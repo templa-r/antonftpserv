@@ -38,7 +38,7 @@ for item in data:
             if key.lower() == "retail":
                 try:
                     val = float(str(value).replace(",", ".").strip())
-                    val = int(val * 1.05)  # +5%, округление вниз
+                    val = int(val * 0.95)  # +5%, округление вниз
                     element.text = str(val)
                 except ValueError:
                     element.text = str(value)
@@ -61,7 +61,7 @@ for item in data:
 
 # Создание дерева XML и запись в файл
 tree = ET.ElementTree(root)
-with open("tyres.xml", "wb") as file:
+with open("azaptyres.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
 print("✅ XML файл успешно создан; розничные цены <retail> увеличены на 5%.")
