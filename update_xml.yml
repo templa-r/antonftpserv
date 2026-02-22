@@ -26,10 +26,6 @@ jobs:
       - name: Run update tyres
         run: python zapaska_tyres.py
         continue-on-error: true
-        
-      - name: Run update disks
-        run: python zapaska_disks.py
-        continue-on-error: true
 
       - name: Check for changes
         id: changes
