@@ -34,13 +34,22 @@ for item in data:
         if key != "Оптовая_Цена":  # Исключаем поле "Оптовая_Цена"
             element = ET.SubElement(product, key)
 
-            # --- увеличение розничной цены на 5% ---
+           # --- увеличение розничной цены на 5% (с исключениями) ---
             if key.lower() == "retail":
-                try:
-                    val = float(str(value).replace(",", ".").strip())
-                    val = int(val * 1.00)  # +5%, округление вниз
-                    element.text = str(val)
-                except ValueError:
+                # получаем бренд из текущего товара
+                brand = item.get("brand", "")
+            
+                # Списки исключений 
+                excluded_brands = ["Mazzini", "Nexen", "MAXXIS"]
+            
+                if model not in excluded_models and brand not in excluded_brands:
+                    try:
+                        val = float(str(value).replace(",", ".").strip())
+                        val = int(val * 0.88)   # корректировка цены
+                        element.text = str(val)
+                    except ValueError:
+                        element.text = str(value)
+                else:
                     element.text = str(value)
             else:
                 element.text = str(value)
@@ -61,7 +70,7 @@ for item in data:
 
 # Создание дерева XML и запись в файл
 tree = ET.ElementTree(root)
-with open("azaptyres.xml", "wb") as file:
+with open("testtyres.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
-print("✅ XML файл успешно создан; розничные цены <retail> увеличены на 5%.")
+print("✅ XML файл успешно создан; розничные цены <retail> уменьшены на 5%.")
