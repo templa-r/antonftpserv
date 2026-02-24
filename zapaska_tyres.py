@@ -38,7 +38,7 @@ for item in data:
             if key.lower() == "retail":
                 try:
                     val = float(str(value).replace(",", ".").strip())
-                    val = int(val * 1.00)  # +5%, округление вниз
+                    val = int(val * 0.90)  # +5%, округление вниз
                     element.text = str(val)
                 except ValueError:
                     element.text = str(value)
