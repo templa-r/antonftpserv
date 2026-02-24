@@ -37,7 +37,7 @@ jobs:
         id: changes
         if: always()
         run: |
-          git add azaptyres.xml 
+          git add azaptyres.xml testtyres.xml
           if git diff-index --quiet HEAD; then
             echo "::set-output name=has_changes::false"
           else
