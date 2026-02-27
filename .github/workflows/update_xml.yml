@@ -31,11 +31,15 @@ jobs:
         run: python TEST.py
         continue-on-error: true
 
+      - name: Run test
+        run: python TEST.py
+        continue-on-error: true
+
       - name: Check for changes
         id: changes
         if: always()
         run: |
-          git add aztyre.xml testtyres.xml
+          git add aztyre.xml testtyres.xml tyres_nsk.xml tyres_gruz.xml tyres.xml
           if git diff-index --quiet HEAD; then
             echo "::set-output name=has_changes::false"
           else
