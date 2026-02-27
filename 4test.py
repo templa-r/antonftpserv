@@ -149,7 +149,7 @@ def filter_and_save_items(api_url, output_file, filter_tag=None,
     return new_root
 
 def main():
-    url1 = "https://b2b.4tochki.ru/export_data/M35352.xml?r=20260227183959"
+    url1 = "https://b2b.4tochki.ru/export_data/M35352.xml"
 
     # Задаём бренды, которые не должны получать скидку 5%
     brands_to_exclude = {"Tracmax", "Sailun", "Landspider", "HiFly", 
