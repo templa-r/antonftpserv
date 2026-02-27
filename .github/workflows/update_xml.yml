@@ -2,7 +2,7 @@ name: Update Products XML
 
 on:
   schedule:
-    - cron: "15 20 * * *" # Запуск каждый день в 3:10 по новосибирскому времени (UTC+7)
+    - cron: "10 20 * * *" # Запуск каждый день в 3:10 по новосибирскому времени (UTC+7)
   workflow_dispatch: # Позволяет запускать workflow вручную
 
 jobs:
