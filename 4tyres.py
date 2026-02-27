@@ -42,21 +42,20 @@ def _to_number(text: Optional[str]) -> Optional[float]:
     except ValueError:
         return None
 
-def adjust_retail_prices_plus5(root: ET.Element, exclude_brands: set = None) -> None:
-    """
-    Увеличивает значения всех тегов *_rozn на 5% от ИХ ЖЕ текущего значения.
-    Если *_rozn пустой/нечисловой — пробуем взять значение из парного базового тега без суффикса.
-    Результат округляется вниз до целого (int()).
-    Параметр exclude_brands: множество брендов, для которых скидка НЕ применяется.
-    """
+def adjust_retail_prices_plus5(root: ET.Element, exclude_brands: set = None):
     if exclude_brands is None:
         exclude_brands = set()
+    print("Исключаемые бренды:", exclude_brands)
 
     for item in root.findall(".//item"):
-        # Проверяем бренд товара
         brand_elem = item.find("brand")
-        if brand_elem is not None and brand_elem.text in exclude_brands:
-            continue  # исключаем этот товар из обработки
+        brand = brand_elem.text.strip() if brand_elem is not None and brand_elem.text else None
+        if brand in exclude_brands:
+            print(f"❌ Пропускаем бренд {brand} (скидка не применяется)")
+            continue
+        else:
+            if brand:
+                print(f"✅ Применяем скидку к бренду {brand}")
 
         tag_map = {child.tag: child for child in list(item)}
         for tag, elem in tag_map.items():
