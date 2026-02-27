@@ -74,7 +74,7 @@ def adjust_retail_prices_plus5(root: ET.Element, exclude_brands: set = None):
             if source_val is None:
                 continue
 
-            new_val = int(source_val * 0.95)
+            new_val = int(source_val * 1.05)
             elem.text = str(new_val)
 
 def filter_and_save_items(api_url, output_file, filter_tag=None, existing_items=None, 
