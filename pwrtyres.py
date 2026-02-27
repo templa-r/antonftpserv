@@ -43,8 +43,7 @@ def _to_number(text: Optional[str]) -> Optional[float]:
         return None
 
 def adjust_retail_prices_plus5(root: ET.Element) -> None:
-    """
-    Увеличивает значения всех тегов *_rozn на 5% от ИХ ЖЕ текущего значения.
+    """Значения всех тегов *_rozn на % от ИХ ЖЕ текущего значения.
     Если *_rozn пустой/нечисловой — пробуем взять значение из парного базового тега без суффикса.
     Результат округляется вниз до целого (int()).
     """
@@ -75,7 +74,7 @@ def adjust_retail_prices_plus5(root: ET.Element) -> None:
 def filter_and_save_items(api_url, output_file, filter_tag=None, existing_items=None,
                           include_tag=None, include_value=None, status=None):
     """Фильтрует товары, удаляет дубликаты, приводит поля к общему формату и сохраняет в XML-файл.
-       После записи увеличивает все *_rozn на 5%."""
+       После записи увеличивает все *_rozn на "%" от основной суммы."""
     root = fetch_xml(api_url)
     new_root = existing_items if existing_items is not None else ET.Element("items")
 
@@ -122,6 +121,9 @@ def filter_and_save_items(api_url, output_file, filter_tag=None, existing_items=
 
 def main():
     url1 = "https://b2b.4tochki.ru/export_data/M35352.xml"
+
+     # Список брендов, для которых НЕ применяем скидку 5%
+    brands_to_exclude = {"Tracmax", "Sailun", "Landspider", "HiFly", "Antares", "Fortune", "Goodride", "LingLong Leao", "Sailun RoadX", "Triangle"}
 
     # Создаем пустые файлы-шаблоны
     ET.ElementTree(ET.Element("items")).write("tyres.xml", encoding="utf-8", xml_declaration=True)
