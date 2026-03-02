@@ -237,6 +237,10 @@ for item in data:
         else:
             element.text = str(value)
 
+    # ----- ДОБАВЛЕНИЕ <inSet> -----
+    inSet_elem = ET.SubElement(product, "inSet")
+    inSet_elem.text = "1"
+
     # Добавление поля studded для Nortec LT 610
     if item.get("model") == "Nortec LT 610":
         studded_elem = ET.SubElement(product, "studded")
