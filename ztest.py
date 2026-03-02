@@ -38,11 +38,17 @@ for item in data:
         if key != "Оптовая_Цена":  # Исключаем поле "Оптовая_Цена"
             element = ET.SubElement(product, key)
 
-             # --- увеличение розничной цены на 5% (с исключениями) ---
+            # --- увеличение розничной цены на 5% (с исключениями) ---
         if key.lower() == "retail":
             brand = item.get("brand", "").strip().lower()
             model = item.get("model", "").strip().lower()
             category = item.get("category", "")
+            diameter_str = item.get("diameter", "")
+            
+            try:
+                diameter = float(str(diameter_str).replace(",", ".").strip())
+            except (ValueError, TypeError):
+                diameter = None  # если не удалось преобразовать
         
             # Списки исключений (бренды и категории, которые не трогаем)
             excluded_brands = ["Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal","Massimo",
@@ -58,13 +64,19 @@ for item in data:
                 "pirelli": 0.97,                # -4%
                 # добавьте другие бренды при необходимости
             }
-            # Словарь специальных правил для конкретных моделей
+                # Словарь специальных правил для конкретных моделей
             # Ключ — кортеж (бренд, модель) в нижнем регистре
             special_model_rules = {
-                ("ikon", "autograph ice 9 suv"): {
-                    "type": "add_to_field",
-                    "field": "price",      # из какого поля берём базу
-                    "value": 1500          # сколько добавляем
+                ("autograph", "autograph ice 9 suv"): {
+                    "type": "add_to_field_by_diameter",
+                    "field": "price",          # базовое поле (может быть "price" или "retail")
+                    "ranges": [
+                        {"min": 16, "max": 16, "value": 1168},
+                        {"min": 17, "max": 18, "value": 1400},
+                        {"min": 19, "max": 20, "value": 1900},
+                        {"min": 21, "max": 22, "value": 2400},
+                    ],
+                    "default": None  # если диаметр не попадает в диапазоны, правило не применяется
                 },
                 # Пример фиксированной цены:
                 # ("nokian", "hakkapeliitta 10"): {
@@ -79,19 +91,46 @@ for item in data:
                 rule = special_model_rules.get((brand, model))
                 if rule:
                     try:
-                        if rule["type"] == "add_to_field":
-                            # Берём значение указанного поля
+                        if rule["type"] == "add_to_field_by_diameter":
+                            # Проверяем, что диаметр известен
+                            if diameter is not None:
+                                # Ищем подходящий диапазон
+                                add_value = None
+                                for r in rule["ranges"]:
+                                    if r["min"] <= diameter <= r["max"]:
+                                        add_value = r["value"]
+                                        break
+                                if add_value is not None:
+                                    base_value_str = item.get(rule["field"], "0")
+                                    base_val = float(str(base_value_str).replace(",", ".").strip())
+                                    new_val = int(base_val + add_value)
+                                else:
+                                    # Если нет подходящего диапазона, используем default (если задан)
+                                    if rule.get("default") is not None:
+                                        base_value_str = item.get(rule["field"], "0")
+                                        base_val = float(str(base_value_str).replace(",", ".").strip())
+                                        new_val = int(base_val + rule["default"])
+                                    else:
+                                        # Оставляем исходное значение retail
+                                        new_val = float(str(value).replace(",", ".").strip())
+                            else:
+                                # Диаметр не определён — оставляем исходное значение
+                                new_val = float(str(value).replace(",", ".").strip())
+        
+                        elif rule["type"] == "add_to_field":
                             base_value_str = item.get(rule["field"], "0")
                             base_val = float(str(base_value_str).replace(",", ".").strip())
                             new_val = int(base_val + rule["value"])
+        
                         elif rule["type"] == "fixed":
                             new_val = int(rule["value"])
-                        else:
-                            # Неизвестный тип правила — оставляем исходное значение retail
+        
+                        else:   # Неизвестный тип правила — оставляем исходное значение retail 
                             new_val = float(str(value).replace(",", ".").strip())
-                        element.text = str(new_val)
-                    except (ValueError, TypeError):
-                        # Если не удалось вычислить, оставляем исходное значение
+        
+                        element.text = str(int(new_val))  # приводим к int и записываем
+        
+                    except (ValueError, TypeError, KeyError) as e:  # Если что-то пошло не так, оставляем исходное значение
                         element.text = str(value)
                 else:
                     # Нет специального правила для модели — применяем логику для бренда
@@ -103,12 +142,10 @@ for item in data:
                     except ValueError:
                         element.text = str(value)
             else:
-                # Товар в исключениях — оставляем цену без изменений
-                element.text = str(value)
+                element.text = str(value)  # Товар в исключениях — оставляем цену без изменений
         else:
             element.text = str(value)
-        # ----------------------------------------
-
+    # ------------------------------------------------------------------------------------------------------------------------
     # Добавляем поле studded для модели Nortec LT 610
     model = item.get("model", "")
     if model == "Nortec LT 610":
