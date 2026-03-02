@@ -26,7 +26,7 @@ EXCLUDED_CATEGORY = ["Грузовая"]
 # Формат: "бренд": {"coeff": коэффициент, "round_step": шаг (опц.), "round_method": метод (опц.)}
 # Если round_step/method не указаны, используются глобальные ROUND_STEP и ROUND_METHOD
 BRAND_COEFFS = {
-    "ikon": {"coeff": 0.88},          # -12% для Ikon
+    "ikon": {"coeff": 0.90},          # -12% для Ikon
     # "michelin": {"coeff": 0.90},     # пример для другого бренда
     # "bridgestone": {"coeff": 0.85, "round_step": 50, "round_method": "nearest"},
 }
