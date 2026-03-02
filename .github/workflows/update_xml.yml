@@ -35,7 +35,7 @@ jobs:
         id: changes
         if: always()
         run: |
-          git add ztest2.xml 4test.xml 4test_nsk.xml 4test_gruz.xml
+          git add aztyre.xml 4test.xml 4test_nsk.xml 4test_gruz.xml
           if git diff-index --quiet HEAD; then
             echo "::set-output name=has_changes::false"
           else
