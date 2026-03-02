@@ -49,7 +49,7 @@ BRAND_COEFFS = {
     "ikon": {
         "default": 0.88,
         "diameter_ranges": [
-            {"min": 13, "max": 15, "coeff": 0.90},
+            {"min": 13, "max": 15, "coeff": 0.905},
             {"min": 17, "max": 22, "coeff": 0.88},
             ],
     },
