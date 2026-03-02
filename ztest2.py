@@ -299,7 +299,7 @@ for item in data:
 
 # Сохранение XML
 tree = ET.ElementTree(root)
-with open("ztest2.xml", "wb") as file:
+with open("aztyre.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
 print("✅ XML файл успешно создан; применены глобальные и брендовые коэффициенты с учётом диаметра.")
