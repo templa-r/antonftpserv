@@ -57,7 +57,7 @@ for item in data:
             # Словарь специальных правил для конкретных моделей
             # Ключ — кортеж (бренд, модель) в нижнем регистре
             special_model_rules = {
-                ("autograph", "autograph ice 9 suv"): {
+                ("ikon (nokian tyres)", "autograph ice 9 suv"): {
                     "type": "add_to_field",
                     "field": "price",      # из какого поля берём базу
                     "value": 1200          # сколько добавляем
