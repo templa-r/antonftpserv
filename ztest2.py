@@ -14,6 +14,8 @@ API_PASSWORD = "rWp7mFWXRKOq"
 ROUND_STEP = 10          # шаг округления (рубли)
 ROUND_METHOD = 'nearest' # метод: 'up', 'down', 'nearest'
 
+INCLUDE_PRICE_TAG = False  # True для отладки, чтобы видеть исходную цену
+
 # Список брендов, которые НЕ корректируем (цены оставляем как есть, но округляем)
 EXCLUDED_BRANDS = [
     "Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
@@ -151,6 +153,9 @@ for item in data:
 
     for key, value in item.items():
         if key == "Оптовая_Цена":
+            continue
+
+        if key == "price" and not INCLUDE_PRICE_TAG:
             continue
 
         element = ET.SubElement(product, key)
