@@ -60,7 +60,7 @@ for item in data:
                 ("autograph", "autograph ice 9 suv"): {
                     "type": "add_to_field",
                     "field": "price",      # из какого поля берём базу
-                    "value": 1500          # сколько добавляем
+                    "value": 1200          # сколько добавляем
                 },
                 # Пример фиксированной цены:
                 # ("nokian", "hakkapeliitta 10"): {
