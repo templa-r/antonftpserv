@@ -362,7 +362,7 @@ print(f"✅ XML файлы успешно созданы.")
 print(f"   - Пропущено (ЗБ): {excluded_zb}")
 print(f"   - Исключено по артикулу: {excluded_article}")
 print(f"   - Всего обработано (в XML): {total_products}")
-print(f"   - Всего обработано (в XML): {total_cae}")
+print(f"   - Всего обработано (в XML): {excluded_cae}")
 print(f"\n📊 Статистика по диаметрам:")
 if diameter_count:
     for d in sorted([k for k in diameter_count if k != 'unknown']):
