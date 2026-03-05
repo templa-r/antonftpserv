@@ -35,6 +35,11 @@ EXCLUDED_ARTICLES = [
 EXCLUDED_CAE = [
     "00000006983",
 ]
+# ===================== ИСКЛЮЧЕНИЯ ПО НАЗВАНИЯМ =====================
+EXCLUDED_NAMES = [
+    "АТ27x8-12 MAXXIS M961 6PR",
+    # добавьте другие полные названия
+]
 # ===================== ГЛОБАЛЬНЫЙ КОЭФФИЦИЕНТ =====================
 # Применяется ко всем шинам, если нет специального правила для модели или бренда.
 GLOBAL_COEFF = {
@@ -258,6 +263,7 @@ excluded_zb = 0
 excluded_diameter = 0  # больше не используется, но оставим для совместимости
 excluded_article = 0
 excluded_cae = 0
+excluded_name = 0
 diameter_count = {}
 
 for item in data:
@@ -305,7 +311,7 @@ for item in data:
         continue
 
     cae = item.get("cae", "")
-    if any(phrase in article for phrase in EXCLUDED_CAE):
+    if any(phrase in cae for phrase in EXCLUDED_CAE):
         excluded_cae += 1
         continue
 
