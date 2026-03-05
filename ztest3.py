@@ -26,10 +26,11 @@ EXCLUDED_BRANDS = [
 EXCLUDED_CATEGORY = ["Грузовая"]
 
 # ===================== ИСКЛЮЧЕНИЯ ПО НАЗВАНИЯМ =====================
-EXCLUDED_NAMES = [
-    "195/75R16C Laufenn X FIT VAN LV01 107/105R Н/А",
-    "АТ27x8-12 MAXXIS M961 6PR",   # пример другого названия
-    # добавьте другие полные названия
+EXCLUDED_PHRASES = [
+    "195/75R16C Laufenn X FIT VAN LV01",
+    "АТ27x8-12 MAXXIS M961 6PR",
+    "185/75R16C Ikon Autograph Snow C4",
+    "33x10,50-16 NORTEC ET-500 111N TL АШК",
 ]
 
 # ===================== ГЛОБАЛЬНЫЙ КОЭФФИЦИЕНТ =====================
@@ -145,6 +146,7 @@ total_products = 0
 excluded_zb = 0
 excluded_diameter = 0
 excluded_name = 0
+diameter_count = {}  # NEW: словарь для подсчёта по диаметрам
 
 for item in data:
     name = item.get("name", "")
@@ -166,6 +168,7 @@ for item in data:
     model_replacements = {
         "Blu Earth V906": ("BluEarth Winter V906", "BluEarth Winter V906"),
         "VS-EV": ("Victra Sport EV", "Victra Sport EV"),
+        "Ecsta PS72": ("Ecsta Sport PS72", "Ecsta Sport PS72"),
     }
     current_model = item.get("model", "")
     if current_model in model_replacements:
@@ -175,24 +178,32 @@ for item in data:
             item["name"] = item["name"].replace(current_model, new_name_part)
             name = item["name"]  # обновляем
 
-    # ---- Фильтр по диаметру ----
+    # ---- Извлечение диаметра (теперь до фильтров) ----
     diameter = safe_float(item.get("diameter"), default=None)
     if diameter is None:
         nomenclature = item.get("Номенклатура", "")
         match = re.search(r'[Rr](\d{2})', nomenclature)
         if match:
             diameter = float(match.group(1))
+
+    # ---- Фильтр по диаметру ----
     if diameter is not None and 12 <= diameter <= 15:
         excluded_diameter += 1
         continue
 
     # ---- Исключение по списку названий ----
-    if name in EXCLUDED_NAMES:
+   if any(phrase in name for phrase in EXCLUDED_PHRASES):
         excluded_name += 1
         continue
 
     # ---- Товар прошёл все фильтры ----
     total_products += 1
+    # NEW: учитываем диаметр в статистике
+    if diameter is not None:
+        d_int = int(diameter)  # округляем до целого (например, 16.0 -> 16)
+        diameter_count[d_int] = diameter_count.get(d_int, 0) + 1
+    else:
+        diameter_count['unknown'] = diameter_count.get('unknown', 0) + 1
 
     # Создаём элемент Product
     product = ET.SubElement(root, "Product")
@@ -304,3 +315,13 @@ print(f"   - Пропущено (ЗБ): {excluded_zb}")
 print(f"   - Исключено по диаметру 12-15: {excluded_diameter}")
 print(f"   - Исключено по названию: {excluded_name}")
 print(f"   - Всего обработано (в XML): {total_products}")
+
+# NEW: вывод статистики по диаметрам
+print(f"\n📊 Статистика по диаметрам:")
+if diameter_count:
+    for d in sorted([k for k in diameter_count if k != 'unknown']):
+        print(f"   - {d}\" : {diameter_count[d]} шт.")
+    if 'unknown' in diameter_count:
+        print(f"   - диаметр не определён : {diameter_count['unknown']} шт.")
+else:
+    print("   (нет данных)")
