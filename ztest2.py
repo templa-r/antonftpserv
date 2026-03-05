@@ -172,6 +172,8 @@ for item in data:
                 match = re.search(r'[Rr](\d{2})', nomenclature)
                 if match:
                     diameter = float(match.group(1))
+            if diameter is not None and 12 <= diameter <= 15:
+                continue  # пропускаем этот товар
 
             # ---- Проверка на исключения ----
             is_excluded = (brand in [b.lower() for b in EXCLUDED_BRANDS] or
