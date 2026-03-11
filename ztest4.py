@@ -319,7 +319,7 @@ for item in data:
         diameter_count['unknown'] = diameter_count.get('unknown', 0) + 1
 
     # Добавление в основной файл (исключая диаметры 15 и 16)
-    if diameter not in (15, 16):
+    if diameter not in (12, 13, 14, 15, 16):
         add_product_to_root(root, item, diameter)
 
     # Добавление в дополнительные файлы по диапазонам
