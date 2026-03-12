@@ -14,7 +14,7 @@ API_PASSWORD = "rWp7mFWXRKOq"
 ROUND_STEP = 10          # шаг округления (рубли)
 ROUND_METHOD = 'nearest' # метод: 'up', 'down', 'nearest'
 
-INCLUDE_PRICE_TAG = True  # True для отладки, чтобы видеть исходную цену
+INCLUDE_PRICE_TAG = False  # True для отладки, чтобы видеть исходную цену
 
 # Список брендов, которые НЕ корректируем (цены оставляем как есть, но округляем)
 EXCLUDED_BRANDS = [
