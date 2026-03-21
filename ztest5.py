@@ -220,6 +220,7 @@ total_products = 0
 excluded_zb = 0
 excluded_article = 0
 excluded_season = 0
+main_file_count = 0   # счётчик для основного файла
 diameter_count = {}
 
 for item in data:
@@ -277,8 +278,9 @@ for item in data:
         diameter_count['unknown'] = diameter_count.get('unknown', 0) + 1
 
     # Добавление в основной файл (исключая 15 и 16)
-    if diameter not in (15, 16):
+    if diameter not in (12, 13, 14):
         add_product_to_root(root, item, diameter)
+        main_file_count += 1   # увеличиваем счётчик для основного файла
 
     if diameter is not None:
         if diameter == 15:
@@ -320,7 +322,8 @@ print(f"   - Пропущено (ЗБ): {excluded_zb}")
 print(f"   - Исключено по артикулу: {excluded_article}")
 if SEASON_EXCLUDE_ENABLED:
     print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
-print(f"   - Всего обработано (в XML): {total_products}")
+print(f"   - Всего товаров, прошедших фильтры: {total_products}")
+print(f"   - Из них в основном файле aztyre.xml: {main_file_count} (исключены диаметры 15 и 16)")
 print(f"\n📊 Статистика по диаметрам:")
 if diameter_count:
     for d in sorted([k for k in diameter_count if k != 'unknown']):
