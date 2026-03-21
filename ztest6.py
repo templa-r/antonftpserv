@@ -15,19 +15,24 @@ INCLUDE_PRICE_TAG = False
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
-IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images/"
-# (учётные данные для хранилища не используются при формировании URL)
+# Попробуйте оба варианта URL:
+# Path style:
+# IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images/"
+# Virtual hosted style:
+IMAGE_BASE_URL = "https://fa5a823588a1-adromavito.s3.ru1.storage.beget.cloud/images/"
 
 # Кэш для результатов проверки существования файлов
 image_cache = {}
 
 def check_image_exists(url):
-    """Проверяет существование файла по URL через HEAD-запрос (с кэшированием)."""
+    """Проверяет существование файла по URL через GET с Range (чтобы не скачивать весь файл)."""
     if url in image_cache:
         return image_cache[url]
     try:
-        response = requests.head(url, timeout=5, allow_redirects=True)
-        exists = response.status_code == 200
+        # Запрашиваем только первый байт
+        response = requests.get(url, timeout=5, headers={'Range': 'bytes=0-0'})
+        # Статусы 200, 206 (Partial Content) и 416 (Range Not Satisfiable) означают, что файл существует
+        exists = response.status_code in (200, 206, 416)
     except requests.RequestException:
         exists = False
     image_cache[url] = exists
@@ -178,9 +183,13 @@ def add_product_to_root(root, item, diameter):
         if key == "img" and IMAGE_REPLACE_ENABLED:
             old_url = value
             new_url = get_new_image_url(item)
+            # Если нужно, раскомментируйте для отладки:
+            # print(f"DEBUG: old={old_url}, new={new_url}")
             if new_url and check_image_exists(new_url):
                 value = new_url
-            # иначе оставляем старую ссылку
+                # print("  -> заменено")
+            # else:
+                # print("  -> не заменено")
 
         element = ET.SubElement(product, key)
 
