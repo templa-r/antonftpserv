@@ -56,7 +56,7 @@ def get_new_image_url(item):
 
     # Попытка получить размер из отдельных полей
     width = item.get("width", "")
-    profile = item.get("profile", "")
+    profile = item.get("profile", "") or item.get("height", "")
     diameter = item.get("diameter", "")
     if width and profile and diameter:
         filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
