@@ -8,13 +8,11 @@ on:
     - cron: "10 20 * * *"
   workflow_dispatch:
 
-# Разрешения для записи в репозиторий и деплоя на Pages
 permissions:
   contents: write
   pages: write
   id-token: write
 
-# Гарантия, что одновременно выполняется только один деплой
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -28,10 +26,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - uses: actions/checkout@v4          # уже используете последнюю на данный момент
-      - uses: actions/configure-pages@v5   # уже последняя
-      - uses: actions/upload-pages-artifact@v3  # уже последняя
-      - uses: actions/deploy-pages@v4  
 
       # ---------- Блок обновления (только для schedule и workflow_dispatch) ----------
       - name: Set up Python
@@ -50,7 +44,7 @@ jobs:
         if: github.event_name != 'push'
         run: python ztest6.py
         env:
-          IMAGE_CACHE_REFRESH: "true"   # теперь будет работать
+          IMAGE_CACHE_REFRESH: "true"   # принудительное обновление кэша при каждом запуске (можно убрать)
         continue-on-error: true
 
       - name: Run test
