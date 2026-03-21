@@ -21,10 +21,19 @@ IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/ima
 # IMAGE_BASE_PASSWORD = "sikitcMj6UBOr28IDWGLCttgGIKwX4CXs9UogRiV"
 
 def get_new_image_url(item):
+    """
+    Формирует URL изображения.
+    Приоритет: если в номенклатуре есть размер, то имя вида:
+        ширина_профиль_диаметр_бренд_модель.jpg
+    Иначе: бренд_модель.jpg
+    """
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
+    if not brand or not model:
+        return None
 
     def clean(s):
+        # Оставляем буквы, цифры, дефис, подчёркивание. Остальное заменяем на _
         return re.sub(r'[^\w\-]', '_', s)
 
     # Пытаемся извлечь размер из Номенклатура
@@ -32,16 +41,12 @@ def get_new_image_url(item):
     match = re.match(r'^(\d+)/(\d+)[Rr](\d+)', nomenclature)
     if match:
         width, profile, diameter = match.groups()
-        if brand and model:
-            filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
-            return IMAGE_BASE_URL + filename
-
-    # Если нет размера – только бренд_модель
-    if brand and model:
-        filename = f"{clean(brand)}_{clean(model)}.jpg"
+        filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
         return IMAGE_BASE_URL + filename
 
-    return None
+    # Запасной вариант: только бренд_модель
+    filename = f"{clean(brand)}_{clean(model)}.jpg"
+    return IMAGE_BASE_URL + filename
 
 # ===================== ФИЛЬТРЫ =====================
 # Фильтр по сезону (исключение товаров с определённым сезоном)
