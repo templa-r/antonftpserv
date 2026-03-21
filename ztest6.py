@@ -123,34 +123,44 @@ def get_coeff_from_settings(settings, diameter):
     return coeff, round_step, round_method
 
 def get_new_image_url(item):
+    """
+    Возвращает список возможных URL для изображения.
+    Первый элемент — с размерами (если удалось получить), второй — короткий (бренд_модель).
+    Если размеров нет, список содержит только короткий.
+    """
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
     if not brand or not model:
-        return None
+        return []
 
     def clean(s):
         return re.sub(r'[^\w\-]', '_', s)
 
-    # 1) Пробуем отдельные поля
+    urls = []
+
+    # 1) Попытка с размерами
     width = item.get("width", "")
     profile = item.get("profile", "") or item.get("height", "")
     diameter = item.get("diameter", "")
     if width and profile and diameter:
         filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
-        return IMAGE_BASE_URL + filename
+        urls.append(IMAGE_BASE_URL + filename)
 
-    # 2) Пробуем извлечь размер из Номенклатура (гибкое выражение)
+    # 2) Попытка извлечь размер из Номенклатура
     nomenclature = item.get("Номенклатура", "")
-    # Ищем любую подстроку вида: число/число (Z?)R число
-    # Группы: (ширина) (профиль) (диаметр)
     match = re.search(r'(\d+)/(\d+)[Zz]?[Rr](\d+)', nomenclature)
     if match:
         width, profile, diameter = match.groups()
         filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
-        return IMAGE_BASE_URL + filename
+        # Добавляем только если ещё не добавлен (избегаем дублирования)
+        if not urls or urls[0] != IMAGE_BASE_URL + filename:
+            urls.append(IMAGE_BASE_URL + filename)
 
-    # 3) Размеров нет – не заменяем
-    return None
+    # 3) Короткое имя (бренд_модель) — всегда добавляем
+    short_filename = f"{clean(brand)}_{clean(model)}.jpg"
+    urls.append(IMAGE_BASE_URL + short_filename)
+
+    return urls
 
 # ===================== КЭШ =====================
 def load_image_cache():
@@ -307,13 +317,21 @@ def add_product_to_root(root, item, diameter):
             continue
 
         if key == "img" and IMAGE_REPLACE_ENABLED:
-            new_url = get_new_image_url(item)
-            if new_url:
+            possible_urls = get_new_image_url(item)
+            new_url = None
+            for url in possible_urls:
                 if IMAGE_CHECK_ENABLED:
-                    if image_cache.get(new_url, False):
-                        value = new_url
+                    # Проверяем существование по кэшу
+                    if image_cache.get(url, False):
+                        new_url = url
+                        break
                 else:
-                    value = new_url
+                    # Если проверка отключена, берём первый (с размерами) если есть, иначе короткий
+                    # Но логика: если есть список, берём первый, который не None
+                    new_url = url
+                    break
+            if new_url:
+                value = new_url
 
         element = ET.SubElement(product, key)
 
