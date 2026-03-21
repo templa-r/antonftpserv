@@ -17,10 +17,10 @@ ROUND_METHOD = 'nearest'
 INCLUDE_PRICE_TAG = False
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
-IMAGE_REPLACE_ENABLED = True          # заменять ли теги <img> на новые
-IMAGE_CHECK_ENABLED = True            # проверять ли существование файла на S3
+IMAGE_REPLACE_ENABLED = True
+IMAGE_CHECK_ENABLED = True
 IMAGE_BASE_URL = "https://fa5a823588a1-adromavito.s3.ru1.storage.beget.cloud/images/"
-IMAGE_CACHE_FILE = "image_cache.json" # файл для сохранения кэша между запусками
+IMAGE_CACHE_FILE = "image_cache.json"
 
 # Чтение переменной окружения для принудительного обновления кэша
 IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
@@ -123,13 +123,6 @@ def get_coeff_from_settings(settings, diameter):
     return coeff, round_step, round_method
 
 def get_new_image_url(item):
-    """
-    Формирует URL изображения.
-    Приоритет:
-      1) если есть поля width, (profile или height), diameter -> ширина_профиль_диаметр_бренд_модель.jpg
-      2) если в Номенклатура есть размер -> извлечённый_размер_бренд_модель.jpg
-      3) иначе бренд_модель.jpg
-    """
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
     if not brand or not model:
@@ -155,7 +148,7 @@ def get_new_image_url(item):
     filename = f"{clean(brand)}_{clean(model)}.jpg"
     return IMAGE_BASE_URL + filename
 
-# ===================== ФУНКЦИИ КЭША =====================
+# ===================== КЭШ =====================
 def load_image_cache():
     if os.path.exists(IMAGE_CACHE_FILE):
         try:
@@ -205,7 +198,6 @@ for item in data:
         excluded_zb += 1
         continue
 
-    # Нормализация бренда
     if item.get("brand") == "Ikon (Nokian Tyres)":
         item["brand"] = "Ikon"
 
@@ -214,7 +206,6 @@ for item in data:
         item["name"] = re.sub(r'\s+', ' ', item["name"])
         name = item["name"]
 
-    # Замена названий моделей
     model_replacements = {
         "Blu Earth V906": ("BluEarth Winter V906", "BluEarth Winter V906"),
         "VS-EV": ("Victra Sport EV", "Victra Sport EV"),
@@ -228,7 +219,6 @@ for item in data:
             item["name"] = item["name"].replace(current_model, new_name_part)
             name = item["name"]
 
-    # Определение диаметра
     diameter = safe_float(item.get("diameter"), default=None)
     if diameter is None:
         nomenclature = item.get("Номенклатура", "")
@@ -236,13 +226,11 @@ for item in data:
         if match:
             diameter = float(match.group(1))
 
-    # Исключение по артикулу
     article = item.get("article", "")
     if any(phrase in article for phrase in EXCLUDED_ARTICLES):
         excluded_article += 1
         continue
 
-    # Исключение по сезону
     if SEASON_EXCLUDE_ENABLED:
         season = item.get("season", "")
         if season == SEASON_EXCLUDE_VALUE:
@@ -257,22 +245,15 @@ for item in data:
         if new_url:
             unique_urls.add(new_url)
 
-print(f"🔍 Найдено {len(unique_urls)} уникальных URL изображений.")
-
-# --- Работа с кэшем ---
+# --- Загрузка / обновление кэша ---
 image_cache = {}
 check_time = 0
 if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
-    # Принудительное удаление кэша, если установлен флаг
     if IMAGE_CACHE_REFRESH and os.path.exists(IMAGE_CACHE_FILE):
         os.remove(IMAGE_CACHE_FILE)
         print("🔁 Кэш принудительно удалён (IMAGE_CACHE_REFRESH=True).")
-
-    # Загружаем существующий кэш
     image_cache = load_image_cache()
     print(f"🔍 Загружено {len(image_cache)} записей из кэша.")
-
-    # Определяем URL, которых ещё нет в кэше
     new_urls = [url for url in unique_urls if url not in image_cache]
     if new_urls:
         print(f"🔍 Требуется проверить {len(new_urls)} новых URL...")
@@ -297,9 +278,9 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
     else:
         print("✅ Все URL уже есть в кэше, проверка не требуется.")
 else:
-    print("🔍 Проверка существования файлов отключена (IMAGE_CHECK_ENABLED=False).")
+    print("🔍 Проверка существования файлов отключена (IMAGE_CHECK_ENABLED=False)")
 
-# --- Второй проход: создание XML и запись товаров ---
+# --- Второй проход: создание XML ---
 root = ET.Element("Products")
 extra_roots = {
     '15': ET.Element("Products"),
@@ -321,7 +302,6 @@ def add_product_to_root(root, item, diameter):
         if key == "price" and not INCLUDE_PRICE_TAG:
             continue
 
-        # Замена изображения с использованием кэша (если проверка включена)
         if key == "img" and IMAGE_REPLACE_ENABLED:
             new_url = get_new_image_url(item)
             if new_url:
@@ -400,7 +380,6 @@ def add_product_to_root(root, item, diameter):
         else:
             element.text = str(value)
 
-    # Дополнительные теги
     inSet_elem = ET.SubElement(product, "inSet")
     inSet_elem.text = "1"
 
@@ -414,7 +393,6 @@ def add_product_to_root(root, item, diameter):
     else:
         product.tag = "tyres"
 
-# Обработка товаров из списка valid_items
 for item, diameter in valid_items:
     if diameter is not None:
         d_int = int(diameter)
@@ -422,12 +400,10 @@ for item, diameter in valid_items:
     else:
         diameter_count['unknown'] = diameter_count.get('unknown', 0) + 1
 
-    # Добавление в основной файл (исключая диаметры 12, 13, 14)
     if diameter not in (12, 13, 14):
         add_product_to_root(root, item, diameter)
         main_file_count += 1
 
-    # Добавление в дополнительные файлы по диаметрам
     if diameter is not None:
         if diameter == 15:
             add_product_to_root(extra_roots['15'], item, diameter)
@@ -442,12 +418,10 @@ for item, diameter in valid_items:
         elif 21 <= diameter <= 24:
             add_product_to_root(extra_roots['21_24'], item, diameter)
 
-# Сохранение основного файла
 tree = ET.ElementTree(root)
-with open("aztyre.xml", "wb") as file:
+with open("aztyre2.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
-# Сохранение дополнительных файлов
 file_names = {
     '15': "ztyrer15.xml",
     '16': "ztyrer16.xml",
@@ -462,16 +436,15 @@ for key, xml_root in extra_roots.items():
         with open(file_names[key], "wb") as file:
             tree.write(file, encoding="utf-8", xml_declaration=True)
 
-# Вывод статистики
 print(f"\n✅ XML файлы успешно созданы.")
 print(f"   - Пропущено (ЗБ): {excluded_zb}")
 print(f"   - Исключено по артикулу: {excluded_article}")
 if SEASON_EXCLUDE_ENABLED:
     print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
 print(f"   - Всего товаров, прошедших фильтры: {total_products}")
-print(f"   - Из них в основном файле aztyre.xml: {main_file_count} (исключены диаметры 12, 13, 14)")
+print(f"   - Из них в основном файле aztyre2.xml: {main_file_count} (исключены диаметры 12, 13, 14)")
 if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
-    print(f"   - Проверено URL: {len(unique_urls)} (новых: {len(new_urls) if 'new_urls' in locals() else 0}) за {check_time:.2f} сек")
+    print(f"   - Проверено URL: {len(unique_urls)} (из них новых: {len(new_urls) if 'new_urls' in locals() else 0}) за {check_time:.2f} сек")
 else:
     print(f"   - Проверка URL отключена (IMAGE_CHECK_ENABLED=False)")
 print(f"\n📊 Статистика по диаметрам:")
