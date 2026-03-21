@@ -16,16 +16,30 @@ INCLUDE_PRICE_TAG = False
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
 IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images/"
-# (учётные данные для хранилища не используются в формировании URL – они могут понадобиться для загрузки, но здесь не нужны)
-# IMAGE_BASE_USER = "G23YLKWRUZT7NW2Y9QUM"
-# IMAGE_BASE_PASSWORD = "sikitcMj6UBOr28IDWGLCttgGIKwX4CXs9UogRiV"
+# (учётные данные для хранилища не используются при формировании URL)
+
+# Кэш для результатов проверки существования файлов
+image_cache = {}
+
+def check_image_exists(url):
+    """Проверяет существование файла по URL через HEAD-запрос (с кэшированием)."""
+    if url in image_cache:
+        return image_cache[url]
+    try:
+        response = requests.head(url, timeout=5, allow_redirects=True)
+        exists = response.status_code == 200
+    except requests.RequestException:
+        exists = False
+    image_cache[url] = exists
+    return exists
 
 def get_new_image_url(item):
     """
-    Формирует URL изображения.
-    Приоритет: если в номенклатуре есть размер, то имя вида:
-        ширина_профиль_диаметр_бренд_модель.jpg
-    Иначе: бренд_модель.jpg
+    Формирует URL для изображения.
+    Приоритет:
+      1) если есть поля width, profile, diameter -> ширина_профиль_диаметр_бренд_модель.jpg
+      2) если в Номенклатура есть размер -> извлечённый_размер_бренд_модель.jpg
+      3) иначе бренд_модель.jpg
     """
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
@@ -33,10 +47,17 @@ def get_new_image_url(item):
         return None
 
     def clean(s):
-        # Оставляем буквы, цифры, дефис, подчёркивание. Остальное заменяем на _
         return re.sub(r'[^\w\-]', '_', s)
 
-    # Пытаемся извлечь размер из Номенклатура
+    # Попытка получить размер из отдельных полей
+    width = item.get("width", "")
+    profile = item.get("profile", "")
+    diameter = item.get("diameter", "")
+    if width and profile and diameter:
+        filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
+        return IMAGE_BASE_URL + filename
+
+    # Попытка извлечь размер из Номенклатура
     nomenclature = item.get("Номенклатура", "")
     match = re.match(r'^(\d+)/(\d+)[Rr](\d+)', nomenclature)
     if match:
@@ -49,11 +70,9 @@ def get_new_image_url(item):
     return IMAGE_BASE_URL + filename
 
 # ===================== ФИЛЬТРЫ =====================
-# Фильтр по сезону (исключение товаров с определённым сезоном)
 SEASON_EXCLUDE_ENABLED = True
 SEASON_EXCLUDE_VALUE = "зима"
 
-# Бренды, которые НЕ корректируем (цены оставляем как есть, но округляем)
 EXCLUDED_BRANDS = [
     "Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
@@ -61,7 +80,6 @@ EXCLUDED_BRANDS = [
 ]
 EXCLUDED_CATEGORY = ["Грузовая"]
 
-# Исключение по артикулам (точное или частичное совпадение)
 EXCLUDED_ARTICLES = [
     "195/75R16C Laufenn X FIT VAN LV01",
     "АТ27x8-12 MAXXIS M961 6PR",
@@ -148,7 +166,6 @@ def get_coeff_from_settings(settings, diameter):
     round_method = settings.get("round_method")
     return coeff, round_step, round_method
 
-# ===================== ГЛАВНАЯ ФУНКЦИЯ ДОБАВЛЕНИЯ ТОВАРА В XML =====================
 def add_product_to_root(root, item, diameter):
     product = ET.SubElement(root, "Product")
     for key, value in item.items():
@@ -157,11 +174,13 @@ def add_product_to_root(root, item, diameter):
         if key == "price" and not INCLUDE_PRICE_TAG:
             continue
 
-        # ЗАМЕНА ИЗОБРАЖЕНИЯ, если включено
+        # ЗАМЕНА ИЗОБРАЖЕНИЯ с проверкой существования
         if key == "img" and IMAGE_REPLACE_ENABLED:
+            old_url = value
             new_url = get_new_image_url(item)
-            if new_url:
+            if new_url and check_image_exists(new_url):
                 value = new_url
+            # иначе оставляем старую ссылку
 
         element = ET.SubElement(product, key)
 
@@ -253,7 +272,7 @@ response.raise_for_status()
 data = response.json()
 
 # ===================== СОЗДАНИЕ XML-ДЕРЕВЬЕВ =====================
-root = ET.Element("Products")                     # основной файл
+root = ET.Element("Products")
 extra_roots = {
     '15': ET.Element("Products"),
     '16': ET.Element("Products"),
@@ -270,14 +289,13 @@ excluded_season = 0
 main_file_count = 0
 diameter_count = {}
 
-# ===================== ОБРАБОТКА КАЖДОГО ТОВАРА =====================
 for item in data:
     name = item.get("name", "")
     if name.startswith("ЗБ"):
         excluded_zb += 1
         continue
 
-    # Нормализация бренда и названия
+    # Нормализация бренда
     if item.get("brand") == "Ikon (Nokian Tyres)":
         item["brand"] = "Ikon"
 
@@ -321,7 +339,6 @@ for item in data:
             excluded_season += 1
             continue
 
-    # Учёт прошедших фильтры
     total_products += 1
     if diameter is not None:
         d_int = int(diameter)
@@ -329,7 +346,7 @@ for item in data:
     else:
         diameter_count['unknown'] = diameter_count.get('unknown', 0) + 1
 
-    # Добавление в основной файл (исключаем диаметры 12, 13, 14)
+    # Добавление в основной файл (исключая диаметры 12, 13, 14)
     if diameter not in (12, 13, 14):
         add_product_to_root(root, item, diameter)
         main_file_count += 1
@@ -349,11 +366,12 @@ for item in data:
         elif 21 <= diameter <= 24:
             add_product_to_root(extra_roots['21_24'], item, diameter)
 
-# ===================== СОХРАНЕНИЕ ФАЙЛОВ =====================
+# Сохранение основного файла
 tree = ET.ElementTree(root)
-with open("aztyre2.xml", "wb") as file:
+with open("aztyre.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
+# Сохранение дополнительных файлов
 file_names = {
     '15': "ztyrer15.xml",
     '16': "ztyrer16.xml",
@@ -368,7 +386,7 @@ for key, xml_root in extra_roots.items():
         with open(file_names[key], "wb") as file:
             tree.write(file, encoding="utf-8", xml_declaration=True)
 
-# ===================== ВЫВОД СТАТИСТИКИ =====================
+# Вывод статистики
 print(f"✅ XML файлы успешно созданы.")
 print(f"   - Пропущено (ЗБ): {excluded_zb}")
 print(f"   - Исключено по артикулу: {excluded_article}")
