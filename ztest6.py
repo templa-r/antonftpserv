@@ -30,7 +30,7 @@ def check_image_exists(url):
         return image_cache[url]
     try:
         # Запрашиваем только первый байт
-        response = requests.get(url, timeout=5, headers={'Range': 'bytes=0-0'})
+        response = requests.get(url, timeout=1, headers={'Range': 'bytes=0-0'})
         # Статусы 200, 206 (Partial Content) и 416 (Range Not Satisfiable) означают, что файл существует
         exists = response.status_code in (200, 206, 416)
     except requests.RequestException:
@@ -377,7 +377,7 @@ for item in data:
 
 # Сохранение основного файла
 tree = ET.ElementTree(root)
-with open("aztyre.xml", "wb") as file:
+with open("aztyre2.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
 # Сохранение дополнительных файлов
