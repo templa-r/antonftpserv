@@ -255,9 +255,9 @@ for item in data:
     valid_items.append((item, diameter))
 
     if IMAGE_REPLACE_ENABLED:
-        new_url = get_new_image_url(item)
-        if new_url:
-            unique_urls.add(new_url)
+        possible_urls = get_new_image_url(item)
+        for url in possible_urls:
+            unique_urls.add(url)
 
 # --- Загрузка / обновление кэша ---
 image_cache = {}
