@@ -1,5 +1,5 @@
 name: Update Products and Deploy to Pages
-
+        
 on:
   push:
     branches: ["main"]
@@ -7,7 +7,12 @@ on:
     # Запуск каждый день в 3:10 по новосибирскому времени (UTC+7)
     - cron: "10 20 * * *"
   workflow_dispatch:
-
+     inputs:
+      refresh_cache:
+        description: 'Принудительно обновить кэш изображений'
+        required: false
+        default: false
+        type: boolean
 permissions:
   contents: write
   pages: write
@@ -52,9 +57,8 @@ jobs:
       - name: Run update tyres
         if: github.event_name != 'push'
         run: python ztest6.py
-        # Если хотите принудительно обновить кэш при запуске, установите переменную:
-        # env:
-        #   IMAGE_CACHE_REFRESH: "true"
+        env:
+          IMAGE_CACHE_REFRESH: ${{ inputs.refresh_cache || 'false' }}
         continue-on-error: true
 
       - name: Run test
