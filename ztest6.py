@@ -432,7 +432,7 @@ print(f"   - Исключено по артикулу: {excluded_article}")
 if SEASON_EXCLUDE_ENABLED:
     print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
 print(f"   - Всего товаров, прошедших фильтры: {total_products}")
-print(f"   - Из них в основном файле aztyre.xml: {main_file_count} (исключены диаметры 12, 13, 14)")
+print(f"   - Из них в основном файле aztyre2.xml: {main_file_count} (исключены диаметры 12, 13, 14)")
 print(f"   - Проверено URL: {len(unique_urls)} за {check_time:.2f} сек")
 print(f"\n📊 Статистика по диаметрам:")
 if diameter_count:
