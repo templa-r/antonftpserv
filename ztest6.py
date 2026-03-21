@@ -3,6 +3,8 @@ import requests
 import base64
 import xml.etree.ElementTree as ET
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
 
 # ===================== НАСТРОЙКИ =====================
 API_URL = "https://ka2.sibzapaska.ru:16500/API/hs/V2/GetTires"
@@ -15,64 +17,8 @@ INCLUDE_PRICE_TAG = False
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
-# Попробуйте оба варианта URL:
-# Path style:
-# IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images/"
-# Virtual hosted style:
+# Используйте нужный вам базовый URL (виртуальный хост)
 IMAGE_BASE_URL = "https://fa5a823588a1-adromavito.s3.ru1.storage.beget.cloud/images/"
-
-# Кэш для результатов проверки существования файлов
-image_cache = {}
-
-def check_image_exists(url):
-    """Проверяет существование файла по URL через GET с Range (чтобы не скачивать весь файл)."""
-    if url in image_cache:
-        return image_cache[url]
-    try:
-        # Запрашиваем только первый байт
-        response = requests.get(url, timeout=1, headers={'Range': 'bytes=0-0'})
-        # Статусы 200, 206 (Partial Content) и 416 (Range Not Satisfiable) означают, что файл существует
-        exists = response.status_code in (200, 206, 416)
-    except requests.RequestException:
-        exists = False
-    image_cache[url] = exists
-    return exists
-
-def get_new_image_url(item):
-    """
-    Формирует URL для изображения.
-    Приоритет:
-      1) если есть поля width, profile, diameter -> ширина_профиль_диаметр_бренд_модель.jpg
-      2) если в Номенклатура есть размер -> извлечённый_размер_бренд_модель.jpg
-      3) иначе бренд_модель.jpg
-    """
-    brand = item.get("brand", "").strip()
-    model = item.get("model", "").strip()
-    if not brand or not model:
-        return None
-
-    def clean(s):
-        return re.sub(r'[^\w\-]', '_', s)
-
-    # Попытка получить размер из отдельных полей
-    width = item.get("width", "")
-    profile = item.get("profile", "") or item.get("height", "")
-    diameter = item.get("diameter", "")
-    if width and profile and diameter:
-        filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
-        return IMAGE_BASE_URL + filename
-
-    # Попытка извлечь размер из Номенклатура
-    nomenclature = item.get("Номенклатура", "")
-    match = re.match(r'^(\d+)/(\d+)[Rr](\d+)', nomenclature)
-    if match:
-        width, profile, diameter = match.groups()
-        filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
-        return IMAGE_BASE_URL + filename
-
-    # Запасной вариант: только бренд_модель
-    filename = f"{clean(brand)}_{clean(model)}.jpg"
-    return IMAGE_BASE_URL + filename
 
 # ===================== ФИЛЬТРЫ =====================
 SEASON_EXCLUDE_ENABLED = True
@@ -171,6 +117,154 @@ def get_coeff_from_settings(settings, diameter):
     round_method = settings.get("round_method")
     return coeff, round_step, round_method
 
+def get_new_image_url(item):
+    """
+    Формирует URL изображения.
+    Приоритет:
+      1) если есть поля width, (profile или height), diameter -> ширина_профиль_диаметр_бренд_модель.jpg
+      2) если в Номенклатура есть размер -> извлечённый_размер_бренд_модель.jpg
+      3) иначе бренд_модель.jpg
+    """
+    brand = item.get("brand", "").strip()
+    model = item.get("model", "").strip()
+    if not brand or not model:
+        return None
+
+    def clean(s):
+        return re.sub(r'[^\w\-]', '_', s)
+
+    width = item.get("width", "")
+    profile = item.get("profile", "") or item.get("height", "")
+    diameter = item.get("diameter", "")
+    if width and profile and diameter:
+        filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
+        return IMAGE_BASE_URL + filename
+
+    nomenclature = item.get("Номенклатура", "")
+    match = re.match(r'^(\d+)/(\d+)[Rr](\d+)', nomenclature)
+    if match:
+        width, profile, diameter = match.groups()
+        filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
+        return IMAGE_BASE_URL + filename
+
+    filename = f"{clean(brand)}_{clean(model)}.jpg"
+    return IMAGE_BASE_URL + filename
+
+# ===================== ОСНОВНАЯ ЛОГИКА =====================
+auth = base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
+response = requests.get(API_URL, headers={"Authorization": f"Basic {auth}"})
+response.raise_for_status()
+data = response.json()
+
+print("🔄 Загрузка данных завершена. Обработка...")
+
+# --- Первый проход: фильтрация и сбор уникальных URL ---
+valid_items = []                     # сохраним прошедшие фильтры товары для второго прохода
+unique_urls = set()                  # все возможные новые URL
+total_products = 0
+excluded_zb = 0
+excluded_article = 0
+excluded_season = 0
+
+for item in data:
+    name = item.get("name", "")
+    if name.startswith("ЗБ"):
+        excluded_zb += 1
+        continue
+
+    # Нормализация бренда
+    if item.get("brand") == "Ikon (Nokian Tyres)":
+        item["brand"] = "Ikon"
+
+    if "name" in item and "(Nokian Tyres)" in item["name"]:
+        item["name"] = item["name"].replace("(Nokian Tyres)", "").strip()
+        item["name"] = re.sub(r'\s+', ' ', item["name"])
+        name = item["name"]
+
+    # Замена названий моделей
+    model_replacements = {
+        "Blu Earth V906": ("BluEarth Winter V906", "BluEarth Winter V906"),
+        "VS-EV": ("Victra Sport EV", "Victra Sport EV"),
+        "Ecsta PS72": ("Ecsta Sport PS72", "Ecsta Sport PS72"),
+    }
+    current_model = item.get("model", "")
+    if current_model in model_replacements:
+        new_model, new_name_part = model_replacements[current_model]
+        item["model"] = new_model
+        if "name" in item:
+            item["name"] = item["name"].replace(current_model, new_name_part)
+            name = item["name"]
+
+    # Определение диаметра
+    diameter = safe_float(item.get("diameter"), default=None)
+    if diameter is None:
+        nomenclature = item.get("Номенклатура", "")
+        match = re.search(r'[Rr](\d{2})', nomenclature)
+        if match:
+            diameter = float(match.group(1))
+
+    # Исключение по артикулу
+    article = item.get("article", "")
+    if any(phrase in article for phrase in EXCLUDED_ARTICLES):
+        excluded_article += 1
+        continue
+
+    # Исключение по сезону
+    if SEASON_EXCLUDE_ENABLED:
+        season = item.get("season", "")
+        if season == SEASON_EXCLUDE_VALUE:
+            excluded_season += 1
+            continue
+
+    # Товар прошёл фильтры
+    total_products += 1
+
+    # Сохраняем для второго прохода
+    valid_items.append((item, diameter))
+
+    # Собираем новый URL, если замена изображений включена
+    if IMAGE_REPLACE_ENABLED:
+        new_url = get_new_image_url(item)
+        if new_url:
+            unique_urls.add(new_url)
+
+print(f"🔍 Найдено {len(unique_urls)} уникальных URL изображений. Проверка существования...")
+
+# --- Многопоточная проверка URL ---
+image_cache = {}
+check_start = time.time()
+
+def check_url(url):
+    try:
+        response = requests.head(url, timeout=2, allow_redirects=True)
+        return url, response.status_code == 200
+    except:
+        return url, False
+
+with ThreadPoolExecutor(max_workers=10) as executor:
+    futures = [executor.submit(check_url, url) for url in unique_urls]
+    for future in as_completed(futures):
+        url, exists = future.result()
+        image_cache[url] = exists
+
+check_time = time.time() - check_start
+print(f"✅ Проверка завершена за {check_time:.2f} сек. Найдено доступных: {sum(1 for v in image_cache.values() if v)}")
+
+# --- Второй проход: создание XML и запись товаров ---
+root = ET.Element("Products")
+extra_roots = {
+    '15': ET.Element("Products"),
+    '16': ET.Element("Products"),
+    '17': ET.Element("Products"),
+    '18': ET.Element("Products"),
+    '19_20': ET.Element("Products"),
+    '21_24': ET.Element("Products"),
+}
+
+main_file_count = 0
+diameter_count = {}
+
+# Функция добавления товара (такая же, как раньше, но с использованием image_cache)
 def add_product_to_root(root, item, diameter):
     product = ET.SubElement(root, "Product")
     for key, value in item.items():
@@ -179,17 +273,11 @@ def add_product_to_root(root, item, diameter):
         if key == "price" and not INCLUDE_PRICE_TAG:
             continue
 
-        # ЗАМЕНА ИЗОБРАЖЕНИЯ с проверкой существования
+        # Замена изображения с использованием кэша
         if key == "img" and IMAGE_REPLACE_ENABLED:
-            old_url = value
             new_url = get_new_image_url(item)
-            # Если нужно, раскомментируйте для отладки:
-            # print(f"DEBUG: old={old_url}, new={new_url}")
-            if new_url and check_image_exists(new_url):
+            if new_url and image_cache.get(new_url, False):
                 value = new_url
-                # print("  -> заменено")
-            # else:
-                # print("  -> не заменено")
 
         element = ET.SubElement(product, key)
 
@@ -274,81 +362,8 @@ def add_product_to_root(root, item, diameter):
     else:
         product.tag = "tyres"
 
-# ===================== ПОЛУЧЕНИЕ ДАННЫХ ИЗ API =====================
-auth = base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
-response = requests.get(API_URL, headers={"Authorization": f"Basic {auth}"})
-response.raise_for_status()
-data = response.json()
-
-# ===================== СОЗДАНИЕ XML-ДЕРЕВЬЕВ =====================
-root = ET.Element("Products")
-extra_roots = {
-    '15': ET.Element("Products"),
-    '16': ET.Element("Products"),
-    '17': ET.Element("Products"),
-    '18': ET.Element("Products"),
-    '19_20': ET.Element("Products"),
-    '21_24': ET.Element("Products"),
-}
-
-total_products = 0
-excluded_zb = 0
-excluded_article = 0
-excluded_season = 0
-main_file_count = 0
-diameter_count = {}
-
-for item in data:
-    name = item.get("name", "")
-    if name.startswith("ЗБ"):
-        excluded_zb += 1
-        continue
-
-    # Нормализация бренда
-    if item.get("brand") == "Ikon (Nokian Tyres)":
-        item["brand"] = "Ikon"
-
-    if "name" in item and "(Nokian Tyres)" in item["name"]:
-        item["name"] = item["name"].replace("(Nokian Tyres)", "").strip()
-        item["name"] = re.sub(r'\s+', ' ', item["name"])
-        name = item["name"]
-
-    # Замена названий моделей
-    model_replacements = {
-        "Blu Earth V906": ("BluEarth Winter V906", "BluEarth Winter V906"),
-        "VS-EV": ("Victra Sport EV", "Victra Sport EV"),
-        "Ecsta PS72": ("Ecsta Sport PS72", "Ecsta Sport PS72"),
-    }
-    current_model = item.get("model", "")
-    if current_model in model_replacements:
-        new_model, new_name_part = model_replacements[current_model]
-        item["model"] = new_model
-        if "name" in item:
-            item["name"] = item["name"].replace(current_model, new_name_part)
-            name = item["name"]
-
-    # Определение диаметра
-    diameter = safe_float(item.get("diameter"), default=None)
-    if diameter is None:
-        nomenclature = item.get("Номенклатура", "")
-        match = re.search(r'[Rr](\d{2})', nomenclature)
-        if match:
-            diameter = float(match.group(1))
-
-    # Исключение по артикулу
-    article = item.get("article", "")
-    if any(phrase in article for phrase in EXCLUDED_ARTICLES):
-        excluded_article += 1
-        continue
-
-    # Исключение по сезону
-    if SEASON_EXCLUDE_ENABLED:
-        season = item.get("season", "")
-        if season == SEASON_EXCLUDE_VALUE:
-            excluded_season += 1
-            continue
-
-    total_products += 1
+# Обработка товаров из списка valid_items
+for item, diameter in valid_items:
     if diameter is not None:
         d_int = int(diameter)
         diameter_count[d_int] = diameter_count.get(d_int, 0) + 1
@@ -396,13 +411,14 @@ for key, xml_root in extra_roots.items():
             tree.write(file, encoding="utf-8", xml_declaration=True)
 
 # Вывод статистики
-print(f"✅ XML файлы успешно созданы.")
+print(f"\n✅ XML файлы успешно созданы.")
 print(f"   - Пропущено (ЗБ): {excluded_zb}")
 print(f"   - Исключено по артикулу: {excluded_article}")
 if SEASON_EXCLUDE_ENABLED:
     print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
 print(f"   - Всего товаров, прошедших фильтры: {total_products}")
 print(f"   - Из них в основном файле aztyre.xml: {main_file_count} (исключены диаметры 12, 13, 14)")
+print(f"   - Проверено URL: {len(unique_urls)} за {check_time:.2f} сек")
 print(f"\n📊 Статистика по диаметрам:")
 if diameter_count:
     for d in sorted([k for k in diameter_count if k != 'unknown']):
