@@ -131,6 +131,7 @@ def get_new_image_url(item):
     def clean(s):
         return re.sub(r'[^\w\-]', '_', s)
 
+    # 1) Пробуем отдельные поля
     width = item.get("width", "")
     profile = item.get("profile", "") or item.get("height", "")
     diameter = item.get("diameter", "")
@@ -138,8 +139,18 @@ def get_new_image_url(item):
         filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
         return IMAGE_BASE_URL + filename
 
-    filename = f"{clean(brand)}_{clean(model)}.jpg"
-    return IMAGE_BASE_URL + filename
+    # 2) Пробуем извлечь размер из Номенклатура (гибкое выражение)
+    nomenclature = item.get("Номенклатура", "")
+    # Ищем любую подстроку вида: число/число (Z?)R число
+    # Группы: (ширина) (профиль) (диаметр)
+    match = re.search(r'(\d+)/(\d+)[Zz]?[Rr](\d+)', nomenclature)
+    if match:
+        width, profile, diameter = match.groups()
+        filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
+        return IMAGE_BASE_URL + filename
+
+    # 3) Размеров нет – не заменяем
+    return None
 
 # ===================== КЭШ =====================
 def load_image_cache():
