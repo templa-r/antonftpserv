@@ -21,18 +21,33 @@ IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/ima
 # IMAGE_BASE_PASSWORD = "sikitcMj6UBOr28IDWGLCttgGIKwX4CXs9UogRiV"
 
 def get_new_image_url(item):
-    """
-    Формирует новый URL для изображения на основе данных товара.
-    Возвращает строку с URL или None, если заменять не нужно.
-    """
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
+
+    # Вспомогательная функция очистки строки для имени файла
+    def clean(s):
+        return re.sub(r'[^\w\-]', '_', s)
+
+    # 1) Попытка использовать полный шаблон с размерами
+    width = item.get("width", "")
+    profile = item.get("profile", "")
+    diameter = item.get("diameter", "")
+    if brand and model and width and profile and diameter:
+        safe_brand = clean(brand)
+        safe_model = clean(model)
+        safe_width = clean(str(width))
+        safe_profile = clean(str(profile))
+        safe_diameter = clean(str(diameter))
+        filename = f"{safe_width}_{safe_profile}_{safe_diameter}_{safe_brand}_{safe_model}.jpg"
+        return IMAGE_BASE_URL + filename
+
+    # 2) Запасной вариант: только бренд и модель
     if brand and model:
-        # Убираем пробелы и недопустимые символы
-        safe_brand = brand.replace(" ", "_")
-        safe_model = model.replace(" ", "_")
+        safe_brand = clean(brand)
+        safe_model = clean(model)
         filename = f"{safe_brand}_{safe_model}.jpg"
         return IMAGE_BASE_URL + filename
+
     return None
 
 # ===================== ФИЛЬТРЫ =====================
