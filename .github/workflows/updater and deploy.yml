@@ -49,14 +49,14 @@ jobs:
 
       - name: Run test
         if: github.event_name != 'push'
-        run: python 4test.py
+        run: python ztest5.py
         continue-on-error: true
 
       - name: Check for changes
         id: changes
         if: github.event_name != 'push' && always()
         run: |
-          git add aztyre2.xml ztyrer15.xml ztyrer16.xml ztyrer17.xml ztyrer18.xml ztyrer1920.xml ztyrer2024.xml 4test.xml 4test_nsk.xml 4test_gruz.xml
+          git add aztyre2.xml aztyre.xml ztyrer15.xml ztyrer16.xml ztyrer17.xml ztyrer18.xml ztyrer1920.xml ztyrer2024.xml
           if git diff-index --quiet HEAD; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
