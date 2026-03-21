@@ -45,6 +45,8 @@ jobs:
       - name: Run update tyres
         if: github.event_name != 'push'
         run: python ztest6.py
+        env:
+          IMAGE_CACHE_REFRESH: "true"   # теперь будет работать
         continue-on-error: true
 
       - name: Run test
