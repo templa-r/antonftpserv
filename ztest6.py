@@ -3,6 +3,7 @@ import requests
 import base64
 import xml.etree.ElementTree as ET
 import re
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
@@ -17,10 +18,12 @@ INCLUDE_PRICE_TAG = False
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True          # заменять ли теги <img> на новые
-IMAGE_CHECK_ENABLED = True            # проверять ли существование файла на S3 (включите для отладки, затем выключите)
-IMAGE_CACHE_REFRESH = False           # принудительно обновить кэш (удалить старый файл и перепроверить все URL)
+IMAGE_CHECK_ENABLED = True            # проверять ли существование файла на S3
 IMAGE_BASE_URL = "https://fa5a823588a1-adromavito.s3.ru1.storage.beget.cloud/images/"
 IMAGE_CACHE_FILE = "image_cache.json" # файл для сохранения кэша между запусками
+
+# Чтение переменной окружения для принудительного обновления кэша
+IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
 
 # ===================== ФИЛЬТРЫ =====================
 SEASON_EXCLUDE_ENABLED = True
@@ -152,6 +155,34 @@ def get_new_image_url(item):
     filename = f"{clean(brand)}_{clean(model)}.jpg"
     return IMAGE_BASE_URL + filename
 
+# ===================== ФУНКЦИИ КЭША =====================
+def load_image_cache():
+    if os.path.exists(IMAGE_CACHE_FILE):
+        try:
+            with open(IMAGE_CACHE_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_image_cache(cache):
+    try:
+        with open(IMAGE_CACHE_FILE, 'w') as f:
+            json.dump(cache, f)
+    except:
+        pass
+
+def check_image_exists(url, cache):
+    if url in cache:
+        return cache[url]
+    try:
+        response = requests.head(url, timeout=2, allow_redirects=True)
+        exists = response.status_code == 200
+    except:
+        exists = False
+    cache[url] = exists
+    return exists
+
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
 auth = base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
 response = requests.get(API_URL, headers={"Authorization": f"Basic {auth}"})
@@ -161,8 +192,8 @@ data = response.json()
 print("🔄 Загрузка данных завершена. Обработка...")
 
 # --- Первый проход: фильтрация и сбор уникальных URL ---
-valid_items = []                     # сохраним прошедшие фильтры товары для второго прохода
-unique_urls = set()                  # все возможные новые URL
+valid_items = []
+unique_urls = set()
 total_products = 0
 excluded_zb = 0
 excluded_article = 0
@@ -218,29 +249,30 @@ for item in data:
             excluded_season += 1
             continue
 
-    # Товар прошёл фильтры
     total_products += 1
-
-    # Сохраняем для второго прохода
     valid_items.append((item, diameter))
 
-    # Собираем новый URL, если замена изображений включена
     if IMAGE_REPLACE_ENABLED:
         new_url = get_new_image_url(item)
         if new_url:
             unique_urls.add(new_url)
 
-print(f"🔍 Найдено {len(unique_urls)} уникальных URL изображений. Проверка существования...")
+print(f"🔍 Найдено {len(unique_urls)} уникальных URL изображений.")
 
-# --- Загрузка существующего кэша ---
+# --- Работа с кэшем ---
 image_cache = {}
 check_time = 0
 if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
+    # Принудительное удаление кэша, если установлен флаг
     if IMAGE_CACHE_REFRESH and os.path.exists(IMAGE_CACHE_FILE):
         os.remove(IMAGE_CACHE_FILE)
         print("🔁 Кэш принудительно удалён (IMAGE_CACHE_REFRESH=True).")
+
+    # Загружаем существующий кэш
     image_cache = load_image_cache()
     print(f"🔍 Загружено {len(image_cache)} записей из кэша.")
+
+    # Определяем URL, которых ещё нет в кэше
     new_urls = [url for url in unique_urls if url not in image_cache]
     if new_urls:
         print(f"🔍 Требуется проверить {len(new_urls)} новых URL...")
@@ -264,6 +296,8 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
         save_image_cache(image_cache)
     else:
         print("✅ Все URL уже есть в кэше, проверка не требуется.")
+else:
+    print("🔍 Проверка существования файлов отключена (IMAGE_CHECK_ENABLED=False).")
 
 # --- Второй проход: создание XML и запись товаров ---
 root = ET.Element("Products")
@@ -279,7 +313,6 @@ extra_roots = {
 main_file_count = 0
 diameter_count = {}
 
-# Функция добавления товара (такая же, как раньше, но с использованием image_cache)
 def add_product_to_root(root, item, diameter):
     product = ET.SubElement(root, "Product")
     for key, value in item.items():
@@ -288,11 +321,15 @@ def add_product_to_root(root, item, diameter):
         if key == "price" and not INCLUDE_PRICE_TAG:
             continue
 
-        # Замена изображения с использованием кэша
+        # Замена изображения с использованием кэша (если проверка включена)
         if key == "img" and IMAGE_REPLACE_ENABLED:
             new_url = get_new_image_url(item)
-            if new_url and image_cache.get(new_url, False):
-                value = new_url
+            if new_url:
+                if IMAGE_CHECK_ENABLED:
+                    if image_cache.get(new_url, False):
+                        value = new_url
+                else:
+                    value = new_url
 
         element = ET.SubElement(product, key)
 
@@ -407,7 +444,7 @@ for item, diameter in valid_items:
 
 # Сохранение основного файла
 tree = ET.ElementTree(root)
-with open("aztyre2.xml", "wb") as file:
+with open("aztyre.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
 # Сохранение дополнительных файлов
@@ -432,8 +469,11 @@ print(f"   - Исключено по артикулу: {excluded_article}")
 if SEASON_EXCLUDE_ENABLED:
     print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
 print(f"   - Всего товаров, прошедших фильтры: {total_products}")
-print(f"   - Из них в основном файле aztyre2.xml: {main_file_count} (исключены диаметры 12, 13, 14)")
-print(f"   - Проверено URL: {len(unique_urls)} за {check_time:.2f} сек")
+print(f"   - Из них в основном файле aztyre.xml: {main_file_count} (исключены диаметры 12, 13, 14)")
+if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
+    print(f"   - Проверено URL: {len(unique_urls)} (новых: {len(new_urls) if 'new_urls' in locals() else 0}) за {check_time:.2f} сек")
+else:
+    print(f"   - Проверка URL отключена (IMAGE_CHECK_ENABLED=False)")
 print(f"\n📊 Статистика по диаметрам:")
 if diameter_count:
     for d in sorted([k for k in diameter_count if k != 'unknown']):
