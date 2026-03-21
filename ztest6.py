@@ -138,13 +138,6 @@ def get_new_image_url(item):
         filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
         return IMAGE_BASE_URL + filename
 
-    nomenclature = item.get("Номенклатура", "")
-    match = re.match(r'^(\d+)/(\d+)[Rr](\d+)', nomenclature)
-    if match:
-        width, profile, diameter = match.groups()
-        filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
-        return IMAGE_BASE_URL + filename
-
     filename = f"{clean(brand)}_{clean(model)}.jpg"
     return IMAGE_BASE_URL + filename
 
