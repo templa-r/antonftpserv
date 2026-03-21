@@ -16,9 +16,11 @@ ROUND_METHOD = 'nearest'
 INCLUDE_PRICE_TAG = False
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
-IMAGE_REPLACE_ENABLED = True
-# Используйте нужный вам базовый URL (виртуальный хост)
-IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images/"
+IMAGE_REPLACE_ENABLED = True          # заменять ли теги <img> на новые
+IMAGE_CHECK_ENABLED = True            # проверять ли существование файла на S3 (включите для отладки, затем выключите)
+IMAGE_CACHE_REFRESH = False           # принудительно обновить кэш (удалить старый файл и перепроверить все URL)
+IMAGE_BASE_URL = "https://fa5a823588a1-adromavito.s3.ru1.storage.beget.cloud/images/"
+IMAGE_CACHE_FILE = "image_cache.json" # файл для сохранения кэша между запусками
 
 # ===================== ФИЛЬТРЫ =====================
 SEASON_EXCLUDE_ENABLED = True
@@ -230,25 +232,38 @@ for item in data:
 
 print(f"🔍 Найдено {len(unique_urls)} уникальных URL изображений. Проверка существования...")
 
-# --- Многопоточная проверка URL ---
+# --- Загрузка существующего кэша ---
 image_cache = {}
-check_start = time.time()
+check_time = 0
+if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
+    if IMAGE_CACHE_REFRESH and os.path.exists(IMAGE_CACHE_FILE):
+        os.remove(IMAGE_CACHE_FILE)
+        print("🔁 Кэш принудительно удалён (IMAGE_CACHE_REFRESH=True).")
+    image_cache = load_image_cache()
+    print(f"🔍 Загружено {len(image_cache)} записей из кэша.")
+    new_urls = [url for url in unique_urls if url not in image_cache]
+    if new_urls:
+        print(f"🔍 Требуется проверить {len(new_urls)} новых URL...")
+        check_start = time.time()
 
-def check_url(url):
-    try:
-        response = requests.head(url, timeout=2, allow_redirects=True)
-        return url, response.status_code == 200
-    except:
-        return url, False
+        def check_url(url):
+            try:
+                response = requests.head(url, timeout=2, allow_redirects=True)
+                return url, response.status_code == 200
+            except:
+                return url, False
 
-with ThreadPoolExecutor(max_workers=10) as executor:
-    futures = [executor.submit(check_url, url) for url in unique_urls]
-    for future in as_completed(futures):
-        url, exists = future.result()
-        image_cache[url] = exists
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(check_url, url) for url in new_urls]
+            for future in as_completed(futures):
+                url, exists = future.result()
+                image_cache[url] = exists
 
-check_time = time.time() - check_start
-print(f"✅ Проверка завершена за {check_time:.2f} сек. Найдено доступных: {sum(1 for v in image_cache.values() if v)}")
+        check_time = time.time() - check_start
+        print(f"✅ Проверка завершена за {check_time:.2f} сек.")
+        save_image_cache(image_cache)
+    else:
+        print("✅ Все URL уже есть в кэше, проверка не требуется.")
 
 # --- Второй проход: создание XML и запись товаров ---
 root = ET.Element("Products")
