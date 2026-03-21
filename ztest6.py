@@ -124,9 +124,10 @@ def get_coeff_from_settings(settings, diameter):
 
 def get_new_image_url(item):
     """
-    Возвращает список возможных URL для изображения.
-    Первый элемент — с размерами (если удалось получить), второй — короткий (бренд_модель).
-    Если размеров нет, список содержит только короткий.
+    Возвращает список возможных URL для изображения в порядке приоритета:
+    - сначала длинное имя с размерами (если удалось получить),
+    - затем короткое имя (бренд_модель).
+    Если размеров нет, список содержит только короткое имя.
     """
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
@@ -138,7 +139,7 @@ def get_new_image_url(item):
 
     urls = []
 
-    # 1) Попытка с размерами
+    # 1) Попытка с размерами из отдельных полей
     width = item.get("width", "")
     profile = item.get("profile", "") or item.get("height", "")
     diameter = item.get("diameter", "")
@@ -146,14 +147,13 @@ def get_new_image_url(item):
         filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
         urls.append(IMAGE_BASE_URL + filename)
 
-    # 2) Попытка извлечь размер из Номенклатура
-    nomenclature = item.get("Номенклатура", "")
-    match = re.search(r'(\d+)/(\d+)[Zz]?[Rr](\d+)', nomenclature)
-    if match:
-        width, profile, diameter = match.groups()
-        filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
-        # Добавляем только если ещё не добавлен (избегаем дублирования)
-        if not urls or urls[0] != IMAGE_BASE_URL + filename:
+    # 2) Попытка извлечь размер из Номенклатура (если ещё не добавили длинное имя)
+    if not urls:
+        nomenclature = item.get("Номенклатура", "")
+        match = re.search(r'(\d+)/(\d+)[Zz]?[Rr](\d+)', nomenclature)
+        if match:
+            width, profile, diameter = match.groups()
+            filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
             urls.append(IMAGE_BASE_URL + filename)
 
     # 3) Короткое имя (бренд_модель) — всегда добавляем
@@ -316,20 +316,18 @@ def add_product_to_root(root, item, diameter):
         if key == "price" and not INCLUDE_PRICE_TAG:
             continue
 
+               # Замена изображения
         if key == "img" and IMAGE_REPLACE_ENABLED:
             possible_urls = get_new_image_url(item)
             new_url = None
-            for url in possible_urls:
-                if IMAGE_CHECK_ENABLED:
-                    # Проверяем существование по кэшу
+            if IMAGE_CHECK_ENABLED:
+                for url in possible_urls:
                     if image_cache.get(url, False):
                         new_url = url
                         break
-                else:
-                    # Если проверка отключена, берём первый (с размерами) если есть, иначе короткий
-                    # Но логика: если есть список, берём первый, который не None
-                    new_url = url
-                    break
+            else:
+                # без проверки берём первый URL из списка (приоритет длинного имени)
+                new_url = possible_urls[0] if possible_urls else None
             if new_url:
                 value = new_url
 
