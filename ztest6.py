@@ -24,28 +24,21 @@ def get_new_image_url(item):
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
 
-    # Вспомогательная функция очистки строки для имени файла
     def clean(s):
         return re.sub(r'[^\w\-]', '_', s)
 
-    # 1) Попытка использовать полный шаблон с размерами
-    width = item.get("width", "")
-    profile = item.get("profile", "")
-    diameter = item.get("diameter", "")
-    if brand and model and width and profile and diameter:
-        safe_brand = clean(brand)
-        safe_model = clean(model)
-        safe_width = clean(str(width))
-        safe_profile = clean(str(profile))
-        safe_diameter = clean(str(diameter))
-        filename = f"{safe_width}_{safe_profile}_{safe_diameter}_{safe_brand}_{safe_model}.jpg"
-        return IMAGE_BASE_URL + filename
+    # Пытаемся извлечь размер из Номенклатура
+    nomenclature = item.get("Номенклатура", "")
+    match = re.match(r'^(\d+)/(\d+)[Rr](\d+)', nomenclature)
+    if match:
+        width, profile, diameter = match.groups()
+        if brand and model:
+            filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
+            return IMAGE_BASE_URL + filename
 
-    # 2) Запасной вариант: только бренд и модель
+    # Если нет размера – только бренд_модель
     if brand and model:
-        safe_brand = clean(brand)
-        safe_model = clean(model)
-        filename = f"{safe_brand}_{safe_model}.jpg"
+        filename = f"{clean(brand)}_{clean(model)}.jpg"
         return IMAGE_BASE_URL + filename
 
     return None
