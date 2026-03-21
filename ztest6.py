@@ -19,7 +19,7 @@ INCLUDE_PRICE_TAG = False
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
 IMAGE_CHECK_ENABLED = True
-IMAGE_BASE_URL = "https://fa5a823588a1-adromavito.s3.ru1.storage.beget.cloud/images/"
+IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images/"
 IMAGE_CACHE_FILE = "image_cache.json"
 
 # Чтение переменной окружения для принудительного обновления кэша
