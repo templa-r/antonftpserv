@@ -123,42 +123,43 @@ def get_coeff_from_settings(settings, diameter):
     return coeff, round_step, round_method
 
 def get_new_image_url(item):
-    """
-    Возвращает список возможных URL для изображения в порядке приоритета:
-    - сначала длинное имя с размерами (если удалось получить),
-    - затем короткое имя (бренд_модель).
-    Если размеров нет, список содержит только короткое имя.
-    """
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
     if not brand or not model:
         return []
 
     def clean(s):
+        # Оставляем буквы, цифры, дефис, подчёркивание. Остальное заменяем на _
         return re.sub(r'[^\w\-]', '_', s)
 
     urls = []
 
-    # 1) Попытка с размерами из отдельных полей
+    # Очищенное имя бренда для папки
+    brand_folder = clean(brand)
+
+     # 1) Попытка с размерами из отдельных полей
     width = item.get("width", "")
     profile = item.get("profile", "") or item.get("height", "")
     diameter = item.get("diameter", "")
     if width and profile and diameter:
         filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
-        urls.append(IMAGE_BASE_URL + filename)
+        url = f"{IMAGE_BASE_URL}{brand_folder}/{filename}"
+        urls.append(url)
 
-    # 2) Попытка извлечь размер из Номенклатура (если ещё не добавили длинное имя)
+    # 2) Попытка извлечь размер из Номенклатура
     if not urls:
         nomenclature = item.get("Номенклатура", "")
         match = re.search(r'(\d+)/(\d+)[Zz]?[Rr](\d+)', nomenclature)
         if match:
             width, profile, diameter = match.groups()
             filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
-            urls.append(IMAGE_BASE_URL + filename)
+            url = f"{IMAGE_BASE_URL}{brand_folder}/{filename}"
+            urls.append(url)
 
     # 3) Короткое имя (бренд_модель) — всегда добавляем
     short_filename = f"{clean(brand)}_{clean(model)}.jpg"
-    urls.append(IMAGE_BASE_URL + short_filename)
+    url_short = f"{IMAGE_BASE_URL}{brand_folder}/{short_filename}"
+    urls.append(url_short)
 
     return urls
 
