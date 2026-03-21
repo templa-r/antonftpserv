@@ -28,6 +28,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - uses: actions/checkout@v4          # уже используете последнюю на данный момент
+      - uses: actions/configure-pages@v5   # уже последняя
+      - uses: actions/upload-pages-artifact@v3  # уже последняя
+      - uses: actions/deploy-pages@v4  
 
       # ---------- Блок обновления (только для schedule и workflow_dispatch) ----------
       - name: Set up Python
