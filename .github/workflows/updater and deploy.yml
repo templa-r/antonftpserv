@@ -52,8 +52,9 @@ jobs:
       - name: Run update tyres
         if: github.event_name != 'push'
         run: python ztest6.py
-        env:
-          IMAGE_CACHE_REFRESH: "false"   # или "true", если нужно обновить кэш
+        # Если хотите принудительно обновить кэш при запуске, установите переменную:
+        # env:
+        #   IMAGE_CACHE_REFRESH: "true"
         continue-on-error: true
 
       - name: Run test
