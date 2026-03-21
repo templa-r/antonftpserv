@@ -27,6 +27,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ---------- Кэш для image_cache.json ----------
+      - name: Cache image check results
+        uses: actions/cache@v4
+        with:
+          path: image_cache.json
+          key: image-cache-${{ runner.os }}-${{ hashFiles('ztest6.py') }}
+          restore-keys: |
+            image-cache-${{ runner.os }}-
+
       # ---------- Блок обновления (только для schedule и workflow_dispatch) ----------
       - name: Set up Python
         if: github.event_name != 'push'
@@ -44,7 +53,7 @@ jobs:
         if: github.event_name != 'push'
         run: python ztest6.py
         env:
-          IMAGE_CACHE_REFRESH: "true"   # принудительное обновление кэша при каждом запуске (можно убрать)
+          IMAGE_CACHE_REFRESH: "false"   # или "true", если нужно обновить кэш
         continue-on-error: true
 
       - name: Run test
