@@ -3,6 +3,7 @@ import requests
 import base64
 import xml.etree.ElementTree as ET
 import re
+from collections import defaultdict
 
 # ===================== НАСТРОЙКИ =====================
 API_URL = "https://ka2.sibzapaska.ru:16500/API/hs/V2/GetTires"
@@ -13,16 +14,28 @@ ROUND_STEP = 10
 ROUND_METHOD = 'nearest'
 INCLUDE_PRICE_TAG = False
 
-# Фильтр по сезону (исключение товаров с определённым сезоном)
-SEASON_EXCLUDE_ENABLED = True      # включить фильтр
-SEASON_EXCLUDE_VALUE = "зима"      # исключать товары с этим сезоном
+# Фильтр по сезону
+SEASON_EXCLUDE_ENABLED = True
+SEASON_EXCLUDE_VALUE = "зима"
 
-# Остальные настройки (бренды, артикулы, коэффициенты) остаются без изменений
 EXCLUDED_BRANDS = [
     "Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
     "Kelly", "Nitto", "Кама"
 ]
+
+# ===================== ОГРАНИЧЕНИЕ ВЫГРУЗКИ =====================
+MAX_ITEMS = 3000
+
+BRAND_PRIORITY = {
+    "MAXXIS": 1,
+    "Mazzini": 1,
+    "Nexen": 1,
+    "Кама": 3,
+}
+
+EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal"]
+
 EXCLUDED_CATEGORY = ["Грузовая"]
 
 EXCLUDED_ARTICLES = [
@@ -206,22 +219,12 @@ response = requests.get(API_URL, headers={"Authorization": f"Basic {auth}"})
 response.raise_for_status()
 data = response.json()
 
-root = ET.Element("Products")
-extra_roots = {
-    '15': ET.Element("Products"),
-    '16': ET.Element("Products"),
-    '17': ET.Element("Products"),
-    '18': ET.Element("Products"),
-    '19_20': ET.Element("Products"),
-    '21_24': ET.Element("Products"),
-}
-
+# --- Первый проход: фильтрация и сбор товаров ---
+valid_items = []
 total_products = 0
 excluded_zb = 0
 excluded_article = 0
 excluded_season = 0
-main_file_count = 0   # счётчик для основного файла
-diameter_count = {}
 
 for item in data:
     name = item.get("name", "")
@@ -237,6 +240,11 @@ for item in data:
         item["name"] = item["name"].replace("(Nokian Tyres)", "").strip()
         item["name"] = re.sub(r'\s+', ' ', item["name"])
         name = item["name"]
+
+    # Исключение бренда из выгрузки
+    brand = item.get("brand", "")
+    if brand in EXCLUDED_BRANDS_FROM_EXPORT:
+        continue
 
     model_replacements = {
         "Blu Earth V906": ("BluEarth Winter V906", "BluEarth Winter V906"),
@@ -271,16 +279,77 @@ for item in data:
             continue
 
     total_products += 1
+    valid_items.append((item, diameter))
+
+print(f"🔍 Всего товаров после фильтров: {total_products}")
+
+# ===================== СТАТИСТИКА ПО БРЕНДАМ =====================
+brand_diameter_stats = defaultdict(lambda: defaultdict(lambda: {'sum': 0, 'count': 0}))
+
+for item, diameter in valid_items:
+    brand = item.get("brand", "").strip()
+    if not brand:
+        continue
+    price = safe_float(item.get("price", 0))
+    retail = safe_float(item.get("retail", 0))
+    margin = retail - price if price else retail
+    d_key = int(diameter) if diameter is not None else 'unknown'
+    brand_diameter_stats[brand][d_key]['sum'] += margin
+    brand_diameter_stats[brand][d_key]['count'] += 1
+
+with open("brand_statistics.txt", "w", encoding="utf-8") as f:
+    f.write("Статистика по брендам (средняя маржинальность на диаметр)\n")
+    f.write("="*60 + "\n")
+    for brand in sorted(brand_diameter_stats.keys()):
+        f.write(f"\nБренд: {brand}\n")
+        f.write("-"*40 + "\n")
+        # Сортируем диаметры: числовые по возрастанию, 'unknown' в конце
+        for diam in sorted(brand_diameter_stats[brand].keys(), key=lambda x: (x != 'unknown', x)):
+            stats = brand_diameter_stats[brand][diam]
+            avg = stats['sum'] / stats['count'] if stats['count'] > 0 else 0
+            f.write(f"  Диаметр {diam}: {stats['count']} шт., средняя маржинальность = {avg:.2f} руб.\n")
+        f.write("\n")
+print("📊 Статистика по брендам сохранена в файл brand_statistics.txt")
+
+# ===================== СОРТИРОВКА И ОГРАНИЧЕНИЕ =====================
+items_with_meta = []
+for item, diameter in valid_items:
+    price = safe_float(item.get("price", 0))
+    retail = safe_float(item.get("retail", 0))
+    margin = retail - price if price else retail
+    brand = item.get("brand", "").strip()
+    priority = BRAND_PRIORITY.get(brand, 999)
+    items_with_meta.append((priority, -margin, item, diameter))
+
+items_with_meta.sort(key=lambda x: (x[0], x[1]))
+selected_items = [(item, diameter) for (_, _, item, diameter) in items_with_meta[:MAX_ITEMS]]
+print(f"📦 Отобрано {len(selected_items)} товаров для выгрузки (из {total_products})")
+
+# ===================== ЗАПИСЬ В XML =====================
+root = ET.Element("Products")
+extra_roots = {
+    '15': ET.Element("Products"),
+    '16': ET.Element("Products"),
+    '17': ET.Element("Products"),
+    '18': ET.Element("Products"),
+    '19_20': ET.Element("Products"),
+    '21_24': ET.Element("Products"),
+}
+
+main_file_count = 0
+diameter_count = {}
+
+for item, diameter in selected_items:
     if diameter is not None:
         d_int = int(diameter)
         diameter_count[d_int] = diameter_count.get(d_int, 0) + 1
     else:
         diameter_count['unknown'] = diameter_count.get('unknown', 0) + 1
 
-    # Добавление в основной файл (исключая 12 и 14)
-    if diameter not in (12, 13, 14):
+    # Добавление в основной файл (исключая диаметры 12, 13, 14, 15)
+    if diameter not in (12, 13, 14, 15):
         add_product_to_root(root, item, diameter)
-        main_file_count += 1   # увеличиваем счётчик для основного файла
+        main_file_count += 1
 
     if diameter is not None:
         if diameter == 15:
@@ -317,14 +386,15 @@ for key, xml_root in extra_roots.items():
             tree.write(file, encoding="utf-8", xml_declaration=True)
 
 # Вывод статистики
-print(f"✅ XML файлы успешно созданы.")
+print(f"\n✅ XML файлы успешно созданы.")
 print(f"   - Пропущено (ЗБ): {excluded_zb}")
 print(f"   - Исключено по артикулу: {excluded_article}")
 if SEASON_EXCLUDE_ENABLED:
     print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
 print(f"   - Всего товаров, прошедших фильтры: {total_products}")
-print(f"   - Из них в основном файле aztyre.xml: {main_file_count} (исключены диаметры 12 и 14)")
-print(f"\n📊 Статистика по диаметрам:")
+print(f"   - Отобрано для выгрузки (ограничение {MAX_ITEMS}): {len(selected_items)}")
+print(f"   - Из них в основном файле aztyre.xml: {main_file_count} (исключены диаметры 12, 13, 14, 15)")
+print(f"\n📊 Статистика по диаметрам (в выгруженных товарах):")
 if diameter_count:
     for d in sorted([k for k in diameter_count if k != 'unknown']):
         print(f"   - {d}\" : {diameter_count[d]} шт.")
