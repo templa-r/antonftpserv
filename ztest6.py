@@ -316,6 +316,7 @@ print("🔄 Загрузка данных завершена. Обработка
 
 # --- Первый проход: фильтрация и сбор товаров ---
 valid_items = []
+full_items = []  # для полной выгрузки (без сезонного фильтра)
 unique_urls = set()
 total_products = 0
 excluded_zb = 0
@@ -367,6 +368,9 @@ for item in data:
     if any(phrase in article for phrase in EXCLUDED_ARTICLES):
         excluded_article += 1
         continue
+
+     # Сохраняем товар для полной выгрузки (до сезонного фильтра)
+    full_items.append((item, diameter))
 
     if SEASON_EXCLUDE_ENABLED:
         season = item.get("season", "")
@@ -491,6 +495,11 @@ for item, diameter in main_selected:
 tree = ET.ElementTree(root)
 with open("aztyre2.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
+
+full_tree = ET.ElementTree(full_root)
+with open("aztyre_full.xml", "wb") as file:
+    full_tree.write(file, encoding="utf-8", xml_declaration=True)
+print(f"✅ Полный XML файл (без фильтров) сохранён: aztyre_full.xml")
 
 # --- Вывод статистики ---
 print(f"\n✅ XML файл успешно создан.")
