@@ -58,7 +58,7 @@ jobs:
         if: github.event_name != 'push'
         run: python ztest6.py
         env:
-          IMAGE_CACHE_REFRESH: ${{ inputs.refresh_cache || 'True' }}
+          IMAGE_CACHE_REFRESH: ${{ inputs.refresh_cache == true && 'true' || 'false' }}
         continue-on-error: true
 
       - name: Run test
