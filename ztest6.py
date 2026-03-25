@@ -506,7 +506,7 @@ for item, diameter in main_selected:
     main_file_count += 1
 
 tree = ET.ElementTree(root)
-with open("aztyre.xml", "wb") as file:
+with open("aztyre2.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
 # --- Вывод статистики ---
