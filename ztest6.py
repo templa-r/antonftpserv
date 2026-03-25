@@ -164,11 +164,11 @@ def get_new_image_url(item):
         if match:
             width, profile, diameter = match.groups()
             filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
-            urls.append(f"{IMAGE_BASE_URL}{brand_folder}/{filename}")
+            urls.append(f"{IMAGE_BASE_URL}/{brand_folder}/{filename}")
 
     # 3) Короткое имя (бренд_модель) — всегда добавляем
     short_filename = f"{clean(brand)}_{clean(model)}.jpg"
-    urls.append(f"{IMAGE_BASE_URL}{brand_folder}/{short_filename}")
+    urls.append(f"{IMAGE_BASE_URL}/{brand_folder}/{short_filename}")
 
     return urls
 
