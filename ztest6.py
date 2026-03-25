@@ -19,8 +19,8 @@ ROUND_METHOD = 'nearest'
 INCLUDE_PRICE_TAG = False
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
-IMAGE_REPLACE_ENABLED = True          # заменять ли теги <img> на новые
-IMAGE_CHECK_ENABLED = True            # проверять ли существование файла на S3 (отладка)
+IMAGE_REPLACE_ENABLED = True
+IMAGE_CHECK_ENABLED = True
 IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images/"
 IMAGE_CACHE_FILE = "image_cache.json"
 IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
@@ -201,7 +201,7 @@ def check_image_exists(url, cache):
     return exists
 
 # ===================== ДОБАВЛЕНИЕ ТОВАРА В XML =====================
-def add_product_to_root(root, item, diameter, image_cache=None):
+def add_product_to_root(root, item, diameter, replace_images=True, image_cache=None):
     product = ET.SubElement(root, "Product")
     for key, value in item.items():
         if key == "Оптовая_Цена":
@@ -209,8 +209,8 @@ def add_product_to_root(root, item, diameter, image_cache=None):
         if key == "price" and not INCLUDE_PRICE_TAG:
             continue
 
-        # Замена изображения (если включена)
-        if key == "img" and IMAGE_REPLACE_ENABLED:
+        # Замена изображения (только если replace_images=True)
+        if key == "img" and replace_images and IMAGE_REPLACE_ENABLED:
             possible_urls = get_new_image_url(item)
             new_url = None
             if IMAGE_CHECK_ENABLED and image_cache is not None:
@@ -315,10 +315,10 @@ data = response.json()
 print("🔄 Загрузка данных завершена. Обработка...")
 
 # --- Первый проход: фильтрация и сбор товаров ---
-valid_items = []
-full_items = []  # для полной выгрузки (без сезонного фильтра)
+full_items = []          # все товары после минимальных фильтров (для полной выгрузки)
+valid_items = []         # товары после всех фильтров (для основной выгрузки)
 unique_urls = set()
-total_products = 0
+total_full = 0
 excluded_zb = 0
 excluded_article = 0
 excluded_season = 0
@@ -338,7 +338,7 @@ for item in data:
         item["name"] = re.sub(r'\s+', ' ', item["name"])
         name = item["name"]
 
-    # Исключение бренда из выгрузки
+    # Исключение бренда из выгрузки (касается обоих файлов)
     brand = item.get("brand", "")
     if brand in EXCLUDED_BRANDS_FROM_EXPORT:
         continue
@@ -369,16 +369,17 @@ for item in data:
         excluded_article += 1
         continue
 
-     # Сохраняем товар для полной выгрузки (до сезонного фильтра)
+    # Добавляем товар в полную выгрузку (даже если сезон исключён)
     full_items.append((item, diameter))
+    total_full += 1
 
+    # Проверка сезона для основной выгрузки
     if SEASON_EXCLUDE_ENABLED:
         season = item.get("season", "")
         if season == SEASON_EXCLUDE_VALUE:
             excluded_season += 1
             continue
 
-    total_products += 1
     valid_items.append((item, diameter))
 
     if IMAGE_REPLACE_ENABLED:
@@ -386,7 +387,8 @@ for item in data:
         for url in possible_urls:
             unique_urls.add(url)
 
-print(f"🔍 Всего товаров после фильтров: {total_products}")
+print(f"🔍 Всего товаров после минимальных фильтров (полная выгрузка): {total_full}")
+print(f"🔍 Всего товаров после фильтра по сезону (основная выгрузка): {len(valid_items)}")
 
 # --- Загрузка / обновление кэша изображений ---
 image_cache = {}
@@ -423,7 +425,7 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
 else:
     print("🔍 Проверка существования файлов отключена (IMAGE_CHECK_ENABLED=False)")
 
-# --- Статистика по брендам ---
+# --- Статистика по брендам (на основе valid_items, т.к. это товары с ценой и сезоном) ---
 brand_diameter_stats = defaultdict(lambda: defaultdict(lambda: {'sum': 0, 'count': 0}))
 stats_count = 0
 
@@ -458,9 +460,19 @@ except Exception as e:
     print(f"❌ Ошибка при записи статистики: {e}")
     traceback.print_exc()
 
-# --- Сортировка и ограничение ---
+# --- Создание полного файла (без замены изображений, без ограничений) ---
+full_root = ET.Element("Products")
+for item, diameter in full_items:
+    # Для полного файла не меняем изображения и не применяем сортировку/лимит
+    add_product_to_root(full_root, item, diameter, replace_images=False)
+
+full_tree = ET.ElementTree(full_root)
+with open("aztyre_full.xml", "wb") as file:
+    full_tree.write(file, encoding="utf-8", xml_declaration=True)
+print(f"✅ Полный XML файл (без фильтра сезона) создан: aztyre_full.xml, всего товаров: {total_full}")
+
+# --- Сортировка и ограничение для основного файла ---
 main_candidates = []      # для основного файла (диаметр >=16)
-extra_candidates = []     # для дополнительных (диаметр <16) – не используются
 
 for item, diameter in valid_items:
     price = safe_float(item.get("price", 0))
@@ -471,7 +483,8 @@ for item, diameter in valid_items:
     if diameter is not None and diameter >= 16:
         main_candidates.append((priority, -margin, item, diameter))
     else:
-        extra_candidates.append((priority, -margin, item, diameter))
+        # диаметры <16 не попадают в основной файл, но могут быть в полном
+        pass
 
 main_candidates.sort(key=lambda x: (x[0], x[1]))
 main_selected = [(item, diameter) for (_, _, item, diameter) in main_candidates[:MAX_ITEMS]]
@@ -489,25 +502,21 @@ for item, diameter in main_selected:
         diameter_count[d_int] = diameter_count.get(d_int, 0) + 1
     else:
         diameter_count['unknown'] = diameter_count.get('unknown', 0) + 1
-    add_product_to_root(root, item, diameter, image_cache if IMAGE_CHECK_ENABLED else None)
+    add_product_to_root(root, item, diameter, replace_images=True, image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
     main_file_count += 1
 
 tree = ET.ElementTree(root)
-with open("aztyre2.xml", "wb") as file:
+with open("aztyre.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
-full_tree = ET.ElementTree(full_root)
-with open("aztyre_full.xml", "wb") as file:
-    full_tree.write(file, encoding="utf-8", xml_declaration=True)
-print(f"✅ Полный XML файл (без фильтров) сохранён: aztyre_full.xml")
-
 # --- Вывод статистики ---
-print(f"\n✅ XML файл успешно создан.")
+print(f"\n✅ XML файлы успешно созданы.")
 print(f"   - Пропущено (ЗБ): {excluded_zb}")
 print(f"   - Исключено по артикулу: {excluded_article}")
 if SEASON_EXCLUDE_ENABLED:
     print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
-print(f"   - Всего товаров, прошедших фильтры: {total_products}")
+print(f"   - Всего товаров в полной выгрузке (aztyre_full.xml): {total_full}")
+print(f"   - Всего товаров, прошедших фильтр по сезону: {len(valid_items)}")
 print(f"   - Отобрано для основного файла (ограничение {MAX_ITEMS}): {len(main_selected)}")
 print(f"   - Из них в основном файле aztyre.xml: {main_file_count} (диаметры >=16)")
 
