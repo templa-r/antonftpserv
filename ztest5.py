@@ -28,11 +28,14 @@ MAX_ITEMS = 3000
 BRAND_PRIORITY = {
     "MAXXIS": 1,
     "Mazzini": 1,
-    "Nexen": 1,
+    "Prinx": 1,
+    "Ikon": 1,
+    "Yokohama": 1,
+    "Roadmarch": 1,
     "Кама": 3,
 }
 
-EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal"]
+EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aotelli"]
 
 EXCLUDED_CATEGORY = ["Грузовая"]
 
