@@ -20,10 +20,14 @@ INCLUDE_PRICE_TAG = False
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
-IMAGE_CHECK_ENABLED = True
-IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images"
+IMAGE_CHECK_ENABLED = True               # проверять существование файлов (отладка)
+IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images"  # без слеша в конце
 IMAGE_CACHE_FILE = "image_cache.json"
 IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
+
+# Параметры проверки
+MAX_WORKERS = 20           # количество параллельных HEAD-запросов
+HEAD_TIMEOUT = 1           # таймаут в секундах
 
 # ===================== ФИЛЬТРЫ =====================
 SEASON_EXCLUDE_ENABLED = True
@@ -44,7 +48,7 @@ BRAND_PRIORITY = {
     "Ikon": 1,
     "Yokohama": 1,
     "Roadmarch": 1,
-    "Кама": 3
+    "Кама": 3,
 }
 
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
@@ -138,6 +142,10 @@ def get_coeff_from_settings(settings, diameter):
     return coeff, round_step, round_method
 
 def get_new_image_url(item):
+    """
+    Возвращает список URL для изображения в порядке приоритета.
+    Если удаётся сформировать длинное имя (с размерами), короткое имя не добавляется.
+    """
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
     if not brand or not model:
@@ -166,9 +174,10 @@ def get_new_image_url(item):
             filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
             urls.append(f"{IMAGE_BASE_URL}/{brand_folder}/{filename}")
 
-    # 3) Короткое имя (бренд_модель) — всегда добавляем
-    short_filename = f"{clean(brand)}_{clean(model)}.jpg"
-    urls.append(f"{IMAGE_BASE_URL}/{brand_folder}/{short_filename}")
+    # 3) Если длинное имя не удалось, добавляем короткое (бренд_модель)
+    if not urls:
+        short_filename = f"{clean(brand)}_{clean(model)}.jpg"
+        urls.append(f"{IMAGE_BASE_URL}/{brand_folder}/{short_filename}")
 
     return urls
 
@@ -193,7 +202,7 @@ def check_image_exists(url, cache):
     if url in cache:
         return cache[url]
     try:
-        response = requests.head(url, timeout=2, allow_redirects=True)
+        response = requests.head(url, timeout=HEAD_TIMEOUT, allow_redirects=True)
         exists = response.status_code == 200
     except:
         exists = False
@@ -315,8 +324,8 @@ data = response.json()
 print("🔄 Загрузка данных завершена. Обработка...")
 
 # --- Первый проход: фильтрация и сбор товаров ---
-full_items = []          # все товары после минимальных фильтров (для полной выгрузки)
-valid_items = []         # товары после всех фильтров (для основной выгрузки)
+full_items = []
+valid_items = []
 unique_urls = set()
 total_full = 0
 excluded_zb = 0
@@ -329,7 +338,6 @@ for item in data:
         excluded_zb += 1
         continue
 
-    # Нормализация бренда
     if item.get("brand") == "Ikon (Nokian Tyres)":
         item["brand"] = "Ikon"
 
@@ -338,12 +346,10 @@ for item in data:
         item["name"] = re.sub(r'\s+', ' ', item["name"])
         name = item["name"]
 
-    # Исключение бренда из выгрузки (касается обоих файлов)
     brand = item.get("brand", "")
     if brand in EXCLUDED_BRANDS_FROM_EXPORT:
         continue
 
-    # Замена названий моделей
     model_replacements = {
         "Blu Earth V906": ("BluEarth Winter V906", "BluEarth Winter V906"),
         "VS-EV": ("Victra Sport EV", "Victra Sport EV"),
@@ -369,11 +375,9 @@ for item in data:
         excluded_article += 1
         continue
 
-    # Добавляем товар в полную выгрузку (даже если сезон исключён)
     full_items.append((item, diameter))
     total_full += 1
 
-    # Проверка сезона для основной выгрузки
     if SEASON_EXCLUDE_ENABLED:
         season = item.get("season", "")
         if season == SEASON_EXCLUDE_VALUE:
@@ -389,6 +393,7 @@ for item in data:
 
 print(f"🔍 Всего товаров после минимальных фильтров (полная выгрузка): {total_full}")
 print(f"🔍 Всего товаров после фильтра по сезону (основная выгрузка): {len(valid_items)}")
+print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
 # --- Загрузка / обновление кэша изображений ---
 image_cache = {}
@@ -406,12 +411,12 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
 
         def check_url(url):
             try:
-                response = requests.head(url, timeout=2, allow_redirects=True)
+                response = requests.head(url, timeout=HEAD_TIMEOUT, allow_redirects=True)
                 return url, response.status_code == 200
             except:
                 return url, False
 
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = [executor.submit(check_url, url) for url in new_urls]
             for future in as_completed(futures):
                 url, exists = future.result()
@@ -425,7 +430,7 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
 else:
     print("🔍 Проверка существования файлов отключена (IMAGE_CHECK_ENABLED=False)")
 
-# --- Статистика по брендам (на основе valid_items, т.к. это товары с ценой и сезоном) ---
+# --- Статистика по брендам ---
 brand_diameter_stats = defaultdict(lambda: defaultdict(lambda: {'sum': 0, 'count': 0}))
 stats_count = 0
 
@@ -463,7 +468,6 @@ except Exception as e:
 # --- Создание полного файла (без замены изображений, без ограничений) ---
 full_root = ET.Element("Products")
 for item, diameter in full_items:
-    # Для полного файла не меняем изображения и не применяем сортировку/лимит
     add_product_to_root(full_root, item, diameter, replace_images=False)
 
 full_tree = ET.ElementTree(full_root)
@@ -472,8 +476,7 @@ with open("aztyre_full.xml", "wb") as file:
 print(f"✅ Полный XML файл (без фильтра сезона) создан: aztyre_full.xml, всего товаров: {total_full}")
 
 # --- Сортировка и ограничение для основного файла ---
-main_candidates = []      # для основного файла (диаметр >=16)
-
+main_candidates = []
 for item, diameter in valid_items:
     price = safe_float(item.get("price", 0))
     retail = safe_float(item.get("retail", 0))
@@ -482,9 +485,6 @@ for item, diameter in valid_items:
     priority = BRAND_PRIORITY.get(brand, 999)
     if diameter is not None and diameter >= 16:
         main_candidates.append((priority, -margin, item, diameter))
-    else:
-        # диаметры <16 не попадают в основной файл, но могут быть в полном
-        pass
 
 main_candidates.sort(key=lambda x: (x[0], x[1]))
 main_selected = [(item, diameter) for (_, _, item, diameter) in main_candidates[:MAX_ITEMS]]
