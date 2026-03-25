@@ -155,7 +155,7 @@ def get_new_image_url(item):
     diameter = item.get("diameter", "")
     if width and profile and diameter:
         filename = f"{width}_{profile}_{diameter}_{clean(brand)}_{clean(model)}.jpg"
-        urls.append(f"{IMAGE_BASE_URL}{brand_folder}/{filename}")
+        urls.append(f"{IMAGE_BASE_URL}/{brand_folder}/{filename}")
 
     # 2) Попытка извлечь размер из Номенклатура
     if not urls:
