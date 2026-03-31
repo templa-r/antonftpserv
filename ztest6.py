@@ -252,7 +252,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
 
             if found_suffixed:
                 # Если есть хотя бы одно суффиксное – используем все найденные через запятую
-                value = ",".join(found_suffixed)
+                value = ", ".join(found_suffixed)
             else:
                 # 2) Нет суффиксных – используем старую логику (один URL)
                 base_urls = get_base_urls(item)
