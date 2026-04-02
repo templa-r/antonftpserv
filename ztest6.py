@@ -525,7 +525,7 @@ for item, diameter in all_items:
                         image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
 
 tree = ET.ElementTree(root)
-with open("aztyre.xml", "wb") as file:
+with open("aztyre_full.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
 print(f"✅ Итоговый XML файл создан: aztyre.xml, всего товаров: {total_products}")
