@@ -26,7 +26,7 @@ IMAGE_CACHE_FILE = "image_cache.json"
 IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
 
 # Параметры проверки
-MAX_WORKERS = 500           # количество параллельных HEAD-запросов
+MAX_WORKERS = 1000           # количество параллельных HEAD-запросов
 HEAD_TIMEOUT = 1           # таймаут в секундах
 
 # ===================== ФИЛЬТРЫ =====================
