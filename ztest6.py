@@ -189,7 +189,7 @@ def get_suffixed_urls(item):
         base_without_ext = base_url[:-4]
     else:
         base_without_ext = base_url
-    return [f"{base_without_ext}_{i}.jpg" for i in range(1, 5)]
+    return [f"{base_without_ext}_{i}.jpg" for i in range(1, 2)]
 
 def get_all_image_urls(item):
     """Возвращает все возможные URL для товара (суффиксные и базовые)."""
