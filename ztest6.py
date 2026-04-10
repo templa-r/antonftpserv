@@ -213,14 +213,14 @@ def check_image_exists(url, cache):
 def add_product_to_root(root, item, diameter, replace_images=True, image_cache=None):
     product = ET.SubElement(root, "Product")
 
-    # Обработка всех полей, кроме img (для img используем новую логику)
+    # Обработка всех полей, кроме img (img обработаем отдельно)
     for key, value in item.items():
         if key == "Оптовая_Цена":
             continue
         if key == "price" and not INCLUDE_PRICE_TAG:
             continue
         if key == "img":
-            continue  # обработаем отдельно
+            continue  # пропускаем исходный img, чтобы не дублировать
 
         element = ET.SubElement(product, key)
 
@@ -306,7 +306,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         else:
             element.text = str(value)
 
-      # Новая логика формирования <Images>
+    # --- НОВАЯ ЛОГИКА ФОРМИРОВАНИЯ IMAGES (заменяет исходный img) ---
     if replace_images and IMAGE_REPLACE_ENABLED:
         # 1) Определяем основное фото
         base_urls = get_base_image_urls(item)
@@ -321,7 +321,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
 
         if main_url:
             # Определяем общий базовый путь (PhotoDir)
-            # Ищем последний слеш, чтобы отделить папку от имени файла
             last_slash = main_url.rfind('/')
             if last_slash != -1:
                 photo_dir = main_url[:last_slash+1]   # включая слеш
@@ -338,18 +337,15 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
             if IMAGE_CHECK_ENABLED and image_cache is not None:
                 for url in additional_urls:
                     if image_cache.get(url, False):
-                        # Извлекаем имя файла из полного URL
                         if '/' in url:
                             filename = url[url.rfind('/')+1:]
                         else:
                             filename = url
                         filenames.append(filename)
-            # (Если проверка отключена – дополнительные не добавляем, чтобы не было битых ссылок)
 
             # Создаём элемент Images
             images_elem = ET.SubElement(product, "Images")
             images_elem.set("PhotoDir", photo_dir)
-
             # Добавляем все собранные имена как дочерние Image
             for fname in filenames:
                 img_elem = ET.SubElement(images_elem, "Image")
@@ -367,8 +363,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
     if re.match(r'^(1[2-9]|2[0-4])\s', nomenclature):
         product.tag = "disk"
     else:
-        product.tag = "tyres"
-
+        product.tag = "tyres""
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
 auth = base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
 response = requests.get(API_URL, headers={"Authorization": f"Basic {auth}"})
