@@ -306,9 +306,9 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         else:
             element.text = str(value)
 
-    # Новая логика формирования <Images>
+      # Новая логика формирования <Images>
     if replace_images and IMAGE_REPLACE_ENABLED:
-        # 1) Основное изображение
+        # 1) Определяем основное фото
         base_urls = get_base_image_urls(item)
         main_url = None
         if IMAGE_CHECK_ENABLED and image_cache is not None:
@@ -320,26 +320,40 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
             main_url = base_urls[0] if base_urls else None
 
         if main_url:
-            images_elem = ET.SubElement(product, "Images")
-            # Добавляем основное фото
-            main_img = ET.SubElement(images_elem, "Image")
-            main_img.set("name", main_url)
+            # Определяем общий базовый путь (PhotoDir)
+            # Ищем последний слеш, чтобы отделить папку от имени файла
+            last_slash = main_url.rfind('/')
+            if last_slash != -1:
+                photo_dir = main_url[:last_slash+1]   # включая слеш
+                main_filename = main_url[last_slash+1:]
+            else:
+                photo_dir = ""
+                main_filename = main_url
+
+            # Собираем все имена файлов (основное + дополнительные)
+            filenames = [main_filename]
 
             # 2) Дополнительные фото (суффиксные)
             additional_urls = get_additional_image_urls(item)
-            found_additional = []
             if IMAGE_CHECK_ENABLED and image_cache is not None:
                 for url in additional_urls:
                     if image_cache.get(url, False):
-                        found_additional.append(url)
-            else:
-                # Если проверка отключена, можно добавить все (но рискованно)
-                # Оставим пустым, чтобы не было битых ссылок
-                pass
+                        # Извлекаем имя файла из полного URL
+                        if '/' in url:
+                            filename = url[url.rfind('/')+1:]
+                        else:
+                            filename = url
+                        filenames.append(filename)
+            # (Если проверка отключена – дополнительные не добавляем, чтобы не было битых ссылок)
 
-            for url in found_additional:
+            # Создаём элемент Images
+            images_elem = ET.SubElement(product, "Images")
+            images_elem.set("PhotoDir", photo_dir)
+
+            # Добавляем все собранные имена как дочерние Image
+            for fname in filenames:
                 img_elem = ET.SubElement(images_elem, "Image")
-                img_elem.set("name", url)
+                img_elem.set("name", fname)
 
     # Дополнительные теги
     inSet_elem = ET.SubElement(product, "inSet")
