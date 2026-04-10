@@ -20,14 +20,13 @@ INCLUDE_PRICE_TAG = False
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
-IMAGE_CHECK_ENABLED = True               # проверять существование файлов (отладка)
-IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images"  # без слеша в конце
+IMAGE_CHECK_ENABLED = True
+IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images"
 IMAGE_CACHE_FILE = "image_cache.json"
 IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
 
-# Параметры проверки
-MAX_WORKERS = 1000           # количество параллельных HEAD-запросов
-HEAD_TIMEOUT = 1           # таймаут в секундах
+MAX_WORKERS = 30
+HEAD_TIMEOUT = 1
 
 # ===================== ФИЛЬТРЫ =====================
 SEASON_EXCLUDE_ENABLED = False
@@ -133,69 +132,54 @@ def get_coeff_from_settings(settings, diameter):
     return coeff, round_step, round_method
 
 def clean_name(s):
-    """Очищает строку для использования в имени файла."""
     return re.sub(r'[^\w\-]', '_', s)
 
-def get_base_urls(item):
-    """
-    Возвращает список возможных URL для изображения в порядке приоритета (без суффиксов).
-    Порядок: длинное имя из полей, длинное имя из номенклатуры, короткое имя (бренд_модель).
-    """
+def get_base_image_urls(item):
+    """Возвращает список возможных URL для основного изображения (приоритет: исходное из API, затем короткое имя)."""
+    original_img = item.get("img", "").strip()
+    if original_img:
+        return [original_img]
+    # Если исходного нет, используем короткое имя
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
     if not brand or not model:
         return []
+    brand_clean = clean_name(brand)
+    model_clean = clean_name(model)
+    short_filename = f"{brand_clean}_{model_clean}.jpg"
+    return [f"{IMAGE_BASE_URL}/{brand_clean}/{short_filename}"]
 
+def get_additional_image_urls(item):
+    """Возвращает список URL дополнительных изображений (на основе размера с суффиксами 1-4)."""
+    brand = item.get("brand", "").strip()
+    model = item.get("model", "").strip()
+    if not brand or not model:
+        return []
     brand_clean = clean_name(brand)
     model_clean = clean_name(model)
 
-    urls = []
-
-    # 1) Попытка с размерами из отдельных полей
+    # Пытаемся получить размер
     width = item.get("width", "")
     profile = item.get("profile", "") or item.get("height", "")
     diameter = item.get("diameter", "")
-    if width and profile and diameter:
-        filename = f"{width}_{profile}_{diameter}_{brand_clean}_{model_clean}.jpg"
-        urls.append(f"{IMAGE_BASE_URL}/{brand_clean}/{filename}")
-
-    # 2) Попытка извлечь размер из Номенклатура
-    if not urls:
+    if not (width and profile and diameter):
+        # Если нет отдельных полей, пробуем из номенклатуры
         nomenclature = item.get("Номенклатура", "")
         match = re.search(r'(\d+)/(\d+)[Zz]?[Rr](\d+)', nomenclature)
         if match:
             width, profile, diameter = match.groups()
-            filename = f"{width}_{profile}_{diameter}_{brand_clean}_{model_clean}.jpg"
-            urls.append(f"{IMAGE_BASE_URL}/{brand_clean}/{filename}")
+        else:
+            return []  # нет размера – нет дополнительных фото
 
-    # 3) Короткое имя (бренд_модель) — всегда добавляем
-    short_filename = f"{brand_clean}_{model_clean}.jpg"
-    urls.append(f"{IMAGE_BASE_URL}/{brand_clean}/{short_filename}")
-
+    base_filename = f"{width}_{profile}_{diameter}_{brand_clean}_{model_clean}"
+    urls = []
+    for i in range(1, 5):
+        urls.append(f"{IMAGE_BASE_URL}/{brand_clean}/{base_filename}_{i}.jpg")
     return urls
 
-def get_suffixed_urls(item):
-    """
-    Генерирует список из 4 URL с суффиксами _1, _2, _3, _4 на основе базового имени.
-    База берётся из первого элемента get_base_urls(item), если он есть, иначе короткое имя.
-    """
-    base_urls = get_base_urls(item)
-    if not base_urls:
-        return []
-    # Берём первый URL как основу
-    base_url = base_urls[0]
-    # Удаляем расширение .jpg, добавляем _N.jpg
-    if base_url.endswith('.jpg'):
-        base_without_ext = base_url[:-4]
-    else:
-        base_without_ext = base_url
-    return [f"{base_without_ext}_{i}.jpg" for i in range(1, 2)]
-
 def get_all_image_urls(item):
-    """Возвращает все возможные URL для товара (суффиксные и базовые)."""
-    suffixed = get_suffixed_urls(item)
-    base = get_base_urls(item)
-    return suffixed + base
+    """Все возможные URL для кэширования (основные + дополнительные)."""
+    return get_base_image_urls(item) + get_additional_image_urls(item)
 
 # ===================== КЭШ =====================
 def load_image_cache():
@@ -228,45 +212,15 @@ def check_image_exists(url, cache):
 # ===================== ДОБАВЛЕНИЕ ТОВАРА В XML =====================
 def add_product_to_root(root, item, diameter, replace_images=True, image_cache=None):
     product = ET.SubElement(root, "Product")
+
+    # Обработка всех полей, кроме img (для img используем новую логику)
     for key, value in item.items():
         if key == "Оптовая_Цена":
             continue
         if key == "price" and not INCLUDE_PRICE_TAG:
             continue
-
-        # Замена изображения
-        if key == "img" and replace_images and IMAGE_REPLACE_ENABLED:
-            # 1) Пытаемся найти суффиксные изображения
-            suffixed_urls = get_suffixed_urls(item)
-            found_suffixed = []
-            if IMAGE_CHECK_ENABLED and image_cache is not None:
-                for url in suffixed_urls:
-                    if image_cache.get(url, False):
-                        found_suffixed.append(url)
-            else:
-                # Если проверка отключена – считаем все существующими (для демонстрации, но лучше всё же проверять)
-                # Однако в продакшене лучше оставить проверку, иначе будут битые ссылки.
-                # Оставим как есть: если проверка отключена, то считаем, что суффиксные изображения есть? Нет, рискованно.
-                # Поэтому при отключенной проверке не используем суффиксные URL.
-                pass
-
-            if found_suffixed:
-                # Если есть хотя бы одно суффиксное – используем все найденные через запятую
-                value = ", ".join(found_suffixed)
-            else:
-                # 2) Нет суффиксных – используем старую логику (один URL)
-                base_urls = get_base_urls(item)
-                new_url = None
-                if IMAGE_CHECK_ENABLED and image_cache is not None:
-                    for url in base_urls:
-                        if image_cache.get(url, False):
-                            new_url = url
-                            break
-                else:
-                    # Если проверка отключена, берём первый URL из списка (приоритет длинного имени)
-                    new_url = base_urls[0] if base_urls else None
-                if new_url:
-                    value = new_url
+        if key == "img":
+            continue  # обработаем отдельно
 
         element = ET.SubElement(product, key)
 
@@ -274,7 +228,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
             brand = item.get("brand", "").strip().lower()
             model = item.get("model", "").strip().lower()
             category = item.get("category", "")
-
             is_excluded = (brand in [b.lower() for b in EXCLUDED_BRANDS] or
                            category in EXCLUDED_CATEGORY)
 
@@ -285,7 +238,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                 apply_coeff = False
 
             final_price = None
-
             try:
                 if is_excluded or not apply_coeff:
                     final_price = original_retail
@@ -336,7 +288,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                             final_price = adjusted_retail
                     else:
                         final_price = adjusted_retail
-
             except Exception:
                 final_price = original_retail
 
@@ -355,6 +306,42 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         else:
             element.text = str(value)
 
+    # Новая логика формирования <Images>
+    if replace_images and IMAGE_REPLACE_ENABLED:
+        # 1) Основное изображение
+        base_urls = get_base_image_urls(item)
+        main_url = None
+        if IMAGE_CHECK_ENABLED and image_cache is not None:
+            for url in base_urls:
+                if image_cache.get(url, False):
+                    main_url = url
+                    break
+        else:
+            main_url = base_urls[0] if base_urls else None
+
+        if main_url:
+            images_elem = ET.SubElement(product, "Images")
+            # Добавляем основное фото
+            main_img = ET.SubElement(images_elem, "Image")
+            main_img.set("name", main_url)
+
+            # 2) Дополнительные фото (суффиксные)
+            additional_urls = get_additional_image_urls(item)
+            found_additional = []
+            if IMAGE_CHECK_ENABLED and image_cache is not None:
+                for url in additional_urls:
+                    if image_cache.get(url, False):
+                        found_additional.append(url)
+            else:
+                # Если проверка отключена, можно добавить все (но рискованно)
+                # Оставим пустым, чтобы не было битых ссылок
+                pass
+
+            for url in found_additional:
+                img_elem = ET.SubElement(images_elem, "Image")
+                img_elem.set("name", url)
+
+    # Дополнительные теги
     inSet_elem = ET.SubElement(product, "inSet")
     inSet_elem.text = "1"
 
@@ -390,7 +377,6 @@ for item in data:
         excluded_zb += 1
         continue
 
-    # Нормализация бренда
     if item.get("brand") == "Ikon (Nokian Tyres)":
         item["brand"] = "Ikon"
 
@@ -403,7 +389,6 @@ for item in data:
     if brand in EXCLUDED_BRANDS_FROM_EXPORT:
         continue
 
-    # Замена названий моделей
     model_replacements = {
         "Blu Earth V906": ("BluEarth Winter V906", "BluEarth Winter V906"),
         "VS-EV": ("Victra Sport EV", "Victra Sport EV"),
@@ -429,7 +414,6 @@ for item in data:
         excluded_article += 1
         continue
 
-    # Сезонный фильтр (если включён)
     if SEASON_EXCLUDE_ENABLED:
         season = item.get("season", "")
         if season == SEASON_EXCLUDE_VALUE:
@@ -440,7 +424,6 @@ for item in data:
     all_items.append((item, diameter))
 
     if IMAGE_REPLACE_ENABLED:
-        # Добавляем все возможные URL (суффиксные и базовые) для кэширования
         for url in get_all_image_urls(item):
             unique_urls.add(url)
 
@@ -525,12 +508,11 @@ for item, diameter in all_items:
                         image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
 
 tree = ET.ElementTree(root)
-with open("aztyre_full.xml", "wb") as file:
+with open("aztyre.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
 print(f"✅ Итоговый XML файл создан: aztyre.xml, всего товаров: {total_products}")
 
-# --- Вывод статистики ---
 print(f"\n✅ XML файл успешно создан.")
 print(f"   - Пропущено (ЗБ): {excluded_zb}")
 print(f"   - Исключено по артикулу: {excluded_article}")
