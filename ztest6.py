@@ -383,7 +383,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
     if re.match(r'^(1[2-9]|2[0-4])\s', nomenclature):
         product.tag = "disk"
     else:
-        product.tag = "tyres""
+        product.tag = "tyres"
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
 auth = base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
 response = requests.get(API_URL, headers={"Authorization": f"Basic {auth}"})
