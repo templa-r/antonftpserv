@@ -306,33 +306,45 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         else:
             element.text = str(value)
 
-    # --- НОВАЯ ЛОГИКА ФОРМИРОВАНИЯ IMAGES (заменяет исходный img) ---
+  # --- НОВАЯ ЛОГИКА ФОРМИРОВАНИЯ IMAGES ---
     if replace_images and IMAGE_REPLACE_ENABLED:
-        # 1) Определяем основное фото
-        base_urls = get_base_image_urls(item)
+        brand = item.get("brand", "").strip()
+        model = item.get("model", "").strip()
         main_url = None
-        if IMAGE_CHECK_ENABLED and image_cache is not None:
-            for url in base_urls:
-                if image_cache.get(url, False):
-                    main_url = url
-                    break
-        else:
-            main_url = base_urls[0] if base_urls else None
+        fallback_url = item.get("img", "").strip()  # исходное из API на случай отсутствия
+
+        if brand and model:
+            brand_clean = clean_name(brand)
+            model_clean = clean_name(model)
+            short_url = f"{IMAGE_BASE_URL}/{brand_clean}/{brand_clean}_{model_clean}.jpg"
+
+            # Проверяем существование короткого имени
+            exists = False
+            if IMAGE_CHECK_ENABLED and image_cache is not None:
+                exists = image_cache.get(short_url, False)
+            else:
+                # Если проверка отключена – считаем, что существует (но лучше проверять)
+                exists = True
+
+            if exists:
+                main_url = short_url
+            elif fallback_url:
+                main_url = fallback_url
 
         if main_url:
             # Определяем общий базовый путь (PhotoDir)
             last_slash = main_url.rfind('/')
             if last_slash != -1:
-                photo_dir = main_url[:last_slash+1]   # включая слеш
+                photo_dir = main_url[:last_slash+1]
                 main_filename = main_url[last_slash+1:]
             else:
                 photo_dir = ""
                 main_filename = main_url
 
-            # Собираем все имена файлов (основное + дополнительные)
+            # Собираем имена файлов (основное + дополнительные)
             filenames = [main_filename]
 
-            # 2) Дополнительные фото (суффиксные)
+            # Дополнительные фото (суффиксные) – только если есть размер и они существуют
             additional_urls = get_additional_image_urls(item)
             if IMAGE_CHECK_ENABLED and image_cache is not None:
                 for url in additional_urls:
@@ -342,6 +354,14 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                         else:
                             filename = url
                         filenames.append(filename)
+
+            # Создаём элемент Images
+            images_elem = ET.SubElement(product, "Images")
+            images_elem.set("PhotoDir", photo_dir)
+
+            for fname in filenames:
+                img_elem = ET.SubElement(images_elem, "Image")
+                img_elem.set("name", fname)
 
             # Создаём элемент Images
             images_elem = ET.SubElement(product, "Images")
