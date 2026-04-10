@@ -312,7 +312,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         model = item.get("model", "").strip()
         fallback_url = item.get("img", "").strip()
 
-                # Собираем все возможные S3-URL (основное короткое + дополнительные)
+        # Собираем все возможные S3-URL (основное короткое + дополнительные)
         s3_urls = []
         if brand and model:
             brand_clean = clean_name(brand)
@@ -328,11 +328,13 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         existing_s3_urls = []
         if IMAGE_CHECK_ENABLED and image_cache is not None:
             for url in s3_urls:
-                if image_cache.get(url, False):
+                exists = image_cache.get(url, False)
+                print(f"DEBUG: {url} -> {exists}")  # временно
+                if exists:
                     has_s3 = True
                     existing_s3_urls.append(url)
         else:
-            # Если проверка отключена, считаем, что S3-изображений нет (чтобы не плодить битые ссылки)
+            # Если проверка отключена, считаем, что S3-изображений нет
             has_s3 = False
 
         if has_s3:
