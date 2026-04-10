@@ -312,13 +312,15 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         model = item.get("model", "").strip()
         fallback_url = item.get("img", "").strip()
 
-        # Собираем все возможные S3-URL (основное короткое + дополнительные)
+                # Собираем все возможные S3-URL (основное короткое + дополнительные)
         s3_urls = []
         if brand and model:
             brand_clean = clean_name(brand)
             model_clean = clean_name(model)
+            # Основное короткое имя
             short_url = f"{IMAGE_BASE_URL}/{brand_clean}/{brand_clean}_{model_clean}.jpg"
             s3_urls.append(short_url)
+            # Дополнительные с размерами
             s3_urls.extend(get_additional_image_urls(item))
 
         # Проверяем, есть ли хоть одно существующее S3-изображение
