@@ -306,70 +306,76 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         else:
             element.text = str(value)
 
-  # --- НОВАЯ ЛОГИКА ФОРМИРОВАНИЯ IMAGES ---
+     # --- НОВАЯ ЛОГИКА ФОРМИРОВАНИЯ IMAGES ---
     if replace_images and IMAGE_REPLACE_ENABLED:
         brand = item.get("brand", "").strip()
         model = item.get("model", "").strip()
-        main_url = None
-        fallback_url = item.get("img", "").strip()  # исходное из API на случай отсутствия
+        fallback_url = item.get("img", "").strip()
 
+        # Собираем все возможные S3-URL (основное короткое + дополнительные)
+        s3_urls = []
         if brand and model:
             brand_clean = clean_name(brand)
             model_clean = clean_name(model)
             short_url = f"{IMAGE_BASE_URL}/{brand_clean}/{brand_clean}_{model_clean}.jpg"
+            s3_urls.append(short_url)
+            s3_urls.extend(get_additional_image_urls(item))
 
-            # Проверяем существование короткого имени
-            exists = False
-            if IMAGE_CHECK_ENABLED and image_cache is not None:
-                exists = image_cache.get(short_url, False)
+        # Проверяем, есть ли хоть одно существующее S3-изображение
+        has_s3 = False
+        existing_s3_urls = []
+        if IMAGE_CHECK_ENABLED and image_cache is not None:
+            for url in s3_urls:
+                if image_cache.get(url, False):
+                    has_s3 = True
+                    existing_s3_urls.append(url)
+        else:
+            # Если проверка отключена, считаем, что S3-изображений нет (чтобы не плодить битые ссылки)
+            has_s3 = False
+
+        if has_s3:
+            # --- Случай 1: есть S3-изображения ---
+            # Определяем PhotoDir (единый для всех S3-изображений)
+            if brand and model:
+                brand_clean = clean_name(brand)
+                photo_dir = f"{IMAGE_BASE_URL}/{brand_clean}/"
             else:
-                # Если проверка отключена – считаем, что существует (но лучше проверять)
-                exists = True
+                # На всякий случай из первого URL
+                first_url = existing_s3_urls[0]
+                last_slash = first_url.rfind('/')
+                photo_dir = first_url[:last_slash+1] if last_slash != -1 else ""
 
-            if exists:
-                main_url = short_url
-            elif fallback_url:
-                main_url = fallback_url
+            # Формируем имена файлов
+            filenames = []
+            for url in existing_s3_urls:
+                if '/' in url:
+                    filename = url[url.rfind('/')+1:]
+                else:
+                    filename = url
+                filenames.append(filename)
 
-        if main_url:
-            # Определяем общий базовый путь (PhotoDir)
-            last_slash = main_url.rfind('/')
+            # Создаём элемент Images
+            images_elem = ET.SubElement(product, "Images")
+            images_elem.set("PhotoDir", photo_dir)
+            for fname in filenames:
+                img_elem = ET.SubElement(images_elem, "Image")
+                img_elem.set("name", fname)
+
+        elif fallback_url:
+            # --- Случай 2: нет S3-изображений, используем исходное API ---
+            # Определяем PhotoDir и имя файла из fallback_url
+            last_slash = fallback_url.rfind('/')
             if last_slash != -1:
-                photo_dir = main_url[:last_slash+1]
-                main_filename = main_url[last_slash+1:]
+                photo_dir = fallback_url[:last_slash+1]
+                main_filename = fallback_url[last_slash+1:]
             else:
                 photo_dir = ""
-                main_filename = main_url
+                main_filename = fallback_url
 
-            # Собираем имена файлов (основное + дополнительные)
-            filenames = [main_filename]
-
-            # Дополнительные фото (суффиксные) – только если есть размер и они существуют
-            additional_urls = get_additional_image_urls(item)
-            if IMAGE_CHECK_ENABLED and image_cache is not None:
-                for url in additional_urls:
-                    if image_cache.get(url, False):
-                        if '/' in url:
-                            filename = url[url.rfind('/')+1:]
-                        else:
-                            filename = url
-                        filenames.append(filename)
-
-            # Создаём элемент Images
             images_elem = ET.SubElement(product, "Images")
             images_elem.set("PhotoDir", photo_dir)
-
-            for fname in filenames:
-                img_elem = ET.SubElement(images_elem, "Image")
-                img_elem.set("name", fname)
-
-            # Создаём элемент Images
-            images_elem = ET.SubElement(product, "Images")
-            images_elem.set("PhotoDir", photo_dir)
-            # Добавляем все собранные имена как дочерние Image
-            for fname in filenames:
-                img_elem = ET.SubElement(images_elem, "Image")
-                img_elem.set("name", fname)
+            img_elem = ET.SubElement(images_elem, "Image")
+            img_elem.set("name", main_filename)
 
     # Дополнительные теги
     inSet_elem = ET.SubElement(product, "inSet")
