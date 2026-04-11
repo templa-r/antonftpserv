@@ -25,8 +25,8 @@ IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/ima
 IMAGE_CACHE_FILE = "image_cache.json"
 IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
 
-MAX_WORKERS = 200
-HEAD_TIMEOUT = 2
+MAX_WORKERS = 100
+HEAD_TIMEOUT = 1
 
 # ===================== ФИЛЬТРЫ =====================
 SEASON_EXCLUDE_ENABLED = False
@@ -202,8 +202,11 @@ def check_image_exists(url, cache):
     if url in cache:
         return cache[url]
     try:
-        response = requests.head(url, timeout=HEAD_TIMEOUT, allow_redirects=True)
-        exists = response.status_code == 200
+        # Используем GET с маленьким диапазоном, чтобы не скачивать весь файл
+        response = requests.get(url, timeout=HEAD_TIMEOUT, headers={"Range": "bytes=0-0"}, stream=True)
+        # Если сервер поддерживает диапазоны, статус будет 206 Partial Content
+        # Если не поддерживает, может вернуть 200 OK, но мы всё равно получим ответ
+        exists = response.status_code in (200, 206)
     except:
         exists = False
     cache[url] = exists
