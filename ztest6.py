@@ -135,11 +135,7 @@ def clean_name(s):
     return re.sub(r'[^\w\-]', '_', s)
 
 def get_base_image_urls(item):
-    """Возвращает список возможных URL для основного изображения (приоритет: исходное из API, затем короткое имя)."""
-    original_img = item.get("img", "").strip()
-    if original_img:
-        return [original_img]
-    # Если исходного нет, используем короткое имя
+    """Возвращает список возможных URL для основного изображения (только короткое имя на S3)."""
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
     if not brand or not model:
@@ -158,18 +154,16 @@ def get_additional_image_urls(item):
     brand_clean = clean_name(brand)
     model_clean = clean_name(model)
 
-    # Пытаемся получить размер
     width = item.get("width", "")
     profile = item.get("profile", "") or item.get("height", "")
     diameter = item.get("diameter", "")
     if not (width and profile and diameter):
-        # Если нет отдельных полей, пробуем из номенклатуры
         nomenclature = item.get("Номенклатура", "")
         match = re.search(r'(\d+)/(\d+)[Zz]?[Rr](\d+)', nomenclature)
         if match:
             width, profile, diameter = match.groups()
         else:
-            return []  # нет размера – нет дополнительных фото
+            return []
 
     base_filename = f"{width}_{profile}_{diameter}_{brand_clean}_{model_clean}"
     urls = []
@@ -178,7 +172,6 @@ def get_additional_image_urls(item):
     return urls
 
 def get_all_image_urls(item):
-    """Все возможные URL для кэширования (основные + дополнительные)."""
     return get_base_image_urls(item) + get_additional_image_urls(item)
 
 # ===================== КЭШ =====================
@@ -203,11 +196,9 @@ def check_image_exists(url, cache):
         return cache[url]
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        response = requests.get(url, timeout=HEAD_TIMEOUT, stream=True, headers=headers)
+        response = requests.head(url, timeout=HEAD_TIMEOUT, headers=headers)
         exists = response.status_code == 200
-        response.close()
-    except Exception as e:
-        print(f"Ошибка при проверке {url}: {e}")
+    except:
         exists = False
     cache[url] = exists
     return exists
@@ -216,14 +207,14 @@ def check_image_exists(url, cache):
 def add_product_to_root(root, item, diameter, replace_images=True, image_cache=None):
     product = ET.SubElement(root, "Product")
 
-    # Обработка всех полей, кроме img (img обработаем отдельно)
+    # Обработка всех полей, кроме img
     for key, value in item.items():
         if key == "Оптовая_Цена":
             continue
         if key == "price" and not INCLUDE_PRICE_TAG:
             continue
         if key == "img":
-            continue  # пропускаем исходный img, чтобы не дублировать
+            continue
 
         element = ET.SubElement(product, key)
 
@@ -245,7 +236,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                 if is_excluded or not apply_coeff:
                     final_price = original_retail
                 else:
-                    # Вычисляем скорректированную розничную цену
                     rule = MODEL_RULES.get((brand, model))
                     if rule:
                         rule_type = rule["type"]
@@ -309,13 +299,12 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         else:
             element.text = str(value)
 
-    # --- НОВЫЙ ФОРМАТ PHOTOS ---
+    # --- ФОРМИРОВАНИЕ ТЕГА IMAGES (замена img) ---
     if replace_images and IMAGE_REPLACE_ENABLED:
         brand = item.get("brand", "").strip()
         model = item.get("model", "").strip()
         fallback_url = item.get("img", "").strip()
 
-        # Собираем S3 URL
         s3_urls = []
         short_url = None
         if brand and model:
@@ -325,7 +314,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
             s3_urls.append(short_url)
             s3_urls.extend(get_additional_image_urls(item))
 
-        # Проверяем существование S3-изображений
         existing_s3 = {}
         if IMAGE_CHECK_ENABLED and image_cache is not None:
             for url in s3_urls:
@@ -334,12 +322,10 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                     filename = url[url.rfind('/')+1:] if '/' in url else url
                     existing_s3[url] = filename
         else:
-            # Если проверка отключена – считаем, что есть только короткое (если оно сформировано)
             if short_url:
                 filename = short_url[short_url.rfind('/')+1:] if '/' in short_url else short_url
                 existing_s3[short_url] = filename
 
-        # Определяем основное фото
         main_url = None
         main_filename = None
         if short_url and short_url in existing_s3:
@@ -350,26 +336,23 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
             main_filename = fallback_url[fallback_url.rfind('/')+1:] if '/' in fallback_url else fallback_url
 
         if main_url:
-            # Определяем PhotoDir (общий путь)
             if short_url and short_url in existing_s3:
                 photo_dir = main_url[:main_url.rfind('/')+1]
             else:
                 photo_dir = main_url[:main_url.rfind('/')+1] if '/' in main_url else ""
 
-            # Собираем дополнительные фото
             additional_filenames = []
             for url, fname in existing_s3.items():
                 if url != main_url and fname not in additional_filenames:
                     additional_filenames.append(fname)
 
-            # Создаём элемент Photos
-            photos_elem = ET.SubElement(product, "Photos")
-            photos_elem.set("PhotoDir", photo_dir)
-            photos_elem.set("PhotoMain", main_filename)
+            images_elem = ET.SubElement(product, "Images")
+            images_elem.set("PhotoDir", photo_dir)
+            images_elem.set("PhotoMain", main_filename)
 
             for fname in additional_filenames:
-                photo_elem = ET.SubElement(photos_elem, "Photo")
-                photo_elem.text = fname
+                img_elem = ET.SubElement(images_elem, "Image")
+                img_elem.set("name", fname)
 
     # Дополнительные теги
     inSet_elem = ET.SubElement(product, "inSet")
@@ -393,7 +376,6 @@ data = response.json()
 
 print("🔄 Загрузка данных завершена. Обработка...")
 
-# --- Первый проход: фильтрация и сбор уникальных URL ---
 all_items = []
 unique_urls = set()
 total_products = 0
@@ -460,7 +442,6 @@ for item in data:
 print(f"🔍 Всего товаров после фильтров: {total_products}")
 print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
-# --- Загрузка / обновление кэша изображений ---
 image_cache = {}
 check_time = 0
 if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
@@ -477,10 +458,8 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
         def check_url(url):
             try:
                 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-                response = requests.get(url, timeout=HEAD_TIMEOUT, stream=True, headers=headers)
-                exists = response.status_code == 200
-                response.close()
-                return url, exists
+                response = requests.head(url, timeout=HEAD_TIMEOUT, headers=headers)
+                return url, response.status_code == 200
             except:
                 return url, False
 
@@ -498,10 +477,9 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
 else:
     print("🔍 Проверка существования файлов отключена (IMAGE_CHECK_ENABLED=False)")
 
-# --- Статистика по брендам ---
+# Статистика по брендам (оставляем без изменений)
 brand_diameter_stats = defaultdict(lambda: defaultdict(lambda: {'sum': 0, 'count': 0}))
 stats_count = 0
-
 for item, diameter in all_items:
     brand = item.get("brand", "").strip()
     if not brand:
@@ -515,7 +493,6 @@ for item, diameter in all_items:
     stats_count += 1
 
 print(f"📊 Обработано записей для статистики: {stats_count}")
-
 try:
     with open("brand_statistics.txt", "w", encoding="utf-8") as f:
         f.write("Статистика по брендам (средняя маржинальность на диаметр)\n")
@@ -533,7 +510,7 @@ except Exception as e:
     print(f"❌ Ошибка при записи статистики: {e}")
     traceback.print_exc()
 
-# --- Создание итогового XML ---
+# Создание итогового XML
 root = ET.Element("Products")
 for item, diameter in all_items:
     add_product_to_root(root, item, diameter,
@@ -545,14 +522,12 @@ with open("aztyre_full.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
 print(f"✅ Итоговый XML файл создан: aztyre_full.xml, всего товаров: {total_products}")
-
 print(f"\n✅ XML файл успешно создан.")
 print(f"   - Пропущено (ЗБ): {excluded_zb}")
 print(f"   - Исключено по артикулу: {excluded_article}")
 if SEASON_EXCLUDE_ENABLED:
     print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
 print(f"   - Всего товаров в выгрузке: {total_products}")
-
 if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
     print(f"   - Проверено URL: {len(unique_urls)} (из них новых: {len(new_urls) if 'new_urls' in locals() else 0}) за {check_time:.2f} сек")
 else:
