@@ -480,17 +480,17 @@ def process_and_save(api_url, output_file, filter_tag=None, include_tag=None, in
 def main():
     url = "https://b2b.4tochki.ru/export_data/M35352.xml"
 
-    process_and_save(url, "4tyre_test.xml",
+    process_and_save(url, "4tyre_test2.xml",
                      filter_tag=None,
                      include_tag="tiretype", include_value="Легковая",
                      status="Под заказ")
 
-    process_and_save(url, "tyres_nsk.xml",
+    process_and_save(url, "4tyres_nsk2.xml",
                      filter_tag="rest_nsk",
                      include_tag="tiretype", include_value="Легковая",
                      status="В наличии")
 
-    process_and_save(url, "tyres_gruz.xml",
+    process_and_save(url, "4tyres_gruz2.xml",
                      filter_tag=None,
                      include_tag="tiretype", include_value="Грузовая",
                      status="Под заказ")
