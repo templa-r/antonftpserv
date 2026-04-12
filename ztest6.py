@@ -25,7 +25,7 @@ IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/ima
 IMAGE_CACHE_FILE = "image_cache.json"
 IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
 
-MAX_WORKERS = 200
+MAX_WORKERS = 100
 HEAD_TIMEOUT = 3
 
 # ===================== ФИЛЬТРЫ =====================
