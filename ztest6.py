@@ -309,12 +309,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         else:
             element.text = str(value)
 
-     # --- НОВАЯ ЛОГИКА ФОРМИРОВАНИЯ IMAGES ---
-    if replace_images and IMAGE_REPLACE_ENABLED:
-        brand = item.get("brand", "").strip()
-        model = item.get("model", "").strip()
-        fallback_url = item.get("img", "").strip()
-
     # --- НОВЫЙ ФОРМАТ PHOTOS ---
     if replace_images and IMAGE_REPLACE_ENABLED:
         brand = item.get("brand", "").strip()
@@ -336,11 +330,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         if IMAGE_CHECK_ENABLED and image_cache is not None:
             for url in s3_urls:
                 exists = image_cache.get(url, False)
-                # Временно для отладки Ikon
-                if brand == "Ikon" and "Autograph_Ice_10_SUV" in url:
-                    print(f"DEBUG Ikon: {url} -> exists={exists}")
                 if exists:
-                    # Сохраняем имя файла
                     filename = url[url.rfind('/')+1:] if '/' in url else url
                     existing_s3[url] = filename
         else:
@@ -362,13 +352,11 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         if main_url:
             # Определяем PhotoDir (общий путь)
             if short_url and short_url in existing_s3:
-                # Основное с S3 – путь берём из short_url
                 photo_dir = main_url[:main_url.rfind('/')+1]
             else:
-                # Основное из fallback – путь берём из fallback_url
                 photo_dir = main_url[:main_url.rfind('/')+1] if '/' in main_url else ""
 
-            # Собираем дополнительные фото (только суффиксные, которые есть в existing_s3, и не равны основному)
+            # Собираем дополнительные фото
             additional_filenames = []
             for url, fname in existing_s3.items():
                 if url != main_url and fname not in additional_filenames:
@@ -396,6 +384,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         product.tag = "disk"
     else:
         product.tag = "tyres"
+
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
 auth = base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
 response = requests.get(API_URL, headers={"Authorization": f"Basic {auth}"})
@@ -487,8 +476,11 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
 
         def check_url(url):
             try:
-                response = requests.head(url, timeout=HEAD_TIMEOUT, allow_redirects=True)
-                return url, response.status_code == 200
+                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+                response = requests.get(url, timeout=HEAD_TIMEOUT, stream=True, headers=headers)
+                exists = response.status_code == 200
+                response.close()
+                return url, exists
             except:
                 return url, False
 
@@ -552,7 +544,7 @@ tree = ET.ElementTree(root)
 with open("aztyre_full.xml", "wb") as file:
     tree.write(file, encoding="utf-8", xml_declaration=True)
 
-print(f"✅ Итоговый XML файл создан: aztyre.xml, всего товаров: {total_products}")
+print(f"✅ Итоговый XML файл создан: aztyre_full.xml, всего товаров: {total_products}")
 
 print(f"\n✅ XML файл успешно создан.")
 print(f"   - Пропущено (ЗБ): {excluded_zb}")
