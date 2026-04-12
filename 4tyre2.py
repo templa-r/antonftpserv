@@ -139,7 +139,6 @@ def get_additional_image_urls(item):
     width = item.get("width", "")
     profile = item.get("height", "")
     diameter = item.get("diameter", "")
-    # Если нет явных полей, пробуем извлечь из "name" или "article"
     if not (width and profile and diameter):
         name = item.get("name", "")
         match = re.search(r'(\d+)/(\d+)[Zz]?[Rr](\d+)', name)
@@ -186,11 +185,11 @@ def check_image_exists(url, cache):
     cache[url] = exists
     return exists
 
-# ===================== ДОБАВЛЕНИЕ ТОВАРА В XML (стиль первого файла) =====================
-def add_product_to_root(root, item, diameter, replace_images=True, image_cache=None):
-    product = ET.SubElement(root, "Product")
+# ===================== ДОБАВЛЕНИЕ ТОВАРА В XML (только шины) =====================
+def add_tyre_to_root(root, item, diameter, replace_images=True, image_cache=None):
+    """Добавляет только шины (product.tag всегда 'tyres')"""
+    product = ET.SubElement(root, "tyres")   # явно задаём tyres
 
-    # Копируем все поля из item (кроме служебных)
     for key, value in item.items():
         if key in ("Оптовая_Цена", "img"):
             continue
@@ -199,7 +198,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
 
         element = ET.SubElement(product, key)
         if key.lower() == "retail":
-            # Расчёт цены retail с учётом коэффициентов (как в первом файле)
             brand = item.get("brand", "").strip().lower()
             model = item.get("model", "").strip().lower()
             category = item.get("category", "")
@@ -336,13 +334,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
     inSet_elem = ET.SubElement(product, "inSet")
     inSet_elem.text = "1"
 
-    # Определение типа товара (шина / диск) – для 4tochki используем признак "disk" (если в названии есть "R" и т.п.)
-    # Упрощённо: если поле "width" отсутствует или "diameter" больше 22 – считаем диском (можно доработать)
-    if item.get("width") == "" or (diameter and diameter > 22):
-        product.tag = "disk"
-    else:
-        product.tag = "tyres"
-
 # ===================== ЗАГРУЗКА И НОРМАЛИЗАЦИЯ ИСХОДНЫХ ДАННЫХ =====================
 def fetch_xml(url):
     response = requests.get(url)
@@ -350,7 +341,6 @@ def fetch_xml(url):
     return ET.fromstring(response.content)
 
 def normalize_fields(elem):
-    """Преобразует теги из XML 4tochki в единый словарь."""
     field_map = {
         "vendor_code": "cae",
         "product_id": "article",
@@ -366,7 +356,7 @@ def normalize_fields(elem):
         "spikes": "thorn",
         "img_big_my": "img_small",
         "proizvoditel": "brand",
-        "tiretype": "category",   # сохраним как category
+        "tiretype": "category",
         "rest_novosib3": "rest_nsk",
     }
     normalized = {}
@@ -375,43 +365,52 @@ def normalize_fields(elem):
         normalized[tag] = child.text.strip() if child.text else ""
     return normalized
 
-# ===================== ОСНОВНАЯ ЛОГИКА (фильтрация и сохранение) =====================
+def is_tyre(item, diameter):
+    """Определяет, является ли товар шиной (не диском)"""
+    width = item.get("width", "")
+    height = item.get("height", "")
+    diam = item.get("diameter", "")
+    # Если есть все три размера и диаметр ≤ 22 (типичный легковой/грузовой шинный диапазон) – считаем шиной
+    if width and height and diam:
+        try:
+            d = float(diam)
+            if d <= 22:
+                return True
+        except:
+            pass
+    # Дополнительная проверка: если в категории написано "Легковая" или "Грузовая" – шина
+    category = item.get("category", "")
+    if category in ("Легковая", "Грузовая"):
+        return True
+    return False
+
+# ===================== ОСНОВНАЯ ЛОГИКА =====================
 def process_and_save(api_url, output_file, filter_tag=None, include_tag=None, include_value=None, status=None):
-    """
-    Загружает XML, фильтрует товары, применяет все ценообразовательные правила,
-    добавляет изображения (с проверкой) и сохраняет в XML в новом формате.
-    """
     root = fetch_xml(api_url)
-    all_items = []      # список кортежей (item_dict, diameter)
+    all_items = []
     unique_urls = set()
 
-    # --- Первый проход: фильтрация и сбор URL ---
     for elem in root.findall(".//item"):
         norm = normalize_fields(elem)
 
-        # Фильтр по include_tag
         if include_tag and include_value:
             val = norm.get(include_tag, "")
             if val != include_value:
                 continue
 
-        # Фильтр по наличию rest (если filter_tag задан)
         if filter_tag:
             rest_val = norm.get(filter_tag, "")
             if not rest_val or safe_float(rest_val) <= 0:
                 continue
 
-        # Исключение по бренду (из EXCLUDED_BRANDS_FROM_EXPORT)
         brand = norm.get("brand", "")
         if brand in EXCLUDED_BRANDS_FROM_EXPORT:
             continue
 
-        # Исключение по артикулу
         article = norm.get("article", "")
         if any(phrase in article for phrase in EXCLUDED_ARTICLES):
             continue
 
-        # Исключение по сезону (опционально)
         if SEASON_EXCLUDE_ENABLED:
             season = norm.get("season", "")
             if season == SEASON_EXCLUDE_VALUE:
@@ -420,28 +419,28 @@ def process_and_save(api_url, output_file, filter_tag=None, include_tag=None, in
         # Извлечение диаметра
         diameter = safe_float(norm.get("diameter"), default=None)
         if diameter is None:
-            # пробуем вытащить из названия или модели
             name = norm.get("name", "")
             match = re.search(r'[Rr](\d{2})', name)
             if match:
                 diameter = float(match.group(1))
 
-        # Добавляем служебное поле status
+        # Проверка, что товар — шина (отсеиваем диски)
+        if not is_tyre(norm, diameter):
+            continue
+
         if status:
             norm["status"] = status
 
-        # Сохраняем товар
         all_items.append((norm, diameter))
 
-        # Собираем URL изображений для проверки
         if IMAGE_REPLACE_ENABLED:
             for url in get_all_image_urls(norm):
                 unique_urls.add(url)
 
-    print(f"📦 Загружено товаров после фильтрации: {len(all_items)}")
+    print(f"📦 Загружено товаров после фильтрации (только шины): {len(all_items)}")
     print(f"🖼 Уникальных URL для проверки: {len(unique_urls)}")
 
-    # --- Проверка существования изображений (кэш) ---
+    # Проверка изображений (кэш)
     image_cache = {}
     check_time = 0
     if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
@@ -457,7 +456,7 @@ def process_and_save(api_url, output_file, filter_tag=None, include_tag=None, in
             with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                 futures = [executor.submit(check_image_exists, url, image_cache) for url in new_urls]
                 for future in as_completed(futures):
-                    future.result()  # результат уже записан в cache внутри check_image_exists
+                    future.result()
             check_time = time.time() - start
             print(f"✅ Проверка завершена за {check_time:.2f} сек.")
             save_image_cache(image_cache)
@@ -466,40 +465,37 @@ def process_and_save(api_url, output_file, filter_tag=None, include_tag=None, in
     else:
         print("🔍 Проверка изображений отключена.")
 
-    # --- Создание итогового XML ---
+    # Создание XML только с шинами
     root_out = ET.Element("Products")
     for item, diameter in all_items:
-        add_product_to_root(root_out, item, diameter,
-                            replace_images=IMAGE_REPLACE_ENABLED,
-                            image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
+        add_tyre_to_root(root_out, item, diameter,
+                         replace_images=IMAGE_REPLACE_ENABLED,
+                         image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
 
     tree = ET.ElementTree(root_out)
     tree.write(output_file, encoding="utf-8", xml_declaration=True)
-    print(f"✅ Файл сохранён: {output_file} (товаров: {len(all_items)})")
+    print(f"✅ Файл сохранён: {output_file} (шин: {len(all_items)})")
     return all_items
 
 def main():
     url = "https://b2b.4tochki.ru/export_data/M35352.xml"
 
-    # Легковые без остатка в Новосибирске (Под заказ)
-    process_and_save(url, "tyres.xml",
+    process_and_save(url, "4tyre_test.xml",
                      filter_tag=None,
                      include_tag="tiretype", include_value="Легковая",
                      status="Под заказ")
 
-    # Легковые с остатком в Новосибирске (В наличии)
     process_and_save(url, "tyres_nsk.xml",
                      filter_tag="rest_nsk",
                      include_tag="tiretype", include_value="Легковая",
                      status="В наличии")
 
-    # Грузовые (Под заказ)
     process_and_save(url, "tyres_gruz.xml",
                      filter_tag=None,
                      include_tag="tiretype", include_value="Грузовая",
                      status="Под заказ")
 
-    print("\n✅ Все XML файлы успешно созданы с применением гибких коэффициентов цен и заменой изображений.")
+    print("\n✅ Все XML файлы успешно созданы (только шины).")
 
 if __name__ == "__main__":
     main()
