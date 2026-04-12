@@ -202,10 +202,12 @@ def check_image_exists(url, cache):
     if url in cache:
         return cache[url]
     try:
-        response = requests.get(url, timeout=HEAD_TIMEOUT, stream=True)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        response = requests.get(url, timeout=HEAD_TIMEOUT, stream=True, headers=headers)
         exists = response.status_code == 200
         response.close()
-    except:
+    except Exception as e:
+        print(f"Ошибка при проверке {url}: {e}")
         exists = False
     cache[url] = exists
     return exists
