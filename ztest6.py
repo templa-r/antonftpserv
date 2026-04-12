@@ -202,10 +202,8 @@ def check_image_exists(url, cache):
     if url in cache:
         return cache[url]
     try:
-        # Пытаемся получить только 1 байт
-        response = requests.get(url, timeout=HEAD_TIMEOUT, headers={"Range": "bytes=0-0"}, stream=True)
-        # Успешными считаем ответы 200 (OK) и 206 (Partial Content)
-        exists = response.status_code in (200, 206)
+        response = requests.get(url, timeout=HEAD_TIMEOUT, stream=True)
+        exists = response.status_code == 200
         response.close()
     except:
         exists = False
@@ -315,74 +313,73 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         model = item.get("model", "").strip()
         fallback_url = item.get("img", "").strip()
 
-        # Собираем все возможные S3-URL (основное короткое + дополнительные)
+    # --- НОВЫЙ ФОРМАТ PHOTOS ---
+    if replace_images and IMAGE_REPLACE_ENABLED:
+        brand = item.get("brand", "").strip()
+        model = item.get("model", "").strip()
+        fallback_url = item.get("img", "").strip()
+
+        # Собираем S3 URL
         s3_urls = []
+        short_url = None
         if brand and model:
             brand_clean = clean_name(brand)
             model_clean = clean_name(model)
-            # Основное короткое имя
             short_url = f"{IMAGE_BASE_URL}/{brand_clean}/{brand_clean}_{model_clean}.jpg"
             s3_urls.append(short_url)
-            # Дополнительные с размерами
             s3_urls.extend(get_additional_image_urls(item))
 
-        # Проверяем, есть ли хоть одно существующее S3-изображение
-        has_s3 = False
-        existing_s3_urls = []
+        # Проверяем существование S3-изображений
+        existing_s3 = {}
         if IMAGE_CHECK_ENABLED and image_cache is not None:
             for url in s3_urls:
                 exists = image_cache.get(url, False)
-                print(f"DEBUG: {url} -> {exists}")  # временно
+                # Временно для отладки Ikon
+                if brand == "Ikon" and "Autograph_Ice_10_SUV" in url:
+                    print(f"DEBUG Ikon: {url} -> exists={exists}")
                 if exists:
-                    has_s3 = True
-                    existing_s3_urls.append(url)
+                    # Сохраняем имя файла
+                    filename = url[url.rfind('/')+1:] if '/' in url else url
+                    existing_s3[url] = filename
         else:
-            # Если проверка отключена, считаем, что S3-изображений нет
-            has_s3 = False
+            # Если проверка отключена – считаем, что есть только короткое (если оно сформировано)
+            if short_url:
+                filename = short_url[short_url.rfind('/')+1:] if '/' in short_url else short_url
+                existing_s3[short_url] = filename
 
-        if has_s3:
-            # --- Случай 1: есть S3-изображения ---
-            # Определяем PhotoDir (единый для всех S3-изображений)
-            if brand and model:
-                brand_clean = clean_name(brand)
-                photo_dir = f"{IMAGE_BASE_URL}/{brand_clean}/"
-            else:
-                # На всякий случай из первого URL
-                first_url = existing_s3_urls[0]
-                last_slash = first_url.rfind('/')
-                photo_dir = first_url[:last_slash+1] if last_slash != -1 else ""
-
-            # Формируем имена файлов
-            filenames = []
-            for url in existing_s3_urls:
-                if '/' in url:
-                    filename = url[url.rfind('/')+1:]
-                else:
-                    filename = url
-                filenames.append(filename)
-
-            # Создаём элемент Images
-            images_elem = ET.SubElement(product, "Images")
-            images_elem.set("PhotoDir", photo_dir)
-            for fname in filenames:
-                img_elem = ET.SubElement(images_elem, "Image")
-                img_elem.set("name", fname)
-
+        # Определяем основное фото
+        main_url = None
+        main_filename = None
+        if short_url and short_url in existing_s3:
+            main_url = short_url
+            main_filename = existing_s3[short_url]
         elif fallback_url:
-            # --- Случай 2: нет S3-изображений, используем исходное API ---
-            # Определяем PhotoDir и имя файла из fallback_url
-            last_slash = fallback_url.rfind('/')
-            if last_slash != -1:
-                photo_dir = fallback_url[:last_slash+1]
-                main_filename = fallback_url[last_slash+1:]
-            else:
-                photo_dir = ""
-                main_filename = fallback_url
+            main_url = fallback_url
+            main_filename = fallback_url[fallback_url.rfind('/')+1:] if '/' in fallback_url else fallback_url
 
-            images_elem = ET.SubElement(product, "Images")
-            images_elem.set("PhotoDir", photo_dir)
-            img_elem = ET.SubElement(images_elem, "Image")
-            img_elem.set("name", main_filename)
+        if main_url:
+            # Определяем PhotoDir (общий путь)
+            if short_url and short_url in existing_s3:
+                # Основное с S3 – путь берём из short_url
+                photo_dir = main_url[:main_url.rfind('/')+1]
+            else:
+                # Основное из fallback – путь берём из fallback_url
+                photo_dir = main_url[:main_url.rfind('/')+1] if '/' in main_url else ""
+
+            # Собираем дополнительные фото (только суффиксные, которые есть в existing_s3, и не равны основному)
+            additional_filenames = []
+            for url, fname in existing_s3.items():
+                if url != main_url and fname not in additional_filenames:
+                    additional_filenames.append(fname)
+
+            # Создаём элемент Photos
+            photos_elem = ET.SubElement(product, "Photos")
+            photos_elem.set("PhotoDir", photo_dir)
+            photos_elem.set("PhotoMain", main_filename)
+
+            for fname in additional_filenames:
+                photo_elem = ET.SubElement(photos_elem, "Photo")
+                photo_elem.text = fname
 
     # Дополнительные теги
     inSet_elem = ET.SubElement(product, "inSet")
