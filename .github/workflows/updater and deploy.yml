@@ -70,7 +70,7 @@ jobs:
         id: changes
         if: github.event_name != 'push' && always()
         run: |
-          git add aztyre_full.xml 4tyre_test.xml aztyre.xml brand_statistics.txt image_cache.json 
+          git add aztyre_full.xml aztyre.xml brand_statistics.txt image_cache.json 4tyre_test2.xml 4tyres_nsk2.xml 4tyres_gruz2.xml 
           if git diff-index --quiet HEAD; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
