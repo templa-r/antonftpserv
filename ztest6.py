@@ -202,11 +202,10 @@ def check_image_exists(url, cache):
     if url in cache:
         return cache[url]
     try:
-        # Используем GET с stream=True, чтобы не скачивать содержимое
-        response = requests.get(url, timeout=HEAD_TIMEOUT, stream=True)
-        # Проверяем статус ответа (200 = OK)
-        exists = response.status_code == 200
-        # Закрываем соединение, не читая тело
+        # Пытаемся получить только 1 байт
+        response = requests.get(url, timeout=HEAD_TIMEOUT, headers={"Range": "bytes=0-0"}, stream=True)
+        # Успешными считаем ответы 200 (OK) и 206 (Partial Content)
+        exists = response.status_code in (200, 206)
         response.close()
     except:
         exists = False
