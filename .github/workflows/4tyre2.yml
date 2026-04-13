@@ -65,14 +65,18 @@ jobs:
       # ---------- Коммитим изменения ----------
       - name: Check for changes
         id: changes
+        if: github.event_name != 'push' && always()
         run: |
-          git add 4tyre_test2.xml 4tyres_nsk2.xml 4tyres_gruz2.xml image_cache_4tochki.json
+          # Создаём пустой кэш, если его нет (чтобы git add не ругался)
+          if [ ! -f image_cache_4tochki.json ]; then
+            echo '{}' > image_cache_4tochki.json
+          fi
+          git add aztyre_full.xml aztyre.xml brand_statistics.txt image_cache.json 4tyre_test2.xml 4tyres_nsk2.xml 4tyres_gruz2.xml image_cache_4tochki.json
           if git diff-index --quiet HEAD; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
-
       - name: Commit and push changes
         if: steps.changes.outputs.has_changes == 'true'
         run: |
