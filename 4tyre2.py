@@ -384,40 +384,51 @@ def is_tyre(item, diameter):
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
 def process_and_save(api_url, output_file, filter_tag=None, include_tag=None, include_value=None, status=None):
     root = fetch_xml(api_url)
+
+    # ===== ДИАГНОСТИКА СТРУКТУРЫ XML =====
+    print(f"Корневой тег: {root.tag}")
+    # Вывод первых 5 дочерних элементов
+    print("Первые 5 дочерних элементов корня:")
+    for i, child in enumerate(root):
+        if i >= 5:
+            break
+        print(f"  {child.tag}")
+
+    # Поиск всех уникальных тегов
+    all_tags = sorted(set(e.tag for e in root.iter()))
+    print(f"Всего уникальных тегов: {len(all_tags)}")
+    print(f"Первые 20 тегов: {all_tags[:20]}")
+
+    # Пробуем найти любые элементы, которые могут быть товарами (содержат proizvoditel)
+    candidates = []
+    for elem in root.iter():
+        if elem.find('proizvoditel') is not None:
+            candidates.append(elem)
+    print(f"Найдено элементов с тегом 'proizvoditel': {len(candidates)}")
+    if candidates:
+        print("Пример первого такого элемента:")
+        print(ET.tostring(candidates[0], encoding='unicode')[:500])
+
+    # Основной поиск – пока ищем .//item, но если нет, можно будет заменить на .//offer и т.д.
+    all_elements = root.findall(".//item")
+    print(f"Найдено элементов .//item: {len(all_elements)}")
+    # Если нет, попробуем другие варианты
+    if not all_elements:
+        all_elements = root.findall(".//offer")
+        print(f"Найдено элементов .//offer: {len(all_elements)}")
+    if not all_elements:
+        all_elements = root.findall(".//product")
+        print(f"Найдено элементов .//product: {len(all_elements)}")
+    if not all_elements:
+        # Если ничего не найдено, используем кандидатов (элементы с proizvoditel)
+        all_elements = candidates
+        print(f"Используем кандидатов с proizvoditel: {len(all_elements)}")
+
+    # Дальше обрабатываем all_elements вместо root.findall(".//item")
     all_items = []
     unique_urls = set()
-    # Диагностика структуры XML
-print(f"Корневой тег: {root.tag}")
-print(f"Количество дочерних элементов корня: {len(list(root))}")
-for i, child in enumerate(root):
-    if i < 10:  # покажем первые 10
-        print(f"  {child.tag}")
-    else:
-        break
 
-# Также выведем первые 500 символов исходного XML для наглядности
-response = requests.get(api_url)
-print("Первые 500 символов ответа:")
-print(response.text[:500])
-
-    # ===== ОТЛАДКА: посмотрим, что загрузилось =====
-    all_elements = root.findall(".//item")
-    print(f"📄 Найдено элементов item: {len(all_elements)}")
-    if all_elements:
-        sample = all_elements[0]
-        print("🔍 Пример структуры первого item:")
-        for child in sample:
-            print(f"   {child.tag}: {child.text[:80] if child.text else 'None'}")
-        # Выведем значения ключевых полей для первых 3 элементов
-        for i, elem in enumerate(all_elements[:3]):
-            norm = normalize_fields(elem)
-            print(f"\n--- Товар {i+1} ---")
-            print(f"  tiretype: {norm.get('category')}")
-            print(f"  brand: {norm.get('brand')}")
-            print(f"  rest_nsk: {norm.get('rest_nsk')}")
-            print(f"  width/height/diameter: {norm.get('width')}/{norm.get('height')}/{norm.get('diameter')}")
-
-    for elem in root.findall(".//item"):
+    for elem in all_elements:
         norm = normalize_fields(elem)
 
         if include_tag and include_value:
@@ -451,7 +462,7 @@ print(response.text[:500])
             if match:
                 diameter = float(match.group(1))
 
-        # Проверка, что товар — шина (отсеиваем диски)
+        # Проверка, что товар — шина
         if not is_tyre(norm, diameter):
             continue
 
