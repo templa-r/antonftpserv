@@ -8,7 +8,7 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional
 
-# ===================== НАСТРОЙКИ (из первого файла) =====================
+# ===================== НАСТРОЙКИ =====================
 ROUND_STEP = 10
 ROUND_METHOD = 'nearest'
 INCLUDE_PRICE_TAG = False
@@ -33,7 +33,7 @@ EXCLUDED_BRANDS = [
 ]
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
 EXCLUDED_CATEGORY = ["Грузовая"]
-EXCLUDED_ARTICLES = []  # можно заполнить при необходимости
+EXCLUDED_ARTICLES = []
 
 # Коэффициенты цен
 GLOBAL_COEFF = {
@@ -367,21 +367,18 @@ def normalize_fields(elem):
 
 def is_tyre(item, diameter):
     """Определяет, является ли товар шиной (не диском)"""
-    width = item.get("width", "")
-    height = item.get("height", "")
-    diam = item.get("diameter", "")
-    # Если есть все три размера и диаметр ≤ 22 (типичный легковой/грузовой шинный диапазон) – считаем шиной
-    if width and height and diam:
-        try:
-            d = float(diam)
-            if d <= 22:
-                return True
-        except:
-            pass
-    # Дополнительная проверка: если в категории написано "Легковая" или "Грузовая" – шина
+    # Если в категории явно указано "Легковая" или "Грузовая" – точно шина
     category = item.get("category", "")
     if category in ("Легковая", "Грузовая"):
         return True
+
+    # Если есть размеры width, height, diameter – считаем шиной (без ограничения по диаметру)
+    width = item.get("width", "")
+    height = item.get("height", "")
+    diam = item.get("diameter", "")
+    if width and height and diam:
+        return True
+
     return False
 
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
@@ -389,22 +386,23 @@ def process_and_save(api_url, output_file, filter_tag=None, include_tag=None, in
     root = fetch_xml(api_url)
     all_items = []
     unique_urls = set()
-# ===== ОТЛАДКА: посмотрим, что загрузилось =====
-all_elements = root.findall(".//item")
-print(f"📄 Найдено элементов item: {len(all_elements)}")
-if all_elements:
-    sample = all_elements[0]
-    print("🔍 Пример структуры первого item:")
-    for child in sample:
-        print(f"   {child.tag}: {child.text[:80] if child.text else 'None'}")
-    # Выведем значения ключевых полей для первых 3 элементов
-    for i, elem in enumerate(all_elements[:3]):
-        norm = normalize_fields(elem)
-        print(f"\n--- Товар {i+1} ---")
-        print(f"  tiretype: {norm.get('category')}")
-        print(f"  brand: {norm.get('brand')}")
-        print(f"  rest_nsk: {norm.get('rest_nsk')}")
-        print(f"  width/height/diameter: {norm.get('width')}/{norm.get('height')}/{norm.get('diameter')}")
+
+    # ===== ОТЛАДКА: посмотрим, что загрузилось =====
+    all_elements = root.findall(".//item")
+    print(f"📄 Найдено элементов item: {len(all_elements)}")
+    if all_elements:
+        sample = all_elements[0]
+        print("🔍 Пример структуры первого item:")
+        for child in sample:
+            print(f"   {child.tag}: {child.text[:80] if child.text else 'None'}")
+        # Выведем значения ключевых полей для первых 3 элементов
+        for i, elem in enumerate(all_elements[:3]):
+            norm = normalize_fields(elem)
+            print(f"\n--- Товар {i+1} ---")
+            print(f"  tiretype: {norm.get('category')}")
+            print(f"  brand: {norm.get('brand')}")
+            print(f"  rest_nsk: {norm.get('rest_nsk')}")
+            print(f"  width/height/diameter: {norm.get('width')}/{norm.get('height')}/{norm.get('diameter')}")
 
     for elem in root.findall(".//item"):
         norm = normalize_fields(elem)
@@ -439,8 +437,6 @@ if all_elements:
             match = re.search(r'[Rr](\d{2})', name)
             if match:
                 diameter = float(match.group(1))
-
-        
 
         # Проверка, что товар — шина (отсеиваем диски)
         if not is_tyre(norm, diameter):
