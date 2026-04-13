@@ -386,6 +386,19 @@ def process_and_save(api_url, output_file, filter_tag=None, include_tag=None, in
     root = fetch_xml(api_url)
     all_items = []
     unique_urls = set()
+    # Диагностика структуры XML
+print(f"Корневой тег: {root.tag}")
+print(f"Количество дочерних элементов корня: {len(list(root))}")
+for i, child in enumerate(root):
+    if i < 10:  # покажем первые 10
+        print(f"  {child.tag}")
+    else:
+        break
+
+# Также выведем первые 500 символов исходного XML для наглядности
+response = requests.get(api_url)
+print("Первые 500 символов ответа:")
+print(response.text[:500])
 
     # ===== ОТЛАДКА: посмотрим, что загрузилось =====
     all_elements = root.findall(".//item")
