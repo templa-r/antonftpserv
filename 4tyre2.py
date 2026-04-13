@@ -389,6 +389,22 @@ def process_and_save(api_url, output_file, filter_tag=None, include_tag=None, in
     root = fetch_xml(api_url)
     all_items = []
     unique_urls = set()
+# ===== ОТЛАДКА: посмотрим, что загрузилось =====
+all_elements = root.findall(".//item")
+print(f"📄 Найдено элементов item: {len(all_elements)}")
+if all_elements:
+    sample = all_elements[0]
+    print("🔍 Пример структуры первого item:")
+    for child in sample:
+        print(f"   {child.tag}: {child.text[:80] if child.text else 'None'}")
+    # Выведем значения ключевых полей для первых 3 элементов
+    for i, elem in enumerate(all_elements[:3]):
+        norm = normalize_fields(elem)
+        print(f"\n--- Товар {i+1} ---")
+        print(f"  tiretype: {norm.get('category')}")
+        print(f"  brand: {norm.get('brand')}")
+        print(f"  rest_nsk: {norm.get('rest_nsk')}")
+        print(f"  width/height/diameter: {norm.get('width')}/{norm.get('height')}/{norm.get('diameter')}")
 
     for elem in root.findall(".//item"):
         norm = normalize_fields(elem)
@@ -423,6 +439,8 @@ def process_and_save(api_url, output_file, filter_tag=None, include_tag=None, in
             match = re.search(r'[Rr](\d{2})', name)
             if match:
                 diameter = float(match.group(1))
+
+        
 
         # Проверка, что товар — шина (отсеиваем диски)
         if not is_tyre(norm, diameter):
