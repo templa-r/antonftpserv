@@ -348,12 +348,16 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
 
             images_elem = ET.SubElement(product, "Images")
             images_elem.set("PhotoDir", photo_dir)
-            images_elem.set("PhotoMain", main_filename)
 
+            # Основное фото (первое в списке)
+            img_main = ET.SubElement(images_elem, "Image")
+            img_main.set("name", main_filename)
+
+            # Дополнительные фото
             for fname in additional_filenames:
                 img_elem = ET.SubElement(images_elem, "Image")
                 img_elem.set("name", fname)
-
+                
     # Дополнительные теги
     inSet_elem = ET.SubElement(product, "inSet")
     inSet_elem.text = "1"
