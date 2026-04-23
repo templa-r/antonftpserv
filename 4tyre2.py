@@ -6,23 +6,14 @@ import json
 import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Optional
+from typing import Optional, List, Tuple, Dict, Any
 
 # ===================== НАСТРОЙКИ =====================
 ROUND_STEP = 10
 ROUND_METHOD = 'nearest'
 INCLUDE_PRICE_TAG = False
 
-# Замена изображений
-IMAGE_REPLACE_ENABLED = True
-IMAGE_CHECK_ENABLED = True
-IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-adromavito/images"
-IMAGE_CACHE_FILE = "image_cache_4tochki.json"
-IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
-MAX_WORKERS = 50
-HEAD_TIMEOUT = 1
-
-# Фильтры
+# Фильтры (оставлены без изменений)
 SEASON_EXCLUDE_ENABLED = False
 SEASON_EXCLUDE_VALUE = "зима"
 
@@ -32,10 +23,10 @@ EXCLUDED_BRANDS = [
     "Kelly", "Nitto", "Кама"
 ]
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
-EXCLUDED_CATEGORY = ["Грузовая"]
+EXCLUDED_CATEGORY = ["Грузовая"]          # грузовые НЕ исключаются из выгрузки (оставляем)
 EXCLUDED_ARTICLES = []
 
-# Коэффициенты цен
+# Коэффициенты цен (без изменений)
 GLOBAL_COEFF = {
     "default": 0.92,
     "diameter_ranges": [
@@ -118,82 +109,122 @@ def get_coeff_from_settings(settings, diameter):
 def clean_name(s):
     return re.sub(r'[^\w\-]', '_', s)
 
-def get_base_image_urls(item):
-    brand = item.get("brand", "").strip()
-    model = item.get("model", "").strip()
-    if not brand or not model:
-        return []
-    brand_clean = clean_name(brand)
-    model_clean = clean_name(model)
-    short_filename = f"{brand_clean}_{model_clean}.jpg"
-    return [f"{IMAGE_BASE_URL}/{brand_clean}/{short_filename}"]
+def fetch_xml(url):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    return ET.fromstring(response.content)
 
-def get_additional_image_urls(item):
-    brand = item.get("brand", "").strip()
-    model = item.get("model", "").strip()
-    if not brand or not model:
-        return []
-    brand_clean = clean_name(brand)
-    model_clean = clean_name(model)
+def normalize_fields(elem):
+    """Приведение имён тегов к единому виду"""
+    field_map = {
+        "vendor_code": "cae",
+        "product_id": "article",
+        "countAll": "rest",
+        "stockName": "stock",
+        "shirina_secheniya": "width",
+        "visota_secheniya": "height",
+        "radius": "diameter",
+        "seasonality": "season",
+        "categoryname": "model",
+        "priceOpt": "opt",
+        "price": "price",
+        "spikes": "thorn",
+        "img_big_my": "img_big_my",
+        "img_small": "img_small",
+        "img_big_pish": "img_big_pish",
+        "proizvoditel": "brand",
+        "brand": "brand",
+        "tiretype": "category",
+        "rest_novosib3": "rest_nsk",               # остаток в Новосибирске
+        "price_novosib3_rozn": "price_novosib3_rozn",  # розница Новосибирск
+        "name": "name",
+        "article": "article",
+        "diameter": "diameter",
+        "width": "width",
+        "height": "height",
+        "season": "season",
+        "model": "model",
+        "retail": "retail",
+        "opt": "opt",
+    }
+    normalized = {}
+    for child in elem:
+        tag = field_map.get(child.tag, child.tag)
+        normalized[tag] = child.text.strip() if child.text else ""
+    return normalized
 
+def is_tyre(item, diameter):
+    """Определяем, является ли товар шиной (легковой или грузовой)"""
+    category = item.get("category", "")
+    if category in ("Легковая", "Грузовая"):
+        return True
     width = item.get("width", "")
-    profile = item.get("height", "")
-    diameter = item.get("diameter", "")
-    if not (width and profile and diameter):
-        name = item.get("name", "")
-        match = re.search(r'(\d+)/(\d+)[Zz]?[Rr](\d+)', name)
-        if match:
-            width, profile, diameter = match.groups()
-        else:
-            return []
+    height = item.get("height", "")
+    diam = item.get("diameter", "")
+    if width and height and diam:
+        return True
+    return False
 
-    base_filename = f"{width}_{profile}_{diameter}_{brand_clean}_{model_clean}"
-    urls = []
-    for i in range(1, 5):
-        urls.append(f"{IMAGE_BASE_URL}/{brand_clean}/{base_filename}_{i}.jpg")
-    return urls
+def extract_photo_dir_and_main(img_url: str) -> Tuple[str, str]:
+    """
+    Из URL вида https://.../path/dir/filename.png
+    возвращает (PhotoDir, PhotoMain)
+    Пример: https://4tochki.ru/pictures/tyres/Yokohama/iceGuard_Studless_iG50Plus/small/0.png
+    -> ('https://4tochki.ru/pictures/tyres/Yokohama/iceGuard_Studless_iG50Plus/small/', '0.png')
+    """
+    if not img_url:
+        return "", ""
+    # Отделяем последний компонент (имя файла)
+    parts = img_url.rsplit('/', 1)
+    if len(parts) == 2:
+        return parts[0] + '/', parts[1]
+    else:
+        return "", img_url
 
-def get_all_image_urls(item):
-    return get_base_image_urls(item) + get_additional_image_urls(item)
-
-# ===================== КЭШ ИЗОБРАЖЕНИЙ =====================
-def load_image_cache():
-    if os.path.exists(IMAGE_CACHE_FILE):
-        try:
-            with open(IMAGE_CACHE_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            return {}
-    return {}
-
-def save_image_cache(cache):
-    try:
-        with open(IMAGE_CACHE_FILE, 'w') as f:
-            json.dump(cache, f)
-    except:
-        pass
-
-def check_image_exists(url, cache):
-    if url in cache:
-        return cache[url]
-    try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        response = requests.head(url, timeout=HEAD_TIMEOUT, headers=headers)
-        exists = response.status_code == 200
-    except:
-        exists = False
-    cache[url] = exists
-    return exists
-
-# ===================== ДОБАВЛЕНИЕ ТОВАРА В XML =====================
-def add_tyre_to_root(root, item, diameter, replace_images=True, image_cache=None):
+def add_tyre_to_root(root, item: Dict, diameter: float,
+                     rename_map: Optional[Dict[str, str]] = None,
+                     remove_fields: Optional[List[str]] = None):
+    """
+    Добавляет товар в XML-корень.
+    - rename_map: словарь замены имён полей (например {'rest_nsk': 'rest'})
+    - remove_fields: список полей, которые НЕ нужно выводить
+    - изображения формируются только из item['img_big_my'] (если есть)
+    """
     product = ET.SubElement(root, "tyres")
-    for key, value in item.items():
-        if key in ("Оптовая_Цена", "img"):
-            continue
+
+    # Сначала подготовим итоговый словарь полей
+    output_data = dict(item)
+
+    # Переименовываем поля
+    if rename_map:
+        for old, new in rename_map.items():
+            if old in output_data:
+                output_data[new] = output_data.pop(old)
+
+    # Удаляем ненужные поля
+    if remove_fields is None:
+        remove_fields = []
+    # Всегда удаляем все img_* поля, кроме тех, что используются для Images
+    img_keys = [k for k in output_data.keys() if k.startswith('img_') and k != 'img_big_my']
+    remove_fields.extend(img_keys)
+    # Дополнительно удаляем исходные rest/retail, если они были переименованы (чтобы не дублировать)
+    if rename_map:
+        if 'rest_nsk' in rename_map:
+            remove_fields.append('rest')        # удаляем старый общий остаток
+        if 'price_novosib3_rozn' in rename_map:
+            remove_fields.append('retail')      # удаляем старую розницу
+    # Также удаляем служебные поля
+    remove_fields.extend(['Оптовая_Цена', 'img'])
+    for field in set(remove_fields):
+        output_data.pop(field, None)
+
+    # Выводим все оставшиеся поля
+    for key, value in output_data.items():
         if key == "price" and not INCLUDE_PRICE_TAG:
             continue
         element = ET.SubElement(product, key)
+        # Розничная цена (retail) проходит через коэффициенты, если это не запрещено
         if key.lower() == "retail":
             brand = item.get("brand", "").strip().lower()
             model = item.get("model", "").strip().lower()
@@ -267,213 +298,108 @@ def add_tyre_to_root(root, item, diameter, replace_images=True, image_cache=None
         else:
             element.text = str(value)
 
-    if replace_images and IMAGE_REPLACE_ENABLED:
-        brand = item.get("brand", "").strip()
-        model = item.get("model", "").strip()
-        fallback_url = item.get("img_small", "") or item.get("img_big_my", "")
-        s3_urls = []
-        short_url = None
-        if brand and model:
-            brand_clean = clean_name(brand)
-            model_clean = clean_name(model)
-            short_url = f"{IMAGE_BASE_URL}/{brand_clean}/{brand_clean}_{model_clean}.jpg"
-            s3_urls.append(short_url)
-            s3_urls.extend(get_additional_image_urls(item))
-        existing_s3 = {}
-        if IMAGE_CHECK_ENABLED and image_cache is not None:
-            for url in s3_urls:
-                exists = image_cache.get(url, False)
-                if exists:
-                    filename = url[url.rfind('/')+1:] if '/' in url else url
-                    existing_s3[url] = filename
-        else:
-            if short_url:
-                filename = short_url[short_url.rfind('/')+1:] if '/' in short_url else short_url
-                existing_s3[short_url] = filename
-        main_url = None
-        main_filename = None
-        if short_url and short_url in existing_s3:
-            main_url = short_url
-            main_filename = existing_s3[short_url]
-        elif fallback_url:
-            main_url = fallback_url
-            main_filename = fallback_url[fallback_url.rfind('/')+1:] if '/' in fallback_url else fallback_url
-        if main_url:
-            if short_url and short_url in existing_s3:
-                photo_dir = main_url[:main_url.rfind('/')+1]
-            else:
-                photo_dir = main_url[:main_url.rfind('/')+1] if '/' in main_url else ""
-            additional_filenames = []
-            for url, fname in existing_s3.items():
-                if url != main_url and fname not in additional_filenames:
-                    additional_filenames.append(fname)
+    # --- Обработка изображений: только img_big_my ---
+    img_big_my = item.get("img_big_my", "")
+    if img_big_my:
+        photo_dir, photo_main = extract_photo_dir_and_main(img_big_my)
+        if photo_dir and photo_main:
             images_elem = ET.SubElement(product, "Images")
             images_elem.set("PhotoDir", photo_dir)
-            images_elem.set("PhotoMain", main_filename)
-            for fname in additional_filenames:
-                img_elem = ET.SubElement(images_elem, "Image")
-                img_elem.set("name", fname)
+            images_elem.set("PhotoMain", photo_main)
 
+    # Добавляем признак "входит в набор"
     inSet_elem = ET.SubElement(product, "inSet")
     inSet_elem.text = "1"
 
-# ===================== ЗАГРУЗКА И НОРМАЛИЗАЦИЯ =====================
-def fetch_xml(url):
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return ET.fromstring(response.content)
+def save_tyres_to_xml(items_with_diam: List[Tuple[Dict, float]], output_file: str,
+                      rename_map: Optional[Dict[str, str]] = None,
+                      remove_fields: Optional[List[str]] = None):
+    """Сохраняет список товаров в XML-файл."""
+    root_out = ET.Element("Products")
+    for item, diameter in items_with_diam:
+        add_tyre_to_root(root_out, item, diameter, rename_map, remove_fields)
+    tree = ET.ElementTree(root_out)
+    tree.write(output_file, encoding="utf-8", xml_declaration=True)
+    print(f"✅ Файл сохранён: {output_file} (шин: {len(items_with_diam)})")
 
-def normalize_fields(elem):
-    field_map = {
-        "vendor_code": "cae",
-        "product_id": "article",
-        "countAll": "rest",
-        "stockName": "stock",
-        "shirina_secheniya": "width",
-        "visota_secheniya": "height",
-        "radius": "diameter",
-        "seasonality": "season",
-        "categoryname": "model",
-        "priceOpt": "opt",
-        "price": "price",
-        "spikes": "thorn",
-        "img_big_my": "img_small",
-        "proizvoditel": "brand",   # оставляем на всякий случай
-        "brand": "brand",          # прямой маппинг
-        "tiretype": "category",    # но его нет
-        "rest_novosib3": "rest_nsk",
-        # добавим возможные теги из лога
-        "name": "name",
-        "article": "article",
-        "diameter": "diameter",
-        "width": "width",
-        "height": "height",
-        "season": "season",
-        "model": "model",
-        "retail": "retail",
-        "price": "price",
-        "opt": "opt",
-        "img_small": "img_small",
-        "img_big_my": "img_big_my",
-    }
-    normalized = {}
-    for child in elem:
-        tag = field_map.get(child.tag, child.tag)
-        normalized[tag] = child.text.strip() if child.text else ""
-    return normalized
-
-def is_tyre(item, diameter):
-    category = item.get("category", "")
-    if category in ("Легковая", "Грузовая"):
-        return True
-    width = item.get("width", "")
-    height = item.get("height", "")
-    diam = item.get("diameter", "")
-    if width and height and diam:
-        return True
-    return False
-
-# ===================== ОСНОВНАЯ ЛОГИКА =====================
-def process_and_save(api_url, output_file, filter_tag=None, status=None):
-    root = fetch_xml(api_url)
-    all_elements = root.findall(".//tires")   #关键：ищем tires
+def main():
+    url = "https://b2b.4tochki.ru/export_data/M35352.xml"
+    print("Загрузка данных...")
+    root_xml = fetch_xml(url)
+    all_elements = root_xml.findall(".//tires")
     print(f"Найдено элементов tires: {len(all_elements)}")
-    all_items = []
-    unique_urls = set()
+
+    # Списки для разделения
+    nsk_items = []      # будут в 4tyres_nsk2.xml
+    order_items = []    # будут в 4tyre_test2.xml
 
     for elem in all_elements:
-        norm = normalize_fields(elem)
+        item = normalize_fields(elem)
 
-        # Фильтр по остатку (например, rest_nsk)
-        if filter_tag:
-            rest_val = norm.get(filter_tag, "")
-            if not rest_val or safe_float(rest_val) <= 0:
-                continue
-
-        brand = norm.get("brand", "")
+        # --- Фильтры (бренды, артикулы, сезон) ---
+        brand = item.get("brand", "")
         if brand in EXCLUDED_BRANDS_FROM_EXPORT:
             continue
 
-        article = norm.get("article", "")
+        article = item.get("article", "")
         if any(phrase in article for phrase in EXCLUDED_ARTICLES):
             continue
 
         if SEASON_EXCLUDE_ENABLED:
-            season = norm.get("season", "")
+            season = item.get("season", "")
             if season == SEASON_EXCLUDE_VALUE:
                 continue
 
-        diameter = safe_float(norm.get("diameter"), default=None)
+        # Определяем диаметр
+        diameter = safe_float(item.get("diameter"), default=None)
         if diameter is None:
-            name = norm.get("name", "")
+            name = item.get("name", "")
             match = re.search(r'[Rr](\d{2})', name)
             if match:
                 diameter = float(match.group(1))
 
-        if not is_tyre(norm, diameter):
+        # Проверяем, является ли товар шиной
+        if not is_tyre(item, diameter):
             continue
 
-        if status:
-            norm["status"] = status
+        # --- Условие для наличия в НСК ---
+        rest_nsk = safe_float(item.get("rest_nsk", 0))
+        price_nsk = item.get("price_novosib3_rozn", "").strip()
+        has_nsk_stock = (rest_nsk > 0) and (price_nsk != "")
 
-        all_items.append((norm, diameter))
-
-        if IMAGE_REPLACE_ENABLED:
-            for url in get_all_image_urls(norm):
-                unique_urls.add(url)
-
-    print(f"📦 Загружено товаров после фильтрации: {len(all_items)}")
-    print(f"🖼 Уникальных URL для проверки: {len(unique_urls)}")
-
-    image_cache = {}
-    check_time = 0
-    if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
-        if IMAGE_CACHE_REFRESH and os.path.exists(IMAGE_CACHE_FILE):
-            os.remove(IMAGE_CACHE_FILE)
-            print("🔁 Кэш принудительно удалён.")
-        image_cache = load_image_cache()
-        print(f"📂 Загружено {len(image_cache)} записей из кэша.")
-        new_urls = [url for url in unique_urls if url not in image_cache]
-        if new_urls:
-            print(f"🔍 Требуется проверить {len(new_urls)} новых URL...")
-            start = time.time()
-            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-                futures = [executor.submit(check_image_exists, url, image_cache) for url in new_urls]
-                for future in as_completed(futures):
-                    future.result()
-            check_time = time.time() - start
-            print(f"✅ Проверка завершена за {check_time:.2f} сек.")
-            save_image_cache(image_cache)
+        if has_nsk_stock:
+            # Для НСК: переименуем rest_nsk -> rest, price_novosib3_rozn -> retail
+            # и удалим исходные поля rest и retail (общий остаток и старая розница)
+            nsk_items.append((item, diameter))
         else:
-            print("✅ Все URL уже в кэше.")
+            # Для "под заказ": удалим поля rest_nsk и price_novosib3_rozn, чтобы они не попали в XML
+            order_items.append((item, diameter))
+
+    print(f"📦 Товаров с наличием в НСК: {len(nsk_items)}")
+    print(f"📦 Товаров под заказ: {len(order_items)}")
+
+    # Сохраняем файл с наличием в НСК (с переименованием)
+    if nsk_items:
+        rename_map = {
+            "rest_nsk": "rest",
+            "price_novosib3_rozn": "retail"
+        }
+        # Удаляем исходные rest, retail, а также все img_* кроме img_big_my (удалится автоматически)
+        save_tyres_to_xml(nsk_items, "4tyres_nsk2.xml",
+                          rename_map=rename_map,
+                          remove_fields=["rest", "retail"])
     else:
-        print("🔍 Проверка изображений отключена.")
+        print("Нет товаров с наличием в НСК — файл 4tyres_nsk2.xml не создан.")
 
-    root_out = ET.Element("Products")
-    for item, diameter in all_items:
-        add_tyre_to_root(root_out, item, diameter,
-                         replace_images=IMAGE_REPLACE_ENABLED,
-                         image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
+    # Сохраняем файл "под заказ" (без специфических полей НСК)
+    if order_items:
+        # Удаляем поля, связанные с НСК
+        save_tyres_to_xml(order_items, "4tyre_test2.xml",
+                          remove_fields=["rest_nsk", "price_novosib3_rozn"])
+    else:
+        print("Нет товаров под заказ — файл 4tyre_test2.xml не создан.")
 
-    tree = ET.ElementTree(root_out)
-    tree.write(output_file, encoding="utf-8", xml_declaration=True)
-    print(f"✅ Файл сохранён: {output_file} (шин: {len(all_items)})")
-    return all_items
-
-def main():
-    url = "https://b2b.4tochki.ru/export_data/M35352.xml"
-
-    # Легковые (все, без фильтра по tiretype, но с признаком "Под заказ")
-    process_and_save(url, "4tyre_test2.xml", filter_tag=None, status="Под заказ")
-
-    # Легковые с остатком в Новосибирске (если есть поле rest_nsk)
-    process_and_save(url, "4tyres_nsk2.xml", filter_tag="rest_nsk", status="В наличии")
-
-    # Грузовые – пока просто копируем все шины (можно потом добавить логику)
-    process_and_save(url, "4tyres_gruz2.xml", filter_tag=None, status="Под заказ")
-
-    print("\n✅ Все XML файлы успешно созданы (только шины).")
+    print("\n✅ Все XML файлы успешно созданы.")
 
 if __name__ == "__main__":
     main()
