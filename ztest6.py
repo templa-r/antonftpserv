@@ -535,4 +535,4 @@ print(f"   - Всего товаров в выгрузке: {total_products}")
 if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
     print(f"   - Проверено URL: {len(unique_urls)} (из них новых: {len(new_urls) if 'new_urls' in locals() else 0}) за {check_time:.2f} сек")
 else:
-    print(f"   - Проверка URL отключена (IMAGE_CHECK_ENABLED=False)"
+    print(f"   - Проверка URL отключена (IMAGE_CHECK_ENABLED=False)")
