@@ -1,8 +1,11 @@
-# ========== НОВЫЙ ИМПОРТ (ДОБАВИТЬ В САМОЕ НАЧАЛО) ==========
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# ========== НОВЫЙ КОД ДЛЯ ИНТЕГРАЦИИ С МОДУЛЕМ ==========
 import sys
 import os
 
-# Добавляем текущую папку в путь для импорта
+# Добавляем текущую директорию в путь для импорта
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Импортируем новые модули
@@ -11,40 +14,24 @@ from tyre_export.legacy import (
     legacy_clean_name as clean_name,
     legacy_safe_float as safe_float,
     get_legacy_config,
-    process_legacy_item
 )
 
 # Загружаем конфигурацию
 config = get_legacy_config()
 
-# ========== ЗАМЕНЯЕМ СТАРЫЕ КОНСТАНТЫ ==========
+# ========== ЗАМЕНЯЕМ СТАРЫЕ КОНСТАНТЫ НА КОНФИГ ==========
+# УДАЛИТЕ или ЗАКОММЕНТИРУЙТЕ старые определения и используйте эти:
+
 ROUND_STEP = config.rounding.step
 ROUND_METHOD = config.rounding.method
 INCLUDE_PRICE_TAG = config.include_price_tag
 
-# ========== ЗАМЕНЯЕМ ВСЕ СПИСКИ ==========
-EXCLUDED_BRANDS = config.filters.excluded_brands
+# Настройки API
+API_URL = config.api.url
+API_USER = config.api.user
+API_PASSWORD = config.api.password
 
-EXCLUDED_CAE = config.filters.excluded_cae
-EXCLUDE_CAE_ENABLED = config.filters.exclude_cae_enabled
-
-EXCLUDED_BRANDS_FROM_EXPORT = config.filters.excluded_brands_from_export
-
-EXCLUDED_CATEGORY = config.filters.excluded_category
-
-EXCLUDED_ARTICLES = config.filters.excluded_articles
-
-SEASON_EXCLUDE_ENABLED = config.filters.season_exclude_enabled
-SEASON_EXCLUDE_VALUE = config.filters.season_exclude_value
-
-# ========== ЗАМЕНЯЕМ КОЭФФИЦИЕНТЫ ==========
-GLOBAL_COEFF = config.pricing.global_coeff
-BRAND_COEFFS = config.pricing.brand_coeffs
-IGNORE_COEFF_BRANDS = config.pricing.ignore_coeff_brands
-MIN_MARGIN = float(config.pricing.min_margin)
-MODEL_RULES = config.pricing.model_rules
-
-# ========== ЗАМЕНЯЕМ НАСТРОЙКИ ИЗОБРАЖЕНИЙ ==========
+# Настройки изображений
 IMAGE_REPLACE_ENABLED = config.images.enabled
 IMAGE_CHECK_ENABLED = config.images.check_enabled
 IMAGE_BASE_URL = config.images.base_url
@@ -53,12 +40,23 @@ IMAGE_CACHE_REFRESH = config.images.cache_refresh
 MAX_WORKERS = config.images.max_workers
 HEAD_TIMEOUT = config.images.timeout
 
-# ========== API НАСТРОЙКИ ==========
-API_URL = config.api.url
-API_USER = config.api.user
-API_PASSWORD = config.api.password
+# Фильтры
+SEASON_EXCLUDE_ENABLED = config.filters.season_exclude_enabled
+SEASON_EXCLUDE_VALUE = config.filters.season_exclude_value
+EXCLUDED_BRANDS = config.filters.excluded_brands
+EXCLUDED_BRANDS_FROM_EXPORT = config.filters.excluded_brands_from_export
+EXCLUDED_CATEGORY = config.filters.excluded_category
+EXCLUDED_ARTICLES = config.filters.excluded_articles
+EXCLUDE_CAE_ENABLED = config.filters.exclude_cae_enabled
+EXCLUDED_CAE = config.filters.excluded_cae
 
-# ========== ДАЛЬШЕ ВЕСЬ ВАШ СТАРЫЙ КОД ИДЕТ БЕЗ ИЗМЕНЕНИЙ ==========
+# Коэффициенты цен
+GLOBAL_COEFF = config.pricing.global_coeff
+BRAND_COEFFS = config.pricing.brand_coeffs
+IGNORE_COEFF_BRANDS = config.pricing.ignore_coeff_brands
+MIN_MARGIN = float(config.pricing.min_margin)
+MODEL_RULES = config.pricing.model_rules
+# ========== ЛОГИКА ==========
 def safe_float(val, default=0.0):
     if val is None:
         return default
