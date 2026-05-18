@@ -8,7 +8,7 @@ import os
 
 @dataclass
 class APIConfig:
-    """Конфигурация API поставщика"""
+    """Конфигурация API"""
     url: str
     user: str
     password: str
@@ -109,7 +109,7 @@ class FiltersConfig:
     ])
     
     exclude_cae_enabled: bool = True
-    excluded_cae: List[str] = field(default_factory=list)  # Будет заполнено из вашего списка
+    excluded_cae: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -125,10 +125,7 @@ class ExportConfig:
 
 
 def load_config() -> ExportConfig:
-    """Загрузка конфигурации из окружения и файлов (пока только из кода)"""
-    
-    # Временно загружаем конфиг из кода
-    # Позже заменим на загрузку из YAML
+    """Загрузка конфигурации"""
     
     api_config = APIConfig(
         url="https://ka2.sibzapaska.ru:16500/API/hs/V2/GetTires",
@@ -138,7 +135,7 @@ def load_config() -> ExportConfig:
     
     filters_config = FiltersConfig()
     
-    # Заполняем список исключенных CAE (из вашего кода)
+    # Заполняем список исключенных CAE
     filters_config.excluded_cae = [
         "КА-00049127", "КА-00049119", "КА-00049010", "КА-00049170", "КА-00049171",
         "КА-00040044", "00000019470", "КА-00048983", "КА-00046413", "КА-00049081",
