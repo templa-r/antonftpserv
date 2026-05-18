@@ -1,62 +1,175 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# ========== НОВЫЙ КОД ДЛЯ ИНТЕГРАЦИИ С МОДУЛЕМ ==========
-import sys
+# ===================== СТАНДАРТНЫЕ ИМПОРТЫ =====================
 import os
+import sys
+import requests
+import base64
+import xml.etree.ElementTree as ET
+import re
+import json
+import time
+import traceback
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# ===================== ИНТЕГРАЦИЯ С НОВЫМ МОДУЛЕМ =====================
 # Добавляем текущую директорию в путь для импорта
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Импортируем новые модули
-from tyre_export.legacy import (
-    legacy_round_price as round_price,
-    legacy_clean_name as clean_name,
-    legacy_safe_float as safe_float,
-    get_legacy_config,
-)
+try:
+    # Импортируем новые модули
+    from tyre_export.legacy import (
+        legacy_round_price as round_price,
+        legacy_clean_name as clean_name,
+        legacy_safe_float as safe_float,
+        get_legacy_config,
+    )
+    
+    # Загружаем конфигурацию
+    config = get_legacy_config()
+    
+    # ========== ЗАМЕНЯЕМ СТАРЫЕ КОНСТАНТЫ НА КОНФИГ ==========
+    ROUND_STEP = config.rounding.step
+    ROUND_METHOD = config.rounding.method
+    INCLUDE_PRICE_TAG = config.include_price_tag
+    
+    # Настройки API
+    API_URL = config.api.url
+    API_USER = config.api.user
+    API_PASSWORD = config.api.password
+    
+    # Настройки изображений
+    IMAGE_REPLACE_ENABLED = config.images.enabled
+    IMAGE_CHECK_ENABLED = config.images.check_enabled
+    IMAGE_BASE_URL = config.images.base_url
+    IMAGE_CACHE_FILE = config.images.cache_file
+    IMAGE_CACHE_REFRESH = config.images.cache_refresh
+    MAX_WORKERS = config.images.max_workers
+    HEAD_TIMEOUT = config.images.timeout
+    
+    # Фильтры
+    SEASON_EXCLUDE_ENABLED = config.filters.season_exclude_enabled
+    SEASON_EXCLUDE_VALUE = config.filters.season_exclude_value
+    EXCLUDED_BRANDS = config.filters.excluded_brands
+    EXCLUDED_BRANDS_FROM_EXPORT = config.filters.excluded_brands_from_export
+    EXCLUDED_CATEGORY = config.filters.excluded_category
+    EXCLUDED_ARTICLES = config.filters.excluded_articles
+    EXCLUDE_CAE_ENABLED = config.filters.exclude_cae_enabled
+    EXCLUDED_CAE = config.filters.excluded_cae
+    
+    # Коэффициенты цен
+    GLOBAL_COEFF = config.pricing.global_coeff
+    BRAND_COEFFS = config.pricing.brand_coeffs
+    IGNORE_COEFF_BRANDS = config.pricing.ignore_coeff_brands
+    MIN_MARGIN = float(config.pricing.min_margin)
+    MODEL_RULES = config.pricing.model_rules
+    
+    print("✅ Конфигурация загружена из модуля tyre_export")
+    
+except ImportError as e:
+    print(f"⚠️ Не удалось загрузить модуль tyre_export: {e}")
+    print("⚠️ Использую стандартные значения из кода")
+    
+    # ========== СТАНДАРТНЫЕ ЗНАЧЕНИЯ (ЕСЛИ МОДУЛЬ НЕ НАЙДЕН) ==========
+    ROUND_STEP = 10
+    ROUND_METHOD = 'nearest'
+    INCLUDE_PRICE_TAG = False
+    
+    API_URL = "https://ka2.sibzapaska.ru:16500/API/hs/V2/GetTires"
+    API_USER = "API_client"
+    API_PASSWORD = "rWp7mFWXRKOq"
+    
+    IMAGE_REPLACE_ENABLED = True
+    IMAGE_CHECK_ENABLED = True
+    IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-antontyres/images"
+    IMAGE_CACHE_FILE = "image_cache.json"
+    IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
+    MAX_WORKERS = 50
+    HEAD_TIMEOUT = 1
+    
+    SEASON_EXCLUDE_ENABLED = False
+    SEASON_EXCLUDE_VALUE = "зима"
+    
+    EXCLUDED_BRANDS = [
+        "Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
+        "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
+        "Kelly", "Nitto", "Кама"
+    ]
+    
+    EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
+    EXCLUDED_CATEGORY = ["Грузовая"]
+    
+    EXCLUDED_ARTICLES = [
+        "195/75R16C Laufenn X FIT VAN LV01",
+        "АТ27x8-12 MAXXIS M961 6PR",
+        "185/75R16C Ikon Autograph Snow C4",
+        "33x10,50-16 NORTEC ET-500 111N TL АШК",
+    ]
+    
+    EXCLUDE_CAE_ENABLED = True
+    EXCLUDED_CAE = [
+        "КА-00049127", "КА-00049119", "КА-00049010", "КА-00049170", "КА-00049171",
+        "КА-00040044", "00000019470", "КА-00048983", "КА-00046413", "КА-00049081",
+        "КА-00049149", "КА-00049109", "КА-00046401", "КА-00046414", "КА-00049102",
+        "КА-00049039", "КА-00046404", "КА-00046416", "КА-00049095", "КА-00049031",
+        "КА-00049073", "КА-00046409", "КА-00049156", "КА-00049104", "КА-00046390",
+        "КА-00046384", "КА-00046397", "КА-00049146", "КА-00063027", "КА-00046383",
+        "КА-00049011", "КА-00049075", "КА-00049144", "КА-00049033", "КА-00049174",
+        "КА-00049096", "КА-00049112", "КА-00049160", "КА-00049116", "КА-00049110",
+        "КА-00049015", "КА-00049082", "КА-00046417", "КА-00049012", "КА-00046405",
+        "КА-00046400", "КА-00049132", "КА-00048992", "КА-00049173", "КА-00049145",
+        "КА-00049001", "КА-00074372", "КА-00049037", "КА-00046420", "КА-00046396",
+        "КА-00046391", "КА-00049018", "КА-00049162", "КА-00046418", "КА-00049107",
+        "КА-00049045", "КА-00049163", "КА-00046410", "КА-00049078", "КА-00049142",
+        "КА-00049165",
+    ]
+    
+    GLOBAL_COEFF = {
+        "default": 0.92,
+        "diameter_ranges": [
+            {"min": 13, "max": 15, "coeff": 0.95},
+            {"min": 16, "max": 17, "coeff": 0.94},
+            {"min": 18, "max": 22, "coeff": 0.93},
+        ],
+    }
+    
+    BRAND_COEFFS = {
+        "ikon": {
+            "default": 0.88,
+            "diameter_ranges": [
+                {"min": 13, "max": 15, "coeff": 0.905},
+                {"min": 17, "max": 22, "coeff": 0.88},
+            ],
+        },
+        "laufenn": 0.905,
+        "bridgestone": 0.965,
+        "hankook": {
+            "default": 0.915,
+            "diameter_ranges": [
+                {"min": 13, "max": 16, "coeff": 0.907},
+                {"min": 17, "max": 22, "coeff": 0.906},
+            ],
+        },
+    }
+    
+    IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Sonix"]
+    MIN_MARGIN = 500
+    
+    MODEL_RULES = {
+        ("autograph", "autograph ice 9 suv"): {
+            "type": "add_to_field_by_diameter",
+            "field": "price",
+            "ranges": [
+                {"min": 16, "max": 17, "value": 1300},
+                {"min": 18, "max": 19, "value": 1700},
+            ],
+            "default": None,
+        },
+    }
 
-# Загружаем конфигурацию
-config = get_legacy_config()
-
-# ========== ЗАМЕНЯЕМ СТАРЫЕ КОНСТАНТЫ НА КОНФИГ ==========
-# УДАЛИТЕ или ЗАКОММЕНТИРУЙТЕ старые определения и используйте эти:
-
-ROUND_STEP = config.rounding.step
-ROUND_METHOD = config.rounding.method
-INCLUDE_PRICE_TAG = config.include_price_tag
-
-# Настройки API
-API_URL = config.api.url
-API_USER = config.api.user
-API_PASSWORD = config.api.password
-
-# Настройки изображений
-IMAGE_REPLACE_ENABLED = config.images.enabled
-IMAGE_CHECK_ENABLED = config.images.check_enabled
-IMAGE_BASE_URL = config.images.base_url
-IMAGE_CACHE_FILE = config.images.cache_file
-IMAGE_CACHE_REFRESH = config.images.cache_refresh
-MAX_WORKERS = config.images.max_workers
-HEAD_TIMEOUT = config.images.timeout
-
-# Фильтры
-SEASON_EXCLUDE_ENABLED = config.filters.season_exclude_enabled
-SEASON_EXCLUDE_VALUE = config.filters.season_exclude_value
-EXCLUDED_BRANDS = config.filters.excluded_brands
-EXCLUDED_BRANDS_FROM_EXPORT = config.filters.excluded_brands_from_export
-EXCLUDED_CATEGORY = config.filters.excluded_category
-EXCLUDED_ARTICLES = config.filters.excluded_articles
-EXCLUDE_CAE_ENABLED = config.filters.exclude_cae_enabled
-EXCLUDED_CAE = config.filters.excluded_cae
-
-# Коэффициенты цен
-GLOBAL_COEFF = config.pricing.global_coeff
-BRAND_COEFFS = config.pricing.brand_coeffs
-IGNORE_COEFF_BRANDS = config.pricing.ignore_coeff_brands
-MIN_MARGIN = float(config.pricing.min_margin)
-MODEL_RULES = config.pricing.model_rules
-# ========== ЛОГИКА ==========
+# ===================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====================
 def safe_float(val, default=0.0):
     if val is None:
         return default
