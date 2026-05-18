@@ -466,7 +466,7 @@ for item, diameter in all_items:
 
 print(f"📊 Обработано записей для статистики: {stats_count}")
 try:
-    with open("brand_statistics.txt2", "w", encoding="utf-8") as f:
+    with open("brand_statistics2.txt", "w", encoding="utf-8") as f:
         f.write("Статистика по брендам (средняя маржинальность на диаметр)\n")
         f.write("="*60 + "\n")
         for brand in sorted(brand_diameter_stats.keys()):
