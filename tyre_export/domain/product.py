@@ -3,7 +3,6 @@
 from typing import Optional, Dict, Any, List
 from decimal import Decimal
 from dataclasses import dataclass, field
-from datetime import datetime
 import re
 
 
@@ -12,10 +11,10 @@ class Product:
     """Основная модель товара - шина или диск"""
     
     # Идентификаторы
-    cae: str                          # Уникальный артикул поставщика
-    article: str                      # Артикул производителя
-    brand: str                        # Бренд
-    model: str                        # Модель
+    cae: str = ""
+    article: str = ""
+    brand: str = ""
+    model: str = ""
     
     # Размеры
     width: Optional[int] = None
@@ -23,9 +22,9 @@ class Product:
     diameter: Optional[int] = None
     
     # Цены
-    purchase_price: Decimal = Decimal('0')    # Закупочная цена
-    retail_original: Decimal = Decimal('0')   # Исходная розничная цена от поставщика
-    final_retail: Optional[Decimal] = None    # Рассчитанная итоговая цена
+    purchase_price: Decimal = Decimal('0')
+    retail_original: Decimal = Decimal('0')
+    final_retail: Optional[Decimal] = None
     
     # Категории и свойства
     season: Optional[str] = None
@@ -34,12 +33,12 @@ class Product:
     nomenclature: str = ""
     
     # Изображения
-    original_image_url: str = ""               # URL от поставщика
-    processed_images: List[str] = field(default_factory=list)  # Найденные S3 URL
+    original_image_url: str = ""
+    processed_images: List[str] = field(default_factory=list)
     
     # Метаданные
-    raw_data: Dict[str, Any] = field(default_factory=dict)      # Исходные данные от API
-    supplier: str = "default"                  # Поставщик (для многопоточности)
+    raw_data: Dict[str, Any] = field(default_factory=dict)
+    supplier: str = "default"
     
     def __post_init__(self):
         """Автоматическая очистка и валидация после создания"""
@@ -54,7 +53,6 @@ class Product:
     
     def _clean_model(self):
         """Очистка названия модели"""
-        # Замены моделей
         replacements = {
             "Blu Earth V906": "BluEarth Winter V906",
             "VS-EV": "Victra Sport EV", 
@@ -63,7 +61,6 @@ class Product:
         if self.model in replacements:
             self.model = replacements[self.model]
             
-        # Очистка name если нужно
         if "(Nokian Tyres)" in self.name:
             self.name = self.name.replace("(Nokian Tyres)", "").strip()
             self.name = re.sub(r'\s+', ' ', self.name)
@@ -76,11 +73,10 @@ class Product:
         if not self.nomenclature:
             return
             
-        # Паттерны для поиска размеров: 205/55R16, 33x10.50R15, 195/75R16C
         patterns = [
-            r'(\d+)/(\d+)[Zz]?[Rr](\d+)',           # 205/55R16
-            r'(\d+)x([\d\.]+)[Rr](\d+)',            # 33x10.50R15
-            r'(\d+)/(\d+)[Zz]?[Rr](\d+)[A-Za-z]?',  # 195/75R16C
+            r'(\d+)/(\d+)[Zz]?[Rr](\d+)',
+            r'(\d+)x([\d\.]+)[Rr](\d+)',
+            r'(\d+)/(\d+)[Zz]?[Rr](\d+)[A-Za-z]?',
         ]
         
         for pattern in patterns:
@@ -97,14 +93,13 @@ class Product:
     @property
     def product_type(self) -> str:
         """Тип продукта: 'tyres' или 'disk'"""
-        # Диски определяются по номенклатуре: 16 7.5J 5x139.7 ET40 DIA110.6
         if self.nomenclature and re.match(r'^(1[2-9]|2[0-4])\s', self.nomenclature):
             return "disk"
         return "tyres"
     
     @property
     def size_key(self) -> str:
-        """Ключ для дедупликации: brand + width + profile + diameter"""
+        """Ключ для дедупликации"""
         return f"{self.brand}_{self.width}_{self.profile}_{self.diameter}"
     
     def to_dict(self) -> Dict[str, Any]:
@@ -125,9 +120,7 @@ class Product:
             "retail": str(self.final_retail if self.final_retail else self.retail_original),
         }
         
-        # Добавляем сырые данные если они есть (для обратной совместимости)
         data.update(self.raw_data)
-        
         return data
     
     @classmethod
