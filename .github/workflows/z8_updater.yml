@@ -1,0 +1,102 @@
+name: Update Products and Deploy to Pages
+        
+on:
+  push:
+    branches: ["main"]
+  schedule:
+    # Запуск каждый день в 3:10 по новосибирскому времени (UTC+7)
+    - cron: "10 20 * * *"
+  workflow_dispatch:
+     inputs:
+      refresh_cache:
+        description: 'Принудительно обновить кэш изображений'
+        required: false
+        default: false
+        type: boolean
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---------- Кэш для image_cache.json ----------
+      - name: Cache image check results
+        uses: actions/cache@v4
+        with:
+          path: image_cache.json
+          key: image-cache-${{ runner.os }}-${{ hashFiles('ztest6.py') }}
+          restore-keys: |
+            image-cache-${{ runner.os }}-
+
+      # ---------- Блок обновления (только для schedule и workflow_dispatch) ----------
+      - name: Set up Python
+        if: github.event_name != 'push'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        if: github.event_name != 'push'
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Run update tyres
+        if: github.event_name != 'push'
+        run: python ztest8.py
+        env:
+          IMAGE_CACHE_REFRESH: ${{ inputs.refresh_cache == true && 'true' || 'false' }}
+        continue-on-error: true
+
+      - name: Run test
+        if: github.event_name != 'push'
+        run: python ztest5.py
+        continue-on-error: true
+
+      - name: Check for changes
+        id: changes
+        if: github.event_name != 'push' && always()
+        run: |
+          git add aztyre_full2.xml aztyre.xml brand_statistics2.txt image_cache.json
+          if git diff-index --quiet HEAD; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: github.event_name != 'push' && always() && steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git commit -m 'Daily update of products XML'
+          git pull --rebase origin main
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ---------- Блок деплоя (всегда) ----------
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
