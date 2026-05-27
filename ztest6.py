@@ -323,26 +323,33 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                                 adjusted_retail = original_retail
                         else:
                             adjusted_retail = original_retail
-                    else:
-                        # Нет правила модели – применяем брендовую настройку (coeff или value) или глобальную
+                                       else:
                         brand_settings = BRAND_COEFFS.get(brand)
                         if brand_settings is not None:
-                            adjusted_retail = apply_brand_adjustment(brand_settings, original_retail, diameter)
+                            # Проверяем, есть ли в настройках бренда value (добавка к оптовой цене)
+                            use_wholesale = False
+                            if isinstance(brand_settings, dict):
+                                if 'value' in brand_settings:
+                                    use_wholesale = True
+                                elif 'diameter_ranges' in brand_settings:
+                                    for r in brand_settings['diameter_ranges']:
+                                        if 'value' in r:
+                                            use_wholesale = True
+                                            break
+                            if use_wholesale:
+                                # Используем оптовую цену (price) как базу для добавки
+                                wholesale = safe_float(item.get("price", 0))
+                                if wholesale > 0:
+                                    adjusted_retail = apply_brand_adjustment(brand_settings, wholesale, diameter)
+                                else:
+                                    # Если оптовой цены нет, используем исходную розницу
+                                    adjusted_retail = apply_brand_adjustment(brand_settings, original_retail, diameter)
+                            else:
+                                # Для коэффициентов используем розничную цену
+                                adjusted_retail = apply_brand_adjustment(brand_settings, original_retail, diameter)
                         else:
                             coeff, _, _ = get_coeff_from_settings(GLOBAL_COEFF, diameter)
                             adjusted_retail = original_retail * coeff
-
-                    price_val = safe_float(item.get("price", 0))
-                    if price_val > 0:
-                        margin = adjusted_retail - price_val
-                        if margin < MIN_MARGIN:
-                            final_price = original_retail
-                        else:
-                            final_price = adjusted_retail
-                    else:
-                        final_price = adjusted_retail
-            except Exception:
-                final_price = original_retail
 
             step = ROUND_STEP
             method = ROUND_METHOD
