@@ -323,7 +323,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                                 adjusted_retail = original_retail
                         else:
                             adjusted_retail = original_retail
-                                       else:
+                    else:
                         brand_settings = BRAND_COEFFS.get(brand)
                         if brand_settings is not None:
                             # Проверяем, есть ли в настройках бренда value (добавка к оптовой цене)
