@@ -108,7 +108,6 @@ BRAND_COEFFS = {
         ],
     },
 }
-}
 
 IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Sonix"]
 MIN_MARGIN = 500
