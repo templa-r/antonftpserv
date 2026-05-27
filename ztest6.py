@@ -162,36 +162,34 @@ def get_coeff_from_settings(settings, diameter):
     round_method = settings.get("round_method")
     return coeff, round_step, round_method
 
-def apply_brand_adjustment(brand_settings, original_retail, diameter):
+def apply_brand_adjustment(brand_settings, base_price, diameter):
     """
     Применяет к цене настройки бренда: либо коэффициент (coeff), либо фиксированное значение (value).
-    Возвращает скорректированную цену.
+    base_price – оптовая цена (price) для добавок, или розница для коэффициентов.
     """
     if not isinstance(brand_settings, dict):
-        # Просто число – коэффициент
-        return original_retail * brand_settings
+        return base_price * brand_settings
 
     # Проверяем диапазоны диаметров
     if diameter is not None and "diameter_ranges" in brand_settings:
         for r in brand_settings["diameter_ranges"]:
             if r["min"] <= diameter <= r["max"]:
                 if "value" in r:
-                    return original_retail + r["value"]
+                    return base_price + r["value"]
                 elif "coeff" in r:
-                    return original_retail * r["coeff"]
+                    return base_price * r["coeff"]
 
-    # Если нет диапазонов или диаметр не подошел, ищем default или coeff
+    # Если нет диапазонов или диаметр не подошел
     if "default" in brand_settings:
         default = brand_settings["default"]
         if isinstance(default, (int, float)):
-            return original_retail * default
+            return base_price * default
     if "coeff" in brand_settings:
-        return original_retail * brand_settings["coeff"]
+        return base_price * brand_settings["coeff"]
     if "value" in brand_settings:
-        return original_retail + brand_settings["value"]
+        return base_price + brand_settings["value"]
 
-    # Ничего не найдено – возвращаем исходную цену
-    return original_retail
+    return base_price
 
 def clean_name(s):
     return re.sub(r'[^\w\-]', '_', s)
@@ -285,7 +283,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                            category in EXCLUDED_CATEGORY)
 
             original_retail = safe_float(value)
-
             apply_coeff = True
             if brand in [b.lower() for b in IGNORE_COEFF_BRANDS]:
                 apply_coeff = False
@@ -326,7 +323,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                     else:
                         brand_settings = BRAND_COEFFS.get(brand)
                         if brand_settings is not None:
-                            # Проверяем, есть ли в настройках бренда value (добавка к оптовой цене)
+                            # Определяем, есть ли в настройках бренда value (добавка к оптовой)
                             use_wholesale = False
                             if isinstance(brand_settings, dict):
                                 if 'value' in brand_settings:
@@ -337,19 +334,28 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                                             use_wholesale = True
                                             break
                             if use_wholesale:
-                                # Используем оптовую цену (price) как базу для добавки
                                 wholesale = safe_float(item.get("price", 0))
                                 if wholesale > 0:
                                     adjusted_retail = apply_brand_adjustment(brand_settings, wholesale, diameter)
                                 else:
-                                    # Если оптовой цены нет, используем исходную розницу
                                     adjusted_retail = apply_brand_adjustment(brand_settings, original_retail, diameter)
                             else:
-                                # Для коэффициентов используем розничную цену
                                 adjusted_retail = apply_brand_adjustment(brand_settings, original_retail, diameter)
                         else:
                             coeff, _, _ = get_coeff_from_settings(GLOBAL_COEFF, diameter)
                             adjusted_retail = original_retail * coeff
+
+                    price_val = safe_float(item.get("price", 0))
+                    if price_val > 0:
+                        margin = adjusted_retail - price_val
+                        if margin < MIN_MARGIN:
+                            final_price = original_retail
+                        else:
+                            final_price = adjusted_retail
+                    else:
+                        final_price = adjusted_retail
+            except Exception:
+                final_price = original_retail
 
             step = ROUND_STEP
             method = ROUND_METHOD
@@ -416,16 +422,13 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
             images_elem = ET.SubElement(product, "Images")
             images_elem.set("PhotoDir", photo_dir)
 
-            # Основное фото (первое в списке)
             img_main = ET.SubElement(images_elem, "Image")
             img_main.set("name", main_filename)
 
-            # Дополнительные фото
             for fname in additional_filenames:
                 img_elem = ET.SubElement(images_elem, "Image")
                 img_elem.set("name", fname)
 
-    # Дополнительные теги
     inSet_elem = ET.SubElement(product, "inSet")
     inSet_elem.text = "1"
 
@@ -461,7 +464,6 @@ for item in data:
         excluded_zb += 1
         continue
 
-    # Исключение по CAE
     if EXCLUDE_CAE_ENABLED:
         cae = item.get("cae", "")
         if cae in EXCLUDED_CAE:
@@ -557,7 +559,6 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
 else:
     print("🔍 Проверка существования файлов отключена (IMAGE_CHECK_ENABLED=False)")
 
-# Статистика по брендам
 brand_diameter_stats = defaultdict(lambda: defaultdict(lambda: {'sum': 0, 'count': 0}))
 stats_count = 0
 for item, diameter in all_items:
@@ -590,7 +591,6 @@ except Exception as e:
     print(f"❌ Ошибка при записи статистики: {e}")
     traceback.print_exc()
 
-# Создание итогового XML
 root = ET.Element("Products")
 for item, diameter in all_items:
     add_product_to_root(root, item, diameter,
