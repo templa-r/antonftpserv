@@ -50,7 +50,7 @@ EXCLUDED_ARTICLES = [
 ]
 
 # ===================== ИСКЛЮЧЕНИЯ ПО CAE (АРТИКУЛАМ) =====================
-EXCLUDE_CAE_ENABLED = True #на случай дублирования обьявлений или удаления неугодных позиций
+EXCLUDE_CAE_ENABLED = True
 EXCLUDED_CAE = [
     "КА-00049127", "КА-00049119", "КА-00049010", "КА-00049170", "КА-00049171",
     "КА-00040044", "00000019470", "КА-00048983", "КА-00046413", "КА-00049081",
@@ -95,13 +95,13 @@ BRAND_COEFFS = {
             {"min": 17, "max": 22, "value": 600},
         ],
     },
-     "pirelli": {
+    "pirelli": {
         "diameter_ranges": [
             {"min": 13, "max": 16, "value": 700},
             {"min": 17, "max": 22, "value": 700},
         ],
     },
-     "formula": {
+    "formula": {
         "diameter_ranges": [
             {"min": 13, "max": 16, "value": 500},
             {"min": 17, "max": 22, "value": 500},
@@ -162,11 +162,41 @@ def get_coeff_from_settings(settings, diameter):
     round_method = settings.get("round_method")
     return coeff, round_step, round_method
 
+def apply_brand_adjustment(brand_settings, original_retail, diameter):
+    """
+    Применяет к цене настройки бренда: либо коэффициент (coeff), либо фиксированное значение (value).
+    Возвращает скорректированную цену.
+    """
+    if not isinstance(brand_settings, dict):
+        # Просто число – коэффициент
+        return original_retail * brand_settings
+
+    # Проверяем диапазоны диаметров
+    if diameter is not None and "diameter_ranges" in brand_settings:
+        for r in brand_settings["diameter_ranges"]:
+            if r["min"] <= diameter <= r["max"]:
+                if "value" in r:
+                    return original_retail + r["value"]
+                elif "coeff" in r:
+                    return original_retail * r["coeff"]
+
+    # Если нет диапазонов или диаметр не подошел, ищем default или coeff
+    if "default" in brand_settings:
+        default = brand_settings["default"]
+        if isinstance(default, (int, float)):
+            return original_retail * default
+    if "coeff" in brand_settings:
+        return original_retail * brand_settings["coeff"]
+    if "value" in brand_settings:
+        return original_retail + brand_settings["value"]
+
+    # Ничего не найдено – возвращаем исходную цену
+    return original_retail
+
 def clean_name(s):
     return re.sub(r'[^\w\-]', '_', s)
 
 def get_base_image_urls(item):
-    """Возвращает список возможных URL для основного изображения (только короткое имя на S3)."""
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
     if not brand or not model:
@@ -177,7 +207,6 @@ def get_base_image_urls(item):
     return [f"{IMAGE_BASE_URL}/{brand_clean}/{short_filename}"]
 
 def get_additional_image_urls(item):
-    """Возвращает список URL дополнительных изображений (на основе размера с суффиксами 1-4)."""
     brand = item.get("brand", "").strip()
     model = item.get("model", "").strip()
     if not brand or not model:
@@ -238,7 +267,6 @@ def check_image_exists(url, cache):
 def add_product_to_root(root, item, diameter, replace_images=True, image_cache=None):
     product = ET.SubElement(root, "Product")
 
-    # Обработка всех полей, кроме img
     for key, value in item.items():
         if key == "Оптовая_Цена":
             continue
@@ -296,12 +324,13 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                         else:
                             adjusted_retail = original_retail
                     else:
+                        # Нет правила модели – применяем брендовую настройку (coeff или value) или глобальную
                         brand_settings = BRAND_COEFFS.get(brand)
                         if brand_settings is not None:
-                            coeff, _, _ = get_coeff_from_settings(brand_settings, diameter)
+                            adjusted_retail = apply_brand_adjustment(brand_settings, original_retail, diameter)
                         else:
                             coeff, _, _ = get_coeff_from_settings(GLOBAL_COEFF, diameter)
-                        adjusted_retail = original_retail * coeff
+                            adjusted_retail = original_retail * coeff
 
                     price_val = safe_float(item.get("price", 0))
                     if price_val > 0:
@@ -330,7 +359,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         else:
             element.text = str(value)
 
-    # --- ФОРМИРОВАНИЕ ТЕГА IMAGES (замена img) ---
+    # --- ФОРМИРОВАНИЕ ТЕГА IMAGES ---
     if replace_images and IMAGE_REPLACE_ENABLED:
         brand = item.get("brand", "").strip()
         model = item.get("model", "").strip()
@@ -417,16 +446,19 @@ total_products = 0
 excluded_zb = 0
 excluded_article = 0
 excluded_season = 0
+excluded_cae = 0
 
 for item in data:
     name = item.get("name", "")
     if name.startswith("ЗБ"):
         excluded_zb += 1
         continue
-# --- Исключение по cae (артикулу) ---
+
+    # Исключение по CAE
     if EXCLUDE_CAE_ENABLED:
         cae = item.get("cae", "")
         if cae in EXCLUDED_CAE:
+            excluded_cae += 1
             continue
 
     if item.get("brand") == "Ikon (Nokian Tyres)":
@@ -480,6 +512,7 @@ for item in data:
             unique_urls.add(url)
 
 print(f"🔍 Всего товаров после фильтров: {total_products}")
+print(f"🔍 Исключено по CAE: {excluded_cae}")
 print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
 image_cache = {}
@@ -517,7 +550,7 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
 else:
     print("🔍 Проверка существования файлов отключена (IMAGE_CHECK_ENABLED=False)")
 
-# Статистика по брендам (оставляем без изменений)
+# Статистика по брендам
 brand_diameter_stats = defaultdict(lambda: defaultdict(lambda: {'sum': 0, 'count': 0}))
 stats_count = 0
 for item, diameter in all_items:
@@ -565,6 +598,7 @@ print(f"✅ Итоговый XML файл создан: aztyre_full.xml, все�
 print(f"\n✅ XML файл успешно создан.")
 print(f"   - Пропущено (ЗБ): {excluded_zb}")
 print(f"   - Исключено по артикулу: {excluded_article}")
+print(f"   - Исключено по CAE: {excluded_cae}")
 if SEASON_EXCLUDE_ENABLED:
     print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
 print(f"   - Всего товаров в выгрузке: {total_products}")
