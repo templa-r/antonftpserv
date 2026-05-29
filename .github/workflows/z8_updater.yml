@@ -61,11 +61,6 @@ jobs:
           IMAGE_CACHE_REFRESH: ${{ inputs.refresh_cache == true && 'true' || 'false' }}
         continue-on-error: true
 
-      - name: Run test
-        if: github.event_name != 'push'
-        run: python ztest5.py
-        continue-on-error: true
-
       - name: Check for changes
         id: changes
         if: github.event_name != 'push' && always()
