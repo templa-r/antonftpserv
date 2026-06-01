@@ -35,7 +35,7 @@ SEASON_EXCLUDE_VALUE = "зима"
 EXCLUDED_BRANDS = [
     "Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
-    "Kelly", "Nitto", "Кама"
+    "Kelly", "Nitto", "Кама", "Roadcruza"
 ]
 
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
