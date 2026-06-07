@@ -284,11 +284,28 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     if lot_size < 1:
         lot_size = 1
 
+
+
     # --- Стандартные поля ---
     ET.SubElement(ad, "Address").text = ""
     ET.SubElement(ad, "Latitude").text = ""
     ET.SubElement(ad, "Longitude").text = ""
-    ET.SubElement(ad, "Id").text = ""
+    
+            # Уникальный идентификатор товара (на основе article + размеры)
+    article = item.get("article", "") or item.get("cae", "")
+    width = item.get("width", "")
+    profile = item.get("profile", "") or item.get("height", "")
+    diameter = item.get("diameter", "")
+    if article:
+        # Добавляем размеры, чтобы различать разные типоразмеры с одинаковым артикулом
+        unique_id = f"{article}_{width}_{profile}_{diameter}".strip('_')
+    else:
+        # Если артикула нет, генерируем по бренду, модели и размеру
+        brand = item.get("brand", "")
+        model = item.get("model", "")
+        unique_id = f"{brand}_{model}_{width}_{profile}_{diameter}".strip('_')
+        
+    ET.SubElement(ad, "Id").text = unique_id
     ET.SubElement(ad, "DateBegin").text = ""
     ET.SubElement(ad, "DateEnd").text = ""
     ET.SubElement(ad, "ListingFee").text = ""
@@ -333,7 +350,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "VideoURL").text = ""
     ET.SubElement(ad, "SellerAddressID").text = ""
     ET.SubElement(ad, "ContactMethod").text = ""
-    ET.SubElement(ad, "Addresses").text = ""
+    ET.SubElement(ad, "Addresses").text = "100189589"
     ET.SubElement(ad, "DeliveryAddresses").text = ""
 
     # Категория (фиксированная)
