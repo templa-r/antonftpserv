@@ -314,10 +314,32 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "ManagerName").text = ""
     ET.SubElement(ad, "ContactPhone").text = ""
     
-    # Описание
-    description = item.get("description", "")
-    if not description:
-        description = f"{item.get('brand', '')} {item.get('model', '')} {item.get('width', '')}/{item.get('profile', '')}R{item.get('diameter', '')}"
+    name = item.get("name", "")
+    if not name:
+        brand = item.get("brand", "")
+        model = item.get("model", "")
+        width = item.get("width", "")
+        profile = item.get("profile", "") or item.get("height", "")
+        diameter = item.get("diameter", "")
+        name = f"{brand} {model} {width}/{profile}R{diameter}".strip()
+
+    # ---- Базовое описание (условия доставки и оплаты) ----
+    description_lines = [
+        name,
+        "В наличии в Новосибирске. Бесплатная доставка по городу. Удалённые районы доставка с доплатой. Звоните пишите. Самые приятные цены. Доставляем быстро.",
+        "",
+        "«АНТОН ШИНЫ-МАШИНЫ»",
+        "🚛 Работаю как интернет-магазин: заказ - доставка до адреса - оплата при получении",
+        "Каталог шин в профиле",
+        "Доставка по Новосибирску: на ваш адрес (дом/офис) - от 30 минут до 2 часов в день заказа",
+        "Оплата: наличные, перевод на карту, безналичный расчёт (для юрлиц, счёт с НДС)",
+        "Если шины под заказ (нет в наличии): предоплата 50% - остальное при получении",
+        "Доставка в другие регионы РФ: через транспортные компании - 100% предоплата, условия уточняйте по телефону",
+        "Работаю честно - никаких скрытых комиссий",
+        "✉️ Звоните или пишите в чат - отвечаю быстро"
+    ]
+    
+    description = "\n".join(description_lines)
     ET.SubElement(ad, "Description").text = description
 
     # Изображения
