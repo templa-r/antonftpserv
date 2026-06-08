@@ -495,7 +495,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "AdType").text = "Товар приобретен на продажу"
     ET.SubElement(ad, "ProductType").text = "Легковые шины"
 
-    ET.SubElement(ad, "Quantity").text = "за 1шт."
+    ET.SubElement(ad, "Quantity").text = "1"
     ET.SubElement(ad, "MultiItem").text = "Да" if lot_size > 1 else "Нет"
 
     # Специфичные поля для шин
