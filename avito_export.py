@@ -9,6 +9,7 @@ import difflib
 import traceback
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict  # добавлено для аннотаций
 
 # ===================== НАСТРОЙКИ =====================
 API_URL = "https://ka2.sibzapaska.ru:16500/API/hs/V2/GetTires"
@@ -22,39 +23,24 @@ ROUND_METHOD = 'nearest'
 MODEL_REFERENCE_FILE = "models_reference.xml"   # путь к вашему XML-файлу
 
 def normalize_string(s: str) -> str:
-    """
-    Приводит строку к нормализованному виду:
-    - удаляет лишние пробелы
-    - заменяет дефисы, подчёркивания, слеши на пробелы
-    - приводит к нижнему регистру
-    - удаляет все символы, кроме букв, цифр и пробелов (опционально)
-    """
+    """Нормализует строку для сравнения (без потери оригинального регистра)."""
     if not s:
         return ""
-    # Заменяем различные разделители на пробелы
     for sep in ['-', '_', '/', '\\', '–', '—']:
         s = s.replace(sep, ' ')
-    # Удаляем всё, кроме букв, цифр и пробелов (можно оставить и другие символы, но для моделей достаточно)
     s = re.sub(r'[^a-zа-яё0-9\s]', '', s, flags=re.IGNORECASE)
-    # Приводим к нижнему регистру
     s = s.lower()
-    # Удаляем множественные пробелы
     s = re.sub(r'\s+', ' ', s).strip()
     return s
 
-def load_model_mapping(xml_path: str) -> Dict[str, set]:
+def load_model_mapping(xml_path: str) -> Dict[str, Dict[str, str]]:
     """
-    Загружает XML со структурой:
-    <make name="Бренд">
-        <model name="Модель"/>
-        ...
-    </make>
-    Возвращает словарь {нормализованный_бренд: множество_нормализованных_моделей}
+    Загружает справочник моделей.
+    Возвращает: { нормализованный_бренд: { нормализованная_модель: оригинальное_название_модели } }
     """
     if not os.path.exists(xml_path):
         print(f"⚠️ Файл {xml_path} не найден. Нормализация моделей отключена.")
         return {}
-    
     try:
         tree = ET.parse(xml_path)
         root = tree.getroot()
@@ -64,35 +50,35 @@ def load_model_mapping(xml_path: str) -> Dict[str, set]:
             if not brand:
                 continue
             brand_norm = normalize_string(brand)
-            models = set()
+            models = {}
             for model in make.findall("model"):
                 model_name = model.get("name", "").strip()
                 if model_name:
-                    models.add(normalize_string(model_name))
+                    model_norm = normalize_string(model_name)
+                    models[model_norm] = model_name   # сохраняем оригинал
             if models:
                 mapping[brand_norm] = models
         print(f"✅ Загружено {len(mapping)} брендов со списками моделей из {xml_path}")
-        # Для отладки выведем пример
-        for b, m_set in list(mapping.items())[:3]:
-            print(f"   Бренд '{b}': {len(m_set)} моделей, например {list(m_set)[:2]}")
         return mapping
     except Exception as e:
         print(f"❌ Ошибка загрузки справочника моделей: {e}")
         return {}
 
-def normalize_model(brand: str, model: str, mapping: Dict[str, Dict[str, str]], cutoff: float = 0.7) -> str:
+def normalize_model(brand: str, model: str, mapping: Dict[str, Dict[str, str]]) -> str:
+    """Точное совпадение нормализованных строк – возвращает оригинал из справочника, иначе исходную модель."""
+    if not model or not mapping:
+        return model
     brand_norm = normalize_string(brand)
     model_norm = normalize_string(model)
-    if brand_norm not in mapping:
-        return model
-    valid_models = mapping[brand_norm]  # словарь {норм: оригинал}
-    if model_norm in valid_models:
-        return valid_models[model_norm]  # возвращаем оригинал из справочника
-    matches = difflib.get_close_matches(model_norm, list(valid_models.keys()), n=1, cutoff=cutoff)
-    if matches:
-        best_norm = matches[0]
-        return valid_models[best_norm]  # возвращаем оригинал
-        
+    if brand_norm in mapping:
+        models_dict = mapping[brand_norm]
+        if model_norm in models_dict:
+            return models_dict[model_norm]   # возвращаем оригинальное написание
+        else:
+            # Для отладки (можно закомментировать)
+            print(f"⚠️ Модель '{model}' (норм: '{model_norm}') не найдена в справочнике для бренда '{brand}'")
+    return model
+
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
 IMAGE_CHECK_ENABLED = True
@@ -347,18 +333,20 @@ def is_disk(item):
 
 # ===================== ФОРМИРОВАНИЕ XML ДЛЯ АВИТО =====================
 def add_ad_to_root(root, item, diameter, image_cache=None):
-    ad = ET.SubElement(root, "Ad")
+    # ---- Определение количества в лоте на основе остатков ----
+    total_stock = safe_float(item.get("countAll", 0))
+    if total_stock == 0:
+        total_stock = safe_float(item.get("rest", 0))
+    # Если товара нет в наличии, пропускаем объявление
+    if total_stock <= 0:
+        return
 
-    # ----- Получение lot_size (количество единиц в лоте) -----
-    lot_size = item.get("lot_size", 1)
-    try:
-        lot_size = int(lot_size)
-    except:
-        lot_size = 1
-    if lot_size > 8:
-        lot_size = 8
-    if lot_size < 1:
-        lot_size = 1
+    if total_stock >= 4:
+        quantity = 4
+    else:
+        quantity = 1
+
+    ad = ET.SubElement(root, "Ad")
 
     # --- Стандартные поля ---
     ET.SubElement(ad, "Address").text = ""
@@ -478,10 +466,9 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "ReturnPolicy").text = ""
     ET.SubElement(ad, "DeliverySubsidy").text = ""
 
-    # ----- Цена за лот (цена_за_1_шт * lot_size) -----
-    # ВНИМАНИЕ: передаём именно параметр diameter (числовой), а не строку diam_str
+    # ----- Цена за лот (цена_за_1_шт * quantity) -----
     price_per_one = calculate_price_per_one(item, diameter)
-    total_price = price_per_one * lot_size
+    total_price = price_per_one * quantity
     total_price = round_price(total_price, ROUND_STEP, ROUND_METHOD)
     ET.SubElement(ad, "Price").text = str(total_price)
 
@@ -492,8 +479,8 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "AdType").text = "Товар приобретен на продажу"
     ET.SubElement(ad, "ProductType").text = "Легковые шины"
 
-    ET.SubElement(ad, "Quantity").text = "1"
-    ET.SubElement(ad, "MultiItem").text = "Да" if lot_size > 1 else "Нет"
+    ET.SubElement(ad, "Quantity").text = str(quantity)
+    ET.SubElement(ad, "MultiItem").text = "Да" if quantity > 1 else "Нет"
 
     # Специфичные поля для шин
     ET.SubElement(ad, "Brand").text = item.get("brand", "")
@@ -506,9 +493,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     if season:
         tire_type_map = {"лето": "Летняя", "зима": "Зимняя", "всесезон": "Всесезонная"}
         tire_type = tire_type_map.get(season.lower(), season)
-        # Для зимней резины уточняем шипованность
         if season.lower() == "зима":
-            # Проверяем наличие шипов: поле studded или spikes
             studded = item.get("studded", "") or item.get("spikes", "")
             if studded and str(studded).lower() in ("да", "yes", "true", "1"):
                 tire_type = "Зимние шипованные"
@@ -536,6 +521,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "OtherDefects").text = ""
     ET.SubElement(ad, "TargetAudience").text = ""
     ET.SubElement(ad, "NDS").text = ""
+
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
 def main():
     auth = base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
@@ -544,6 +530,9 @@ def main():
     data = response.json()
 
     print("🔄 Загрузка данных завершена. Обработка...")
+
+    # ---- Загружаем справочник моделей ----
+    model_mapping = load_model_mapping(MODEL_REFERENCE_FILE)
 
     all_items = []
     unique_urls = set()
@@ -575,6 +564,14 @@ def main():
             excluded_disk += 1
             continue
 
+        # ---- Нормализация модели (замена на правильное название из справочника) ----
+        original_model = item.get("model", "")
+        if brand and original_model and model_mapping:
+            corrected_model = normalize_model(brand, original_model, model_mapping)
+            if corrected_model != original_model:
+                item["model"] = corrected_model
+
+        # Ручные замены (оставлены для совместимости)
         model_replacements = {
             "Blu Earth V906": ("BluEarth Winter V906", "BluEarth Winter V906"),
             "VS-EV": ("Victra Sport EV", "Victra Sport EV"),
