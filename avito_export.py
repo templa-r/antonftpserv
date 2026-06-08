@@ -446,7 +446,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "VideoURL").text = ""
     ET.SubElement(ad, "SellerAddressID").text = ""
     ET.SubElement(ad, "ContactMethod").text = ""
-    ET.SubElement(ad, "Addresses").text = "Новосибирск, Фабричная ул., 43"
+    ET.SubElement(ad, "Addresses").text = "Новосибирская область, Новосибирск, Фабричная улица, 43"
     ET.SubElement(ad, "DeliveryAddresses").text = ""
 
     # Категория
@@ -509,6 +509,14 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     if season:
         tire_type_map = {"лето": "Летняя", "зима": "Зимняя", "всесезон": "Всесезонная"}
         tire_type = tire_type_map.get(season.lower(), season)
+        # Для зимней резины уточняем шипованность
+        if season.lower() == "зима":
+            # Проверяем наличие шипов: поле studded или spikes
+            studded = item.get("studded", "") or item.get("spikes", "")
+            if studded and str(studded).lower() in ("да", "yes", "true", "1"):
+                tire_type = "Зимние шипованные"
+            else:
+                tire_type = "Зимние нешипованные"
     else:
         tire_type = ""
     ET.SubElement(ad, "TireType").text = tire_type
