@@ -80,47 +80,19 @@ def load_model_mapping(xml_path: str) -> Dict[str, set]:
         print(f"❌ Ошибка загрузки справочника моделей: {e}")
         return {}
 
-def normalize_model(brand: str, model: str, mapping: Dict[str, set], cutoff: float = 0.7) -> str:
-    """
-    Приводит модель к правильному названию из справочника.
-    Использует нормализацию строк и нечёткий поиск.
-    """
-    if not model or not mapping:
-        return model
-    
+def normalize_model(brand: str, model: str, mapping: Dict[str, Dict[str, str]], cutoff: float = 0.7) -> str:
     brand_norm = normalize_string(brand)
     model_norm = normalize_string(model)
-    
-    # Если бренд отсутствует в справочнике, ничего не делаем
     if brand_norm not in mapping:
         return model
-    
-    valid_models = mapping[brand_norm]
-    
-    # 1. Точное совпадение нормализованных строк
+    valid_models = mapping[brand_norm]  # словарь {норм: оригинал}
     if model_norm in valid_models:
-        # Возвращаем исходную модель (можно вернуть model, но для красоты найдём оригинал)
-        # Поскольку мы храним нормализованные, то точное совпадение уже нормализовано
-        # Лучше вернуть исходную модель (с оригинальным регистром и дефисами) – её пользователь увидит.
-        # Но для единообразия вернём model (исходную). Если хотите вернуть эталонный вариант из справочника,
-        # нужно хранить оригиналы. Упростим: возвращаем model, т.к. она уже корректна (скорее всего).
-        print(f"🔧 Точное совпадение: бренд {brand}, модель '{model}'")
-        return model
-    
-    # 2. Нечёткое совпадение (по нормализованным строкам)
-    # Для нечёткого сравнения используем difflib на нормализованных строках
-    matches = difflib.get_close_matches(model_norm, valid_models, n=1, cutoff=cutoff)
+        return valid_models[model_norm]  # возвращаем оригинал из справочника
+    matches = difflib.get_close_matches(model_norm, list(valid_models.keys()), n=1, cutoff=cutoff)
     if matches:
-        best_match_norm = matches[0]
-        # Найдём, какая оригинальная модель соответствует этой нормализованной (трудоёмко)
-        # Просто вернём best_match_norm (в нормализованном виде) – для вывода, но лучше оставить исходную?
-        # Однако в исходной модели могут быть лишние символы. Всё же вернём best_match_norm, он ближе к эталону.
-        print(f"🔧 Исправлена модель: бренд {brand}, было '{model}', стало '{best_match_norm}'")
-        return best_match_norm
-    else:
-        # Если не найдено, можно вывести предупреждение только для отладки
-        print(f"⚠️ Модель '{model}' для бренда '{brand}' не найдена в справочнике (норм: '{model_norm}')")
-        return model
+        best_norm = matches[0]
+        return valid_models[best_norm]  # возвращаем оригинал
+        
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
 IMAGE_CHECK_ENABLED = True
