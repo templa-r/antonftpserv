@@ -367,7 +367,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "VideoURL").text = ""
     ET.SubElement(ad, "SellerAddressID").text = ""
     ET.SubElement(ad, "ContactMethod").text = ""
-    ET.SubElement(ad, "Addresses").text = "100189589"
+    ET.SubElement(ad, "Addresses").text = "Новосибирск, Фабричная ул., 43"
     ET.SubElement(ad, "DeliveryAddresses").text = ""
 
     # Категория
@@ -412,11 +412,11 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "FreeTireService").text = ""
     ET.SubElement(ad, "VideoFileURL").text = ""
 
-    ET.SubElement(ad, "GoodsType").text = "Шины"
+    ET.SubElement(ad, "GoodsType").text = "Шины, диски и колёса"
     ET.SubElement(ad, "AdType").text = "Товар приобретен на продажу"
     ET.SubElement(ad, "ProductType").text = "Легковые шины"
 
-    ET.SubElement(ad, "Quantity").text = str(lot_size)
+    ET.SubElement(ad, "Quantity").text = "за 1шт."
     ET.SubElement(ad, "MultiItem").text = "Да" if lot_size > 1 else "Нет"
 
     # Специфичные поля для шин
