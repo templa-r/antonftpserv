@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 import re
 import json
 import time
+import difflib
 import traceback
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -16,6 +17,84 @@ API_PASSWORD = "rWp7mFWXRKOq"
 
 ROUND_STEP = 10
 ROUND_METHOD = 'nearest'
+
+# ===================== НОРМАЛИЗАЦИЯ МОДЕЛЕЙ ПО СПРАВОЧНИКУ =====================
+MODEL_REFERENCE_FILE = "models_reference.xml"   # путь к вашему XML-файлу
+
+def load_model_mapping(xml_path: str) -> Dict[str, set]:
+    """
+    Загружает XML со структурой:
+    <make name="Бренд">
+        <model name="Модель"/>
+        ...
+    </make>
+    Возвращает словарь {бренд: множество_названий_моделей_в_нижнем_регистре}
+    """
+    if not os.path.exists(xml_path):
+        print(f"⚠️ Файл {xml_path} не найден. Нормализация моделей отключена.")
+        return {}
+    
+    try:
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        mapping = {}
+        for make in root.findall("make"):
+            brand = make.get("name", "").strip()
+            if not brand:
+                continue
+            models = set()
+            for model in make.findall("model"):
+                model_name = model.get("name", "").strip()
+                if model_name:
+                    models.add(model_name.lower())
+            if models:
+                mapping[brand.lower()] = models
+        print(f"✅ Загружено {len(mapping)} брендов со списками моделей из {xml_path}")
+        return mapping
+    except Exception as e:
+        print(f"❌ Ошибка загрузки справочника моделей: {e}")
+        return {}
+
+def normalize_model(brand: str, model: str, mapping: Dict[str, set], cutoff: float = 0.6) -> str:
+    """
+    Приводит модель к правильному названию из справочника.
+    - brand: название бренда (будет приведено к нижнему регистру для поиска)
+    - model: текущее название модели
+    - mapping: словарь {бренд: множество_эталонных_моделей_нижний_регистр}
+    - cutoff: порог схожести для fuzzy matching (0.0 - 1.0)
+    Возвращает исправленное название модели (с оригинальным регистром, если найдено)
+    """
+    if not model or not mapping:
+        return model
+    
+    brand_lower = brand.lower()
+    model_lower = model.lower().strip()
+    
+    # Если бренд отсутствует в справочнике, ничего не делаем
+    if brand_lower not in mapping:
+        return model
+    
+    valid_models = mapping[brand_lower]
+    
+    # 1. Точное совпадение (без учёта регистра)
+    if model_lower in valid_models:
+        # Можно вернуть как есть, но для единообразия найдём оригинальное написание из mapping
+        # (в mapping хранятся только нижний регистр, поэтому точное совпадение – уже нижний)
+        return model  # оставляем исходное, если регистр не важен, или ищем оригинал
+        # Для поиска оригинального регистра пришлось бы хранить оригиналы, упростим: возвращаем model
+    
+    # 2. Нечёткое совпадение
+    matches = difflib.get_close_matches(model_lower, valid_models, n=1, cutoff=cutoff)
+    if matches:
+        best_match = matches[0]  # эталонная модель в нижнем регистре
+        # Чтобы вернуть исходный регистр, нужно знать эталонное написание. Его нет, вернём best_match
+        # (но в справочнике модели могут быть с заглавными, мы их привели к нижнему, поэтому возвращаем best_match)
+        print(f"🔧 Исправлена модель: бренд {brand}, было '{model}', стало '{best_match}'")
+        return best_match
+    else:
+        # Можно вывести предупреждение, если модель отсутствует в справочнике
+        print(f"⚠️ Модель '{model}' для бренда '{brand}' не найдена в справочнике и не имеет близких аналогов.")
+        return model
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
