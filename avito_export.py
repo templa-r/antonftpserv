@@ -284,28 +284,24 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     if lot_size < 1:
         lot_size = 1
 
-
-
     # --- Стандартные поля ---
     ET.SubElement(ad, "Address").text = ""
     ET.SubElement(ad, "Latitude").text = ""
     ET.SubElement(ad, "Longitude").text = ""
-    
-            # Уникальный идентификатор товара (на основе article + размеры)
+
+    # Уникальный идентификатор товара (на основе article + размеры)
     article = item.get("article", "") or item.get("cae", "")
     width = item.get("width", "")
     profile = item.get("profile", "") or item.get("height", "")
-    diameter = item.get("diameter", "")
+    diam_str = item.get("diameter", "")   # строковое представление диаметра (для ID)
     if article:
-        # Добавляем размеры, чтобы различать разные типоразмеры с одинаковым артикулом
-        unique_id = f"{article}_{width}_{profile}_{diameter}".strip('_')
+        unique_id = f"{article}_{width}_{profile}_{diam_str}".strip('_')
     else:
-        # Если артикула нет, генерируем по бренду, модели и размеру
         brand = item.get("brand", "")
         model = item.get("model", "")
-        unique_id = f"{brand}_{model}_{width}_{profile}_{diameter}".strip('_')
-        
+        unique_id = f"{brand}_{model}_{width}_{profile}_{diam_str}".strip('_')
     ET.SubElement(ad, "Id").text = unique_id
+
     ET.SubElement(ad, "DateBegin").text = ""
     ET.SubElement(ad, "DateEnd").text = ""
     ET.SubElement(ad, "ListingFee").text = ""
@@ -313,15 +309,15 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "AvitoId").text = ""
     ET.SubElement(ad, "ManagerName").text = ""
     ET.SubElement(ad, "ContactPhone").text = ""
-    
+
+    # ---- Название товара (для описания) ----
     name = item.get("name", "")
     if not name:
         brand = item.get("brand", "")
         model = item.get("model", "")
         width = item.get("width", "")
         profile = item.get("profile", "") or item.get("height", "")
-        diameter = item.get("diameter", "")
-        name = f"{brand} {model} {width}/{profile}R{diameter}".strip()
+        name = f"{brand} {model} {width}/{profile}R{diam_str}".strip()
 
     # ---- Базовое описание (условия доставки и оплаты) ----
     description_lines = [
@@ -338,7 +334,6 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
         "Работаю честно - никаких скрытых комиссий",
         "✉️ Звоните или пишите в чат - отвечаю быстро"
     ]
-    
     description = "\n".join(description_lines)
     ET.SubElement(ad, "Description").text = description
 
@@ -375,7 +370,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "Addresses").text = "100189589"
     ET.SubElement(ad, "DeliveryAddresses").text = ""
 
-    # Категория (фиксированная)
+    # Категория
     ET.SubElement(ad, "Category").text = "Запчасти и аксессуары"
 
     ET.SubElement(ad, "Promo").text = ""
@@ -408,6 +403,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "DeliverySubsidy").text = ""
 
     # ----- Цена за лот (цена_за_1_шт * lot_size) -----
+    # ВНИМАНИЕ: передаём именно параметр diameter (числовой), а не строку diam_str
     price_per_one = calculate_price_per_one(item, diameter)
     total_price = price_per_one * lot_size
     total_price = round_price(total_price, ROUND_STEP, ROUND_METHOD)
@@ -416,25 +412,20 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "FreeTireService").text = ""
     ET.SubElement(ad, "VideoFileURL").text = ""
 
-    # Тип товара
     ET.SubElement(ad, "GoodsType").text = "Шины"
     ET.SubElement(ad, "AdType").text = "Товар приобретен на продажу"
     ET.SubElement(ad, "ProductType").text = "Легковые шины"
 
-    # ----- MultiItem и Quantity (согласно lot_size) -----
     ET.SubElement(ad, "Quantity").text = str(lot_size)
-    if lot_size > 1:
-        ET.SubElement(ad, "MultiItem").text = "Да"
-    else:
-        ET.SubElement(ad, "MultiItem").text = "Нет"
+    ET.SubElement(ad, "MultiItem").text = "Да" if lot_size > 1 else "Нет"
 
     # Специфичные поля для шин
     ET.SubElement(ad, "Brand").text = item.get("brand", "")
     ET.SubElement(ad, "Model").text = item.get("model", "")
-    ET.SubElement(ad, "TireSectionWidth").text = str(item.get("width", "")) if item.get("width") else ""
-    ET.SubElement(ad, "RimDiameter").text = str(item.get("diameter", "")) if item.get("diameter") else ""
+    ET.SubElement(ad, "TireSectionWidth").text = str(item.get("width", ""))
+    ET.SubElement(ad, "RimDiameter").text = str(item.get("diameter", ""))
     ET.SubElement(ad, "TireAspectRatio").text = str(item.get("profile", "") or item.get("height", ""))
-    
+
     season = item.get("season", "")
     if season:
         tire_type_map = {"лето": "Летняя", "зима": "Зимняя", "всесезон": "Всесезонная"}
@@ -443,19 +434,15 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
         tire_type = ""
     ET.SubElement(ad, "TireType").text = tire_type
     ET.SubElement(ad, "LoadIndex").text = str(item.get("load_index", ""))
-    # Quantity уже заполнен выше, но не нужно его путать с количеством в наличии – это лот.
     ET.SubElement(ad, "Homologation").text = ""
     ET.SubElement(ad, "SpeedIndex").text = str(item.get("speed_index", ""))
-    
+
     runflat = item.get("runflat", "")
-    if runflat and runflat.lower() in ("да", "yes", "runflat"):
-        ET.SubElement(ad, "RunFlat").text = "Да"
-    else:
-        ET.SubElement(ad, "RunFlat").text = "Нет"
+    ET.SubElement(ad, "RunFlat").text = "Да" if runflat and runflat.lower() in ("да", "yes", "runflat") else "Нет"
 
     ET.SubElement(ad, "DifferentWidthTires").text = ""
     ET.SubElement(ad, "TireYear").text = str(item.get("year", ""))
-    # Поля для дисков (оставляем пустыми)
+    # Поля для дисков (пустые)
     ET.SubElement(ad, "BackRimDiameter").text = ""
     ET.SubElement(ad, "BackTireAspectRatio").text = ""
     ET.SubElement(ad, "BackTireSectionWidth").text = ""
@@ -465,7 +452,6 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "OtherDefects").text = ""
     ET.SubElement(ad, "TargetAudience").text = ""
     ET.SubElement(ad, "NDS").text = ""
-
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
 def main():
     auth = base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
