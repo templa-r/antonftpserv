@@ -21,6 +21,27 @@ ROUND_METHOD = 'nearest'
 # ===================== НОРМАЛИЗАЦИЯ МОДЕЛЕЙ ПО СПРАВОЧНИКУ =====================
 MODEL_REFERENCE_FILE = "models_reference.xml"   # путь к вашему XML-файлу
 
+def normalize_string(s: str) -> str:
+    """
+    Приводит строку к нормализованному виду:
+    - удаляет лишние пробелы
+    - заменяет дефисы, подчёркивания, слеши на пробелы
+    - приводит к нижнему регистру
+    - удаляет все символы, кроме букв, цифр и пробелов (опционально)
+    """
+    if not s:
+        return ""
+    # Заменяем различные разделители на пробелы
+    for sep in ['-', '_', '/', '\\', '–', '—']:
+        s = s.replace(sep, ' ')
+    # Удаляем всё, кроме букв, цифр и пробелов (можно оставить и другие символы, но для моделей достаточно)
+    s = re.sub(r'[^a-zа-яё0-9\s]', '', s, flags=re.IGNORECASE)
+    # Приводим к нижнему регистру
+    s = s.lower()
+    # Удаляем множественные пробелы
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s
+
 def load_model_mapping(xml_path: str) -> Dict[str, set]:
     """
     Загружает XML со структурой:
@@ -28,7 +49,7 @@ def load_model_mapping(xml_path: str) -> Dict[str, set]:
         <model name="Модель"/>
         ...
     </make>
-    Возвращает словарь {бренд: множество_названий_моделей_в_нижнем_регистре}
+    Возвращает словарь {нормализованный_бренд: множество_нормализованных_моделей}
     """
     if not os.path.exists(xml_path):
         print(f"⚠️ Файл {xml_path} не найден. Нормализация моделей отключена.")
@@ -42,60 +63,64 @@ def load_model_mapping(xml_path: str) -> Dict[str, set]:
             brand = make.get("name", "").strip()
             if not brand:
                 continue
+            brand_norm = normalize_string(brand)
             models = set()
             for model in make.findall("model"):
                 model_name = model.get("name", "").strip()
                 if model_name:
-                    models.add(model_name.lower())
+                    models.add(normalize_string(model_name))
             if models:
-                mapping[brand.lower()] = models
+                mapping[brand_norm] = models
         print(f"✅ Загружено {len(mapping)} брендов со списками моделей из {xml_path}")
+        # Для отладки выведем пример
+        for b, m_set in list(mapping.items())[:3]:
+            print(f"   Бренд '{b}': {len(m_set)} моделей, например {list(m_set)[:2]}")
         return mapping
     except Exception as e:
         print(f"❌ Ошибка загрузки справочника моделей: {e}")
         return {}
 
-def normalize_model(brand: str, model: str, mapping: Dict[str, set], cutoff: float = 0.6) -> str:
+def normalize_model(brand: str, model: str, mapping: Dict[str, set], cutoff: float = 0.7) -> str:
     """
     Приводит модель к правильному названию из справочника.
-    - brand: название бренда (будет приведено к нижнему регистру для поиска)
-    - model: текущее название модели
-    - mapping: словарь {бренд: множество_эталонных_моделей_нижний_регистр}
-    - cutoff: порог схожести для fuzzy matching (0.0 - 1.0)
-    Возвращает исправленное название модели (с оригинальным регистром, если найдено)
+    Использует нормализацию строк и нечёткий поиск.
     """
     if not model or not mapping:
         return model
     
-    brand_lower = brand.lower()
-    model_lower = model.lower().strip()
+    brand_norm = normalize_string(brand)
+    model_norm = normalize_string(model)
     
     # Если бренд отсутствует в справочнике, ничего не делаем
-    if brand_lower not in mapping:
+    if brand_norm not in mapping:
         return model
     
-    valid_models = mapping[brand_lower]
+    valid_models = mapping[brand_norm]
     
-    # 1. Точное совпадение (без учёта регистра)
-    if model_lower in valid_models:
-        # Можно вернуть как есть, но для единообразия найдём оригинальное написание из mapping
-        # (в mapping хранятся только нижний регистр, поэтому точное совпадение – уже нижний)
-        return model  # оставляем исходное, если регистр не важен, или ищем оригинал
-        # Для поиска оригинального регистра пришлось бы хранить оригиналы, упростим: возвращаем model
+    # 1. Точное совпадение нормализованных строк
+    if model_norm in valid_models:
+        # Возвращаем исходную модель (можно вернуть model, но для красоты найдём оригинал)
+        # Поскольку мы храним нормализованные, то точное совпадение уже нормализовано
+        # Лучше вернуть исходную модель (с оригинальным регистром и дефисами) – её пользователь увидит.
+        # Но для единообразия вернём model (исходную). Если хотите вернуть эталонный вариант из справочника,
+        # нужно хранить оригиналы. Упростим: возвращаем model, т.к. она уже корректна (скорее всего).
+        print(f"🔧 Точное совпадение: бренд {brand}, модель '{model}'")
+        return model
     
-    # 2. Нечёткое совпадение
-    matches = difflib.get_close_matches(model_lower, valid_models, n=1, cutoff=cutoff)
+    # 2. Нечёткое совпадение (по нормализованным строкам)
+    # Для нечёткого сравнения используем difflib на нормализованных строках
+    matches = difflib.get_close_matches(model_norm, valid_models, n=1, cutoff=cutoff)
     if matches:
-        best_match = matches[0]  # эталонная модель в нижнем регистре
-        # Чтобы вернуть исходный регистр, нужно знать эталонное написание. Его нет, вернём best_match
-        # (но в справочнике модели могут быть с заглавными, мы их привели к нижнему, поэтому возвращаем best_match)
-        print(f"🔧 Исправлена модель: бренд {brand}, было '{model}', стало '{best_match}'")
-        return best_match
+        best_match_norm = matches[0]
+        # Найдём, какая оригинальная модель соответствует этой нормализованной (трудоёмко)
+        # Просто вернём best_match_norm (в нормализованном виде) – для вывода, но лучше оставить исходную?
+        # Однако в исходной модели могут быть лишние символы. Всё же вернём best_match_norm, он ближе к эталону.
+        print(f"🔧 Исправлена модель: бренд {brand}, было '{model}', стало '{best_match_norm}'")
+        return best_match_norm
     else:
-        # Можно вывести предупреждение, если модель отсутствует в справочнике
-        print(f"⚠️ Модель '{model}' для бренда '{brand}' не найдена в справочнике и не имеет близких аналогов.")
+        # Если не найдено, можно вывести предупреждение только для отладки
+        print(f"⚠️ Модель '{model}' для бренда '{brand}' не найдена в справочнике (норм: '{model_norm}')")
         return model
-
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
 IMAGE_CHECK_ENABLED = True
