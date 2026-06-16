@@ -22,10 +22,11 @@ ROUND_METHOD = 'nearest'
 # ===================== НОРМАЛИЗАЦИЯ МОДЕЛЕЙ И БРЕНДОВ =====================
 MODEL_REFERENCE_FILE = "models_reference.xml"
 
-# Пути к справочникам размеров
+# Пути к справочникам размеров и индексов
 DIAMETER_REFERENCE_FILE = "diameter.xml"
 PROFILE_REFERENCE_FILE = "profile.xml"
 WIDTH_REFERENCE_FILE = "width.xml"
+LOADINDEX_REFERENCE_FILE = "loadindex.xml"
 
 def normalize_string(s: str) -> str:
     """Нормализует строку для сравнения (без потери оригинального регистра)."""
@@ -101,6 +102,29 @@ def load_values_set(xml_path: str, tag: str) -> set:
         print(f"❌ Ошибка загрузки {xml_path}: {e}")
         return set()
 
+def load_int_set(xml_path: str, tag: str) -> set:
+    """Загружает целочисленные допустимые значения из XML (например, индексы нагрузки)."""
+    if not os.path.exists(xml_path):
+        print(f"⚠️ Файл {xml_path} не найден. Валидация отключена.")
+        return set()
+    try:
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        valid = set()
+        for elem in root.findall(tag):
+            val = (elem.text or "").strip()
+            if val:
+                try:
+                    num = int(val)
+                    valid.add(num)
+                except ValueError:
+                    pass  # игнорируем некорректные значения
+        print(f"✅ Загружено {len(valid)} значений из {xml_path}")
+        return valid
+    except Exception as e:
+        print(f"❌ Ошибка загрузки {xml_path}: {e}")
+        return set()
+
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
 IMAGE_CHECK_ENABLED = True
@@ -150,7 +174,6 @@ BRAND_COEFFS = {
             {"min": 17, "max": 22, "coeff": 0.88},
         ],
     },
-    # Дубликат для "ikon tyres" на случай, если бренд уже заменён
     "ikon tyres": {
         "default": 0.88,
         "diameter_ranges": [
@@ -485,7 +508,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
         tire_type = "Всесезонные"
     ET.SubElement(ad, "TireType").text = tire_type
 
-    # Индексы
+    # Индексы (необязательные, но если есть – уже прошли валидацию)
     if item.get("load_index"):
         ET.SubElement(ad, "LoadIndex").text = str(item["load_index"])
     if item.get("speed_index"):
@@ -515,10 +538,11 @@ def main():
     model_mapping, brand_map = load_model_mapping(MODEL_REFERENCE_FILE)
     valid_brands_norms = set(brand_map.keys())
 
-    # 2. Загружаем справочники размеров
+    # 2. Загружаем справочники размеров и индексов
     valid_diameters = load_values_set(DIAMETER_REFERENCE_FILE, "RimDiameter")
     valid_profiles = load_values_set(PROFILE_REFERENCE_FILE, "TireAspectRatio")
     valid_widths = load_values_set(WIDTH_REFERENCE_FILE, "TireSectionWidth")
+    valid_loadindexes = load_int_set(LOADINDEX_REFERENCE_FILE, "LoadIndex")
 
     # 3. Подготовка лога ошибок валидации
     log_file = "validation_errors.log"
@@ -539,7 +563,8 @@ def main():
     excluded_article = 0
     excluded_season = 0
     excluded_disk = 0
-    excluded_validation = 0   # все исключения по валидации бренда/модели/размеров
+    excluded_validation = 0
+    excluded_zero_price = 0
 
     for item in data:
         name = item.get("name", "")
@@ -554,6 +579,12 @@ def main():
         if "name" in item and "(Nokian Tyres)" in item["name"]:
             item["name"] = item["name"].replace("(Nokian Tyres)", "").strip()
             item["name"] = re.sub(r'\s+', ' ', item["name"])
+
+        # Исключаем товары с нулевой ценой (retail)
+        original_retail = safe_float(item.get("retail", 0))
+        if original_retail <= 0:
+            excluded_zero_price += 1
+            continue
 
         brand = item.get("brand", "")
         if brand in EXCLUDED_BRANDS_FROM_EXPORT:
@@ -581,7 +612,6 @@ def main():
             excluded_validation += 1
             continue
 
-        # brand_norm уже вычислен
         if brand_norm in model_mapping:
             models_dict = model_mapping[brand_norm]
             model_norm = normalize_string(model)
@@ -592,7 +622,6 @@ def main():
                 excluded_validation += 1
                 continue
         else:
-            # Бренд есть, но моделей нет (на всякий случай)
             log_invalid(item, "Model", model, f"бренд {item['brand']} не имеет списка моделей")
             excluded_validation += 1
             continue
@@ -651,12 +680,25 @@ def main():
             excluded_validation += 1
             continue
 
+        # ---------- Валидация индекса нагрузки (если указан) ----------
+        load_index_raw = item.get("load_index", "")
+        if load_index_raw:
+            try:
+                li = int(load_index_raw)
+                if li not in valid_loadindexes:
+                    log_invalid(item, "LoadIndex", str(load_index_raw), "отсутствует в справочнике")
+                    excluded_validation += 1
+                    continue
+            except ValueError:
+                log_invalid(item, "LoadIndex", str(load_index_raw), "некорректное число")
+                excluded_validation += 1
+                continue
+
         # ---------- Остальные проверки ----------
         if is_disk(item):
             excluded_disk += 1
             continue
 
-        # Исключение по артикулу
         article = item.get("article", "")
         if any(phrase in article for phrase in EXCLUDED_ARTICLES):
             excluded_article += 1
@@ -672,16 +714,16 @@ def main():
         total_products += 1
         all_items.append((item, diameter))
 
-        # Сбор URL картинок
         if IMAGE_REPLACE_ENABLED:
             for url in get_all_image_urls(item):
                 unique_urls.add(url)
 
     print(f"🔍 Всего товаров после всех фильтров: {total_products}")
-    print(f"🔍 Исключено по валидации (бренд/модель/размеры): {excluded_validation}")
+    print(f"🔍 Исключено по валидации (бренд/модель/размеры/индексы): {excluded_validation}")
+    print(f"🔍 Исключено с нулевой ценой: {excluded_zero_price}")
     print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
-    # Кэширование изображений (как и прежде)
+    # Кэширование изображений
     image_cache = {}
     check_time = 0
     if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
@@ -727,7 +769,7 @@ def main():
                        image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
 
     tree = ET.ElementTree(root)
-    output_file = "avito_export3.xml"
+    output_file = "avito_export2.xml"
     tree.write(output_file, encoding="utf-8", xml_declaration=True)
 
     print(f"✅ Итоговый XML для Авито создан: {output_file}, всего объявлений: {total_products}")
@@ -735,6 +777,7 @@ def main():
     print(f"   - Исключено по артикулу: {excluded_article}")
     print(f"   - Исключено дисков: {excluded_disk}")
     print(f"   - Исключено по валидации: {excluded_validation}")
+    print(f"   - Исключено с нулевой ценой: {excluded_zero_price}")
     if SEASON_EXCLUDE_ENABLED:
         print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
 
