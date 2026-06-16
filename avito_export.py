@@ -333,39 +333,36 @@ def is_disk(item):
 
 # ===================== ФОРМИРОВАНИЕ XML ДЛЯ АВИТО =====================
 def add_ad_to_root(root, item, diameter, image_cache=None):
-    # ---- Определение количества в лоте на основе остатков ----
     total_stock = safe_float(item.get("countAll", 0))
     if total_stock == 0:
         total_stock = safe_float(item.get("rest", 0))
-    # Если товара нет в наличии, пропускаем объявление
     if total_stock <= 0:
         return
 
-    if total_stock >= 4:
-        quantity = 4
-    else:
-        quantity = 1
+    quantity = 4 if total_stock >= 4 else 1
 
     ad = ET.SubElement(root, "Ad")
 
     # --- Стандартные поля ---
-    ET.SubElement(ad, "Address").text = ""
+    ET.SubElement(ad, "Address").text = "Новосибирская область, Новосибирск, Фабричная улица, 43"
     ET.SubElement(ad, "Latitude").text = ""
     ET.SubElement(ad, "Longitude").text = ""
 
-    # Уникальный идентификатор товара (на основе article + размеры)
+    # --- Идентификатор (только разрешённые символы) ---
     article = item.get("article", "") or item.get("cae", "")
     width = item.get("width", "")
     profile = item.get("profile", "") or item.get("height", "")
-    diam_str = item.get("diameter", "")   # строковое представление диаметра (для ID)
+    diam_str = item.get("diameter", "")
     if article:
-        unique_id = f"{article}_{width}_{profile}_{diam_str}".strip('_')
+        unique_id = f"{article}-{width}-{profile}-{diam_str}".strip('-')
     else:
         brand = item.get("brand", "")
         model = item.get("model", "")
-        unique_id = f"{brand}_{model}_{width}_{profile}_{diam_str}".strip('_')
+        unique_id = f"{brand}-{model}-{width}-{profile}-{diam_str}".strip('-')
+    # На всякий случай заменим другие небезопасные символы (оставим буквы, цифры, дефис)
+    unique_id = re.sub(r'[^a-zA-Zа-яА-ЯёЁ0-9\-]', '', unique_id)
+   
     ET.SubElement(ad, "Id").text = unique_id
-
     ET.SubElement(ad, "DateBegin").text = ""
     ET.SubElement(ad, "DateEnd").text = ""
     ET.SubElement(ad, "ListingFee").text = ""
@@ -384,7 +381,11 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
         name = f"{brand} {model} {width}/{profile}R{diam_str}".strip()
 
     # ---- Базовое описание (условия доставки и оплаты) ----
-    description_lines = [
+# --- Описание ---
+    name = item.get("name", "")
+    if not name:
+        name = f"{item.get('brand', '')} {item.get('model', '')} {width}/{profile}R{diam_str}".strip()
+    description = "\n".join([
         name,
         "В наличии в Новосибирске. Бесплатная доставка по городу. Удалённые районы доставка с доплатой. Звоните пишите. Самые приятные цены. Доставляем быстро.",
         "",
@@ -397,10 +398,8 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
         "Доставка в другие регионы РФ: через транспортные компании - 100% предоплата, условия уточняйте по телефону",
         "Работаю честно - никаких скрытых комиссий",
         "✉️ Звоните или пишите в чат - отвечаю быстро"
-    ]
-    description = "\n".join(description_lines)
+    ])
     ET.SubElement(ad, "Description").text = description
-
     # Изображения
     images_elem = ET.SubElement(ad, "Images")
     brand = item.get("brand", "").strip()
@@ -431,7 +430,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "VideoURL").text = ""
     ET.SubElement(ad, "SellerAddressID").text = ""
     ET.SubElement(ad, "ContactMethod").text = ""
-    ET.SubElement(ad, "Addresses").text = "Новосибирская область, Новосибирск, Фабричная улица, 43"
+    ET.SubElement(ad, "Addresses").text = ""
     ET.SubElement(ad, "DeliveryAddresses").text = ""
 
     # Категория
@@ -447,11 +446,8 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
         title_parts.append(item.get("brand"))
     if item.get("model"):
         title_parts.append(item.get("model"))
-    width = item.get("width", "")
-    profile = item.get("profile", "") or item.get("height", "")
-    diam = item.get("diameter", "")
-    if width and profile and diam:
-        title_parts.append(f"{width}/{profile}R{diam}")
+    if width and profile and diam_str:
+        title_parts.append(f"{width}/{profile}R{diam_str}")
     title = " ".join(title_parts) if title_parts else "Шина"
     ET.SubElement(ad, "Title").text = title
 
@@ -491,7 +487,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
 
     season = item.get("season", "")
     if season:
-        tire_type_map = {"лето": "Летняя", "зима": "Зимняя", "всесезон": "Всесезонная"}
+        tire_type_map = {"лето": "Летние", "зима": "Зимние", "всесезон": "Всесезонные"}
         tire_type = tire_type_map.get(season.lower(), season)
         if season.lower() == "зима":
             studded = item.get("studded", "") or item.get("spikes", "")
