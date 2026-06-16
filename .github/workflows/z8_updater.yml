@@ -3,9 +3,6 @@ name: z8 updater shuuuuuuuuu
 on:
   push:
     branches: ["main"]
-  schedule:
-    # Запуск каждый день в 3:10 по новосибирскому времени (UTC+7)
-    - cron: "10 20 * * *"
   workflow_dispatch:
      inputs:
       refresh_cache:
