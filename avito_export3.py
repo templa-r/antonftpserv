@@ -412,10 +412,9 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
     total_price = price_per_one * quantity
     total_price = round_price(total_price, ROUND_STEP, ROUND_METHOD)
 
-    # Принудительная минимальная цена, чтобы избежать 0
+    # Не выгружаем товары с нулевой ценой
     if total_price <= 0:
-        print(f"⚠️ Внимание: товар {unique_id} имел нулевую цену, установлено минимальное значение {ROUND_STEP}")
-        total_price = ROUND_STEP
+        return
 
     ad = ET.SubElement(root, "Ad")
 
@@ -767,14 +766,14 @@ def main():
     root.set("formatVersion", "3")
     root.set("target", "Avito.ru")
 
-    seen_ids = set()   # множество для отслеживания уникальных ID в файле
+    seen_ids = set()
     for item, diameter in all_items:
         add_ad_to_root(root, item, diameter,
                        image_cache=image_cache if IMAGE_CHECK_ENABLED else None,
                        seen_ids=seen_ids)
 
     tree = ET.ElementTree(root)
-    output_file = "avito_export2.xml"
+    output_file = "avito_export3.xml"
     tree.write(output_file, encoding="utf-8", xml_declaration=True)
 
     print(f"✅ Итоговый XML для Авито создан: {output_file}, всего объявлений в файле: {len(tree.getroot().findall('Ad'))}")
