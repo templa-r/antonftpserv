@@ -606,7 +606,7 @@ def main():
                        image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
 
     tree = ET.ElementTree(root)
-    output_file = "avito_export.xml"
+    output_file = "avito_export2.xml"
     tree.write(output_file, encoding="utf-8", xml_declaration=True)
 
     print(f"✅ Итоговый XML для Авито создан: {output_file}, всего объявлений: {total_products}")
