@@ -5,8 +5,6 @@ import xml.etree.ElementTree as ET
 import re
 import json
 import time
-import difflib
-import traceback
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict
@@ -141,6 +139,15 @@ EXCLUDED_ARTICLES = [
     "33x10,50-16 NORTEC ET-500 111N TL АШК",
 ]
 
+# Список идентификаторов, которые нужно исключить (обычно из-за нулевой цены)
+EXCLUDED_IDS = {
+    "6924590215153-195-65-15",
+    "2167333-235-40-18",
+    "6924590215306-225-60-17",
+    "6924590215191-215-60-16",
+    "6924590215221-215-55-17",
+}
+
 # ===================== КОЭФФИЦИЕНТЫ ЦЕН =====================
 GLOBAL_COEFF = {
     "default": 0.92,
@@ -230,6 +237,21 @@ def get_coeff_from_settings(settings, diameter):
 
 def clean_name(s):
     return re.sub(r'[^\w\-]', '_', s)
+
+def make_id(item):
+    """Создаёт уникальный идентификатор объявления (как в XML)."""
+    article = item.get("article", "") or item.get("cae", "")
+    width = item.get("width", "")
+    profile = item.get("profile", "") or item.get("height", "")
+    diam_str = item.get("diameter", "")
+    if article:
+        unique_id = f"{article}-{width}-{profile}-{diam_str}".strip('-')
+    else:
+        brand_name = item.get("brand", "")
+        model_name = item.get("model", "")
+        unique_id = f"{brand_name}-{model_name}-{width}-{profile}-{diam_str}".strip('-')
+    unique_id = re.sub(r'[^a-zA-Zа-яА-ЯёЁ0-9\-]', '', unique_id)
+    return unique_id
 
 def get_base_image_urls(item):
     brand = item.get("brand", "").strip()
@@ -367,7 +389,7 @@ def is_disk(item):
     return False
 
 # ===================== ФОРМИРОВАНИЕ XML ДЛЯ АВИТО =====================
-def add_ad_to_root(root, item, diameter, image_cache=None, zero_counter=None):
+def add_ad_to_root(root, item, diameter, image_cache=None):
     total_stock = safe_float(item.get("countAll", 0))
     if total_stock == 0:
         total_stock = safe_float(item.get("rest", 0))
@@ -376,15 +398,12 @@ def add_ad_to_root(root, item, diameter, image_cache=None, zero_counter=None):
 
     quantity = 4 if total_stock >= 4 else 1
 
-    # Расчёт цены
     price_per_one = calculate_price_per_one(item, diameter)
     total_price = price_per_one * quantity
     total_price = round_price(total_price, ROUND_STEP, ROUND_METHOD)
 
-    # Проверка на нулевую цену после расчёта
     if total_price <= 0:
-        if zero_counter is not None:
-            zero_counter[0] += 1
+        # Не выгружаем товары с нулевой итоговой ценой
         return
 
     ad = ET.SubElement(root, "Ad")
@@ -392,17 +411,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None, zero_counter=None):
     ET.SubElement(ad, "Address").text = "Новосибирская область, Новосибирск, Фабричная улица, 43"
 
     # Идентификатор
-    article = item.get("article", "") or item.get("cae", "")
-    width = item.get("width", "")
-    profile = item.get("profile", "") or item.get("height", "")
-    diam_str = item.get("diameter", "")
-    if article:
-        unique_id = f"{article}-{width}-{profile}-{diam_str}".strip('-')
-    else:
-        brand_name = item.get("brand", "")
-        model_name = item.get("model", "")
-        unique_id = f"{brand_name}-{model_name}-{width}-{profile}-{diam_str}".strip('-')
-    unique_id = re.sub(r'[^a-zA-Zа-яА-ЯёЁ0-9\-]', '', unique_id)
+    unique_id = make_id(item)
     ET.SubElement(ad, "Id").text = unique_id
 
     # Заголовок
@@ -411,6 +420,9 @@ def add_ad_to_root(root, item, diameter, image_cache=None, zero_counter=None):
         title_parts.append(item.get("brand"))
     if item.get("model"):
         title_parts.append(item.get("model"))
+    width = item.get("width", "")
+    profile = item.get("profile", "") or item.get("height", "")
+    diam_str = item.get("diameter", "")
     if width and profile and diam_str:
         title_parts.append(f"{width}/{profile}R{diam_str}")
     title = " ".join(title_parts) if title_parts else "Шина"
@@ -490,8 +502,11 @@ def add_ad_to_root(root, item, diameter, image_cache=None, zero_counter=None):
         tire_type = "Всесезонные"
     ET.SubElement(ad, "TireType").text = tire_type
 
-    if item.get("load_index"):
-        ET.SubElement(ad, "LoadIndex").text = str(item["load_index"])
+    # Индекс нагрузки (только если задан и не пуст)
+    load_index_val = str(item.get("load_index", "")).strip()
+    if load_index_val:
+        ET.SubElement(ad, "LoadIndex").text = load_index_val
+
     if item.get("speed_index"):
         ET.SubElement(ad, "SpeedIndex").text = str(item["speed_index"])
 
@@ -539,7 +554,7 @@ def main():
     excluded_disk = 0
     excluded_validation = 0
     excluded_zero_retail = 0
-    zero_price_counter = [0]   # для отслеживания внутри add_ad_to_root
+    excluded_by_id = 0      # новый счётчик
 
     for item in data:
         name = item.get("name", "")
@@ -651,21 +666,27 @@ def main():
         # --- Валидация индекса нагрузки ---
         load_index_raw = str(item.get("load_index", "")).strip()
         if load_index_raw:
-            # Обработка составных индексов "106/104" -> берём первую часть
             if '/' in load_index_raw:
                 load_index_raw = load_index_raw.split('/')[0].strip()
             try:
                 li = int(load_index_raw)
-                if li not in valid_loadindexes:
+                if li in valid_loadindexes:
+                    item["load_index"] = str(li)
+                else:
                     log_invalid(item, "LoadIndex", str(item.get("load_index", "")), "отсутствует в справочнике")
                     excluded_validation += 1
                     continue
-                else:
-                    item["load_index"] = str(li)   # заменяем на чистое число
             except ValueError:
                 log_invalid(item, "LoadIndex", str(item.get("load_index", "")), "некорректное число")
                 excluded_validation += 1
                 continue
+        else:
+            item.pop("load_index", None)
+
+        # --- Проверка по ID исключения ---
+        if make_id(item) in EXCLUDED_IDS:
+            excluded_by_id += 1
+            continue
 
         # --- Остальные проверки ---
         if is_disk(item):
@@ -693,6 +714,7 @@ def main():
     print(f"🔍 Всего товаров после фильтров: {total_products}")
     print(f"🔍 Исключено по валидации: {excluded_validation}")
     print(f"🔍 Исключено с нулевой розничной ценой: {excluded_zero_retail}")
+    print(f"🔍 Исключено по ID (EXCLUDED_IDS): {excluded_by_id}")
     print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
     # Кэширование изображений
@@ -738,8 +760,7 @@ def main():
 
     for item, diameter in all_items:
         add_ad_to_root(root, item, diameter,
-                       image_cache=image_cache if IMAGE_CHECK_ENABLED else None,
-                       zero_counter=zero_price_counter)
+                       image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
 
     tree = ET.ElementTree(root)
     output_file = "avito_export2.xml"
@@ -751,7 +772,7 @@ def main():
     print(f"   - Исключено дисков: {excluded_disk}")
     print(f"   - Исключено по валидации: {excluded_validation}")
     print(f"   - Исключено с нулевой розничной ценой: {excluded_zero_retail}")
-    print(f"   - Исключено с нулевой ценой после расчёта: {zero_price_counter[0]}")
+    print(f"   - Исключено по ID: {excluded_by_id}")
     if SEASON_EXCLUDE_ENABLED:
         print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
 
