@@ -6,8 +6,8 @@ on:
     paths:
       - 'avito_export3.py'          # запуск при изменении скрипта
   schedule:
-    # Каждый день в 4:10 по Новосибирску (UTC+7) = 21:10 UTC предыдущего дня
-    - cron: "10 21 * * *"
+    # Каждые 30 минут
+    - cron: "*/30 * * * *"
   workflow_dispatch:
     inputs:
       refresh_cache:
@@ -82,7 +82,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git commit -m 'Daily update of avito_export3.xml'
+          git commit -m 'Update avito_export3.xml'
           git pull --rebase origin main
           git push
         env:
