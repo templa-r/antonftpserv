@@ -1,0 +1,966 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BrandValues>
+	<Brand>ACCU-TRAC</Brand>
+	<Brand>AMP</Brand>
+	<Brand>ARROYO</Brand>
+	<Brand>ATF</Brand>
+	<Brand>ATR Radial</Brand>
+	<Brand>Accelera</Brand>
+	<Brand>Achilles</Brand>
+	<Brand>Acustica</Brand>
+	<Brand>Addo India</Brand>
+	<Brand>Aderenza</Brand>
+	<Brand>Adistar</Brand>
+	<Brand>Admiral</Brand>
+	<Brand>Advan</Brand>
+	<Brand>Advance</Brand>
+	<Brand>Advanta</Brand>
+	<Brand>Advenza</Brand>
+	<Brand>Aeolus</Brand>
+	<Brand>Agate</Brand>
+	<Brand>Aichi tire</Brand>
+	<Brand>Aim-One</Brand>
+	<Brand>Akuret</Brand>
+	<Brand>Alaska</Brand>
+	<Brand>Alliance</Brand>
+	<Brand>Allosaurus</Brand>
+	<Brand>Altaire</Brand>
+	<Brand>Altenzo</Brand>
+	<Brand>Alventi</Brand>
+	<Brand>AmberWay</Brand>
+	<Brand>Amberstone</Brand>
+	<Brand>America</Brand>
+	<Brand>American Classic</Brand>
+	<Brand>American Tourer</Brand>
+	<Brand>Americus</Brand>
+	<Brand>Amtel</Brand>
+	<Brand>Amulet</Brand>
+	<Brand>Anchee</Brand>
+	<Brand>Annaite</Brand>
+	<Brand>Antares</Brand>
+	<Brand>Antyre</Brand>
+	<Brand>Aoqishi</Brand>
+	<Brand>Aosen</Brand>
+	<Brand>Aoteli</Brand>
+	<Brand>Aplus</Brand>
+	<Brand>Apollo</Brand>
+	<Brand>Aptany</Brand>
+	<Brand>Arcron</Brand>
+	<Brand>Arctic Claw</Brand>
+	<Brand>Arctic Trucks</Brand>
+	<Brand>Ardent</Brand>
+	<Brand>Arduzza</Brand>
+	<Brand>Arestone</Brand>
+	<Brand>Arietis</Brand>
+	<Brand>Arisun</Brand>
+	<Brand>Arivo</Brand>
+	<Brand>Arizonian</Brand>
+	<Brand>Armforce</Brand>
+	<Brand>Armour</Brand>
+	<Brand>Armstrong</Brand>
+	<Brand>Arrowspeed</Brand>
+	<Brand>Artum</Brand>
+	<Brand>Ascenso</Brand>
+	<Brand>Aspen</Brand>
+	<Brand>Assa</Brand>
+	<Brand>Atlander</Brand>
+	<Brand>Atlas</Brand>
+	<Brand>Atomstone</Brand>
+	<Brand>Attar</Brand>
+	<Brand>Atturo</Brand>
+	<Brand>Aufine</Brand>
+	<Brand>Auplus</Brand>
+	<Brand>Aurora</Brand>
+	<Brand>Aurunze</Brand>
+	<Brand>Austone</Brand>
+	<Brand>Austyre</Brand>
+	<Brand>Autobacs</Brand>
+	<Brand>Autogreen</Brand>
+	<Brand>Autogrip</Brand>
+	<Brand>Autoguard</Brand>
+	<Brand>Avatyre</Brand>
+	<Brand>Aversus</Brand>
+	<Brand>Avon</Brand>
+	<Brand>Avtoros</Brand>
+	<Brand>BAOBO</Brand>
+	<Brand>BBS</Brand>
+	<Brand>BCT</Brand>
+	<Brand>BFGoodrich</Brand>
+	<Brand>BKT</Brand>
+	<Brand>Back Country</Brand>
+	<Brand>Bandamatic</Brand>
+	<Brand>Banoze</Brand>
+	<Brand>Barez</Brand>
+	<Brand>Barkley</Brand>
+	<Brand>Bars</Brand>
+	<Brand>Barum</Brand>
+	<Brand>Bearway</Brand>
+	<Brand>Berlin</Brand>
+	<Brand>Best Drive</Brand>
+	<Brand>Bestall</Brand>
+	<Brand>Bestrich</Brand>
+	<Brand>Big-O</Brand>
+	<Brand>Birla</Brand>
+	<Brand>Black Bear</Brand>
+	<Brand>Black Rocket</Brand>
+	<Brand>Blackarrow</Brand>
+	<Brand>Blackhawk</Brand>
+	<Brand>Blacklion</Brand>
+	<Brand>Blackstar</Brand>
+	<Brand>Blackstone</Brand>
+	<Brand>Blue Streak</Brand>
+	<Brand>Bobcat (Бобкет)</Brand>
+	<Brand>Bolex</Brand>
+	<Brand>Bontyre</Brand>
+	<Brand>Boto</Brand>
+	<Brand>Brasa</Brand>
+	<Brand>Bridgestone</Brand>
+	<Brand>Briland</Brand>
+	<Brand>Briway</Brand>
+	<Brand>Bullong Tyre</Brand>
+	<Brand>Busy Van</Brand>
+	<Brand>CHEVRON</Brand>
+	<Brand>CR-Renkaat</Brand>
+	<Brand>CR-Renkaat Oy</Brand>
+	<Brand>CST</Brand>
+	<Brand>Cachland</Brand>
+	<Brand>Caldera</Brand>
+	<Brand>Camac</Brand>
+	<Brand>Camrun</Brand>
+	<Brand>Camso</Brand>
+	<Brand>Cantop</Brand>
+	<Brand>Capitol</Brand>
+	<Brand>Carbon Series</Brand>
+	<Brand>Carlisle</Brand>
+	<Brand>Carps</Brand>
+	<Brand>Carwel</Brand>
+	<Brand>Casumina</Brand>
+	<Brand>Ceat</Brand>
+	<Brand>Celimo</Brand>
+	<Brand>Centara</Brand>
+	<Brand>Centennial Tires</Brand>
+	<Brand>Certified</Brand>
+	<Brand>Ch-Noble</Brand>
+	<Brand>Changfeng</Brand>
+	<Brand>ChaoYang</Brand>
+	<Brand>Chaparral</Brand>
+	<Brand>Charmhoo</Brand>
+	<Brand>Chengshan</Brand>
+	<Brand>Cheyen</Brand>
+	<Brand>Churchill</Brand>
+	<Brand>Citystar</Brand>
+	<Brand>Clear</Brand>
+	<Brand>Cleveride</Brand>
+	<Brand>Coalstar</Brand>
+	<Brand>Coker Tire</Brand>
+	<Brand>Collins</Brand>
+	<Brand>Colway</Brand>
+	<Brand>Comforser</Brand>
+	<Brand>Compasal</Brand>
+	<Brand>Compass</Brand>
+	<Brand>Condor</Brand>
+	<Brand>Constancy</Brand>
+	<Brand>Continental</Brand>
+	<Brand>Contyre</Brand>
+	<Brand>Cooper</Brand>
+	<Brand>Cooper Chengshan</Brand>
+	<Brand>Copartner</Brand>
+	<Brand>Cordial</Brand>
+	<Brand>Cordiant</Brand>
+	<Brand>Cordovan</Brand>
+	<Brand>Corsa</Brand>
+	<Brand>Cosmo</Brand>
+	<Brand>Cotechoo</Brand>
+	<Brand>Courier</Brand>
+	<Brand>Courser</Brand>
+	<Brand>Cratos</Brand>
+	<Brand>CrocoTreker</Brand>
+	<Brand>CrossLeader</Brand>
+	<Brand>Crosswind</Brand>
+	<Brand>Cyclone</Brand>
+	<Brand>DRC</Brand>
+	<Brand>Daewoo</Brand>
+	<Brand>Dailyway</Brand>
+	<Brand>Danlopna</Brand>
+	<Brand>Davanti</Brand>
+	<Brand>Dayton</Brand>
+	<Brand>Dean</Brand>
+	<Brand>Debica</Brand>
+	<Brand>Deestone</Brand>
+	<Brand>Definity</Brand>
+	<Brand>Delcora</Brand>
+	<Brand>Delfin</Brand>
+	<Brand>Deli</Brand>
+	<Brand>Delinte</Brand>
+	<Brand>Delium</Brand>
+	<Brand>Delmax</Brand>
+	<Brand>Delta</Brand>
+	<Brand>Demeter</Brand>
+	<Brand>Dena Tire</Brand>
+	<Brand>Deruibo</Brand>
+	<Brand>Dextero</Brand>
+	<Brand>Diablo</Brand>
+	<Brand>Diamond</Brand>
+	<Brand>DiamondBack</Brand>
+	<Brand>Dick Cepek</Brand>
+	<Brand>Diplomat</Brand>
+	<Brand>Dmack</Brand>
+	<Brand>Dominator</Brand>
+	<Brand>Dong Feng</Brand>
+	<Brand>Doral</Brand>
+	<Brand>Double Camel</Brand>
+	<Brand>Double Coin</Brand>
+	<Brand>Double King</Brand>
+	<Brand>Double Road</Brand>
+	<Brand>Doubleking</Brand>
+	<Brand>Doublestar</Brand>
+	<Brand>Douglas</Brand>
+	<Brand>Doupro</Brand>
+	<Brand>Dovroad</Brand>
+	<Brand>Duck Commander</Brand>
+	<Brand>Dunlop</Brand>
+	<Brand>Duran</Brand>
+	<Brand>Duraturn</Brand>
+	<Brand>Duringon</Brand>
+	<Brand>Duro</Brand>
+	<Brand>Durun</Brand>
+	<Brand>Dynamo</Brand>
+	<Brand>EKKA</Brand>
+	<Brand>Eagle Blade</Brand>
+	<Brand>Eco Opony</Brand>
+	<Brand>Ecostar</Brand>
+	<Brand>Ecovision</Brand>
+	<Brand>Effiplus</Brand>
+	<Brand>Eko Turbo</Brand>
+	<Brand>Eldorado</Brand>
+	<Brand>Emerald</Brand>
+	<Brand>Encore</Brand>
+	<Brand>Entda</Brand>
+	<Brand>Epic Tour</Brand>
+	<Brand>Esa-Tecar</Brand>
+	<Brand>Esporte</Brand>
+	<Brand>Estrada</Brand>
+	<Brand>Eternity</Brand>
+	<Brand>EuroStone</Brand>
+	<Brand>Eurogrip</Brand>
+	<Brand>Eurorepar</Brand>
+	<Brand>Eurotec</Brand>
+	<Brand>Euzkadi</Brand>
+	<Brand>Event</Brand>
+	<Brand>Everforce</Brand>
+	<Brand>Evergreat</Brand>
+	<Brand>Evergreen</Brand>
+	<Brand>Evermax</Brand>
+	<Brand>Evershine</Brand>
+	<Brand>Evoluxx</Brand>
+	<Brand>Excel</Brand>
+	<Brand>Excelon</Brand>
+	<Brand>Extreme</Brand>
+	<Brand>FBX</Brand>
+	<Brand>Falken</Brand>
+	<Brand>Falken-V</Brand>
+	<Brand>Faralong</Brand>
+	<Brand>Farride</Brand>
+	<Brand>Farroad</Brand>
+	<Brand>Fate</Brand>
+	<Brand>Federal</Brand>
+	<Brand>Fedima</Brand>
+	<Brand>Fenglun</Brand>
+	<Brand>Fenix</Brand>
+	<Brand>Ferentino</Brand>
+	<Brand>Fesite</Brand>
+	<Brand>Feu Vert</Brand>
+	<Brand>Fierce</Brand>
+	<Brand>Finalist</Brand>
+	<Brand>Finixx</Brand>
+	<Brand>Firemax</Brand>
+	<Brand>Firenza</Brand>
+	<Brand>Firestone</Brand>
+	<Brand>FirstStop</Brand>
+	<Brand>Flamingo</Brand>
+	<Brand>Foman</Brand>
+	<Brand>Force</Brand>
+	<Brand>Forceland</Brand>
+	<Brand>Forceum</Brand>
+	<Brand>Forerunner</Brand>
+	<Brand>Forever</Brand>
+	<Brand>Forgiato</Brand>
+	<Brand>Formula</Brand>
+	<Brand>Fortio</Brand>
+	<Brand>Fortuna</Brand>
+	<Brand>Fortune</Brand>
+	<Brand>Forward</Brand>
+	<Brand>Fronway</Brand>
+	<Brand>Frztrac</Brand>
+	<Brand>Fuel</Brand>
+	<Brand>Fulda</Brand>
+	<Brand>Fullershine</Brand>
+	<Brand>Fullrun</Brand>
+	<Brand>Fullway</Brand>
+	<Brand>Futura</Brand>
+	<Brand>Futuroad</Brand>
+	<Brand>Fuzion</Brand>
+	<Brand>GT Radial</Brand>
+	<Brand>Gajah Tunggal</Brand>
+	<Brand>Galaxia</Brand>
+	<Brand>Galaxie</Brand>
+	<Brand>Galaxy</Brand>
+	<Brand>Gazelle</Brand>
+	<Brand>Gemstone</Brand>
+	<Brand>Gencotire</Brand>
+	<Brand>General Tire</Brand>
+	<Brand>Geostar</Brand>
+	<Brand>Geotrac</Brand>
+	<Brand>Gepormax</Brand>
+	<Brand>Gerutti</Brand>
+	<Brand>Ginell</Brand>
+	<Brand>Gis</Brand>
+	<Brand>Gislaved</Brand>
+	<Brand>Giti</Brand>
+	<Brand>Gladiator</Brand>
+	<Brand>Glede</Brand>
+	<Brand>Glob-Gum</Brand>
+	<Brand>GoPro</Brand>
+	<Brand>Goalstar</Brand>
+	<Brand>Goddard</Brand>
+	<Brand>Godzilla</Brand>
+	<Brand>Goform</Brand>
+	<Brand>Gold Partner</Brand>
+	<Brand>Gold-Gum</Brand>
+	<Brand>Golden Bridge</Brand>
+	<Brand>Goldline</Brand>
+	<Brand>Goldstone</Brand>
+	<Brand>Goldway</Brand>
+	<Brand>Good Friend</Brand>
+	<Brand>Good Tire</Brand>
+	<Brand>Goodride</Brand>
+	<Brand>Goodtrip</Brand>
+	<Brand>Goodyear</Brand>
+	<Brand>Gowind</Brand>
+	<Brand>GrandStone</Brand>
+	<Brand>GrandTour</Brand>
+	<Brand>Green Diamond</Brand>
+	<Brand>Green Dragon</Brand>
+	<Brand>Greenland</Brand>
+	<Brand>Greentour</Brand>
+	<Brand>Greentrac</Brand>
+	<Brand>Greforce</Brand>
+	<Brand>Gremax</Brand>
+	<Brand>Grenlander</Brand>
+	<Brand>Gripmax</Brand>
+	<Brand>Groundspeed</Brand>
+	<Brand>Gtk</Brand>
+	<Brand>HAIDA</Brand>
+	<Brand>Habilead</Brand>
+	<Brand>Hankook</Brand>
+	<Brand>Harmonic</Brand>
+	<Brand>Harvest</Brand>
+	<Brand>Haulking</Brand>
+	<Brand>Haulmax</Brand>
+	<Brand>Hawkway</Brand>
+	<Brand>Headway</Brand>
+	<Brand>Heidenau</Brand>
+	<Brand>Hemisphere</Brand>
+	<Brand>Hercules</Brand>
+	<Brand>Heritage</Brand>
+	<Brand>Hero</Brand>
+	<Brand>Herovic</Brand>
+	<Brand>Herse</Brand>
+	<Brand>HiFly</Brand>
+	<Brand>Hilo</Brand>
+	<Brand>Honour</Brand>
+	<Brand>Hoosier</Brand>
+	<Brand>Horizon</Brand>
+	<Brand>Hualin</Brand>
+	<Brand>IST</Brand>
+	<Brand>Ikon Tyres</Brand>
+	<Brand>Imperial</Brand>
+	<Brand>IndoRadial</Brand>
+	<Brand>Indy</Brand>
+	<Brand>Infinity Tyres</Brand>
+	<Brand>Innova</Brand>
+	<Brand>Insa-Turbo</Brand>
+	<Brand>Interco</Brand>
+	<Brand>Interstate</Brand>
+	<Brand>Intertrac</Brand>
+	<Brand>Invovic</Brand>
+	<Brand>Iris</Brand>
+	<Brand>Ironman</Brand>
+	<Brand>J.Planet</Brand>
+	<Brand>JASSITOW</Brand>
+	<Brand>JCB</Brand>
+	<Brand>JK Tyre</Brand>
+	<Brand>Jauto</Brand>
+	<Brand>Jesstire</Brand>
+	<Brand>Jetzon</Brand>
+	<Brand>Jinglun</Brand>
+	<Brand>Jintongda</Brand>
+	<Brand>Jinyu</Brand>
+	<Brand>Journey</Brand>
+	<Brand>Joyall</Brand>
+	<Brand>Joyroad</Brand>
+	<Brand>Justnovo</Brand>
+	<Brand>K&amp;K</Brand>
+	<Brand>K-Break</Brand>
+	<Brand>KINGBOSS</Brand>
+	<Brand>Kanati</Brand>
+	<Brand>Kapsen</Brand>
+	<Brand>Kavir Tire</Brand>
+	<Brand>Kebek</Brand>
+	<Brand>Kelly</Brand>
+	<Brand>Kenda</Brand>
+	<Brand>Kenex</Brand>
+	<Brand>Keter</Brand>
+	<Brand>Kinforest</Brand>
+	<Brand>King Meiler</Brand>
+	<Brand>King Сobra</Brand>
+	<Brand>Kingnate</Brand>
+	<Brand>Kingpin</Brand>
+	<Brand>Kingrun</Brand>
+	<Brand>Kings Tire</Brand>
+	<Brand>Kingstar</Brand>
+	<Brand>Kinto Tyres</Brand>
+	<Brand>Kleber</Brand>
+	<Brand>Kooler</Brand>
+	<Brand>Kormoran</Brand>
+	<Brand>Koryo</Brand>
+	<Brand>Kpatos</Brand>
+	<Brand>Krain</Brand>
+	<Brand>Krone</Brand>
+	<Brand>Kumho</Brand>
+	<Brand>Kustone</Brand>
+	<Brand>Lakesea</Brand>
+	<Brand>Lancaster</Brand>
+	<Brand>Lander Sea</Brand>
+	<Brand>Landrock</Brand>
+	<Brand>Landsail</Brand>
+	<Brand>Landspider</Brand>
+	<Brand>Lanvigator</Brand>
+	<Brand>Lappi</Brand>
+	<Brand>Lapponia</Brand>
+	<Brand>Lassa</Brand>
+	<Brand>Laufenn</Brand>
+	<Brand>Leadway</Brand>
+	<Brand>Leao</Brand>
+	<Brand>LegeArtis</Brand>
+	<Brand>Lemans</Brand>
+	<Brand>Lenso</Brand>
+	<Brand>Lenston</Brand>
+	<Brand>Lexani</Brand>
+	<Brand>Lexxis</Brand>
+	<Brand>Linglong</Brand>
+	<Brand>Lionhart</Brand>
+	<Brand>Lizetti</Brand>
+	<Brand>LongMarch</Brand>
+	<Brand>Longway</Brand>
+	<Brand>LuHe</Brand>
+	<Brand>Luccini</Brand>
+	<Brand>Luckstar</Brand>
+	<Brand>Lucky Lion</Brand>
+	<Brand>Luckyland</Brand>
+	<Brand>Lugster</Brand>
+	<Brand>Luistone</Brand>
+	<Brand>Luxxan</Brand>
+	<Brand>M&amp;H Racemaster</Brand>
+	<Brand>MILEVER</Brand>
+	<Brand>MRF</Brand>
+	<Brand>Mabor</Brand>
+	<Brand>Magnum</Brand>
+	<Brand>Malatesta</Brand>
+	<Brand>Malhotra</Brand>
+	<Brand>Maloya</Brand>
+	<Brand>Marangoni</Brand>
+	<Brand>Marcher</Brand>
+	<Brand>Marix</Brand>
+	<Brand>MarkMa</Brand>
+	<Brand>Markgum</Brand>
+	<Brand>Marshal</Brand>
+	<Brand>Marsway</Brand>
+	<Brand>Massimo</Brand>
+	<Brand>Master</Brand>
+	<Brand>Mastercraft</Brand>
+	<Brand>Mastersteel</Brand>
+	<Brand>Mastertrack</Brand>
+	<Brand>Matador</Brand>
+	<Brand>MatraX</Brand>
+	<Brand>Mavis</Brand>
+	<Brand>Maxam</Brand>
+	<Brand>Maxen</Brand>
+	<Brand>Maxgrade</Brand>
+	<Brand>Maxrun</Brand>
+	<Brand>Maxtour</Brand>
+	<Brand>Maxtrack</Brand>
+	<Brand>Maxtrek</Brand>
+	<Brand>Maxxis</Brand>
+	<Brand>Mayrun</Brand>
+	<Brand>Mazama</Brand>
+	<Brand>Mazzini</Brand>
+	<Brand>Medalist</Brand>
+	<Brand>Medeo </Brand>
+	<Brand>Medved</Brand>
+	<Brand>Membat</Brand>
+	<Brand>Mentor</Brand>
+	<Brand>Meridian</Brand>
+	<Brand>Merit</Brand>
+	<Brand>Mesa</Brand>
+	<Brand>Meshiline</Brand>
+	<Brand>Meteor</Brand>
+	<Brand>Metric</Brand>
+	<Brand>Michelin</Brand>
+	<Brand>Mickey Thompson</Brand>
+	<Brand>Midas</Brand>
+	<Brand>Mileking</Brand>
+	<Brand>Milestar</Brand>
+	<Brand>Milestone</Brand>
+	<Brand>Millennium</Brand>
+	<Brand>Miller</Brand>
+	<Brand>Minerva</Brand>
+	<Brand>Minnell</Brand>
+	<Brand>Mirada</Brand>
+	<Brand>Mirage</Brand>
+	<Brand>Mitas</Brand>
+	<Brand>Mohave</Brand>
+	<Brand>Mohawk</Brand>
+	<Brand>Mojo</Brand>
+	<Brand>Momo</Brand>
+	<Brand>Monarch</Brand>
+	<Brand>Monsta</Brand>
+	<Brand>Montana</Brand>
+	<Brand>Montreal</Brand>
+	<Brand>Motomaster</Brand>
+	<Brand>Motrio</Brand>
+	<Brand>Mud Claw</Brand>
+	<Brand>Multi-Mile</Brand>
+	<Brand>Multirac</Brand>
+	<Brand>Mustang</Brand>
+	<Brand>NZ</Brand>
+	<Brand>NZ Wheels</Brand>
+	<Brand>Naaats</Brand>
+	<Brand>Nama</Brand>
+	<Brand>Nankang</Brand>
+	<Brand>Nastrek</Brand>
+	<Brand>National</Brand>
+	<Brand>Negotiator</Brand>
+	<Brand>Neolin</Brand>
+	<Brand>Neoterra</Brand>
+	<Brand>Nereus</Brand>
+	<Brand>Neupar</Brand>
+	<Brand>Neuton</Brand>
+	<Brand>Nexen</Brand>
+	<Brand>Next</Brand>
+	<Brand>Nika Tires</Brand>
+	<Brand>Ninevont</Brand>
+	<Brand>Nitto</Brand>
+	<Brand>Noble</Brand>
+	<Brand>Nokian Tyres</Brand>
+	<Brand>NorTec</Brand>
+	<Brand>Norauto</Brand>
+	<Brand>Nord Wolf</Brand>
+	<Brand>Nordexx</Brand>
+	<Brand>Nordman</Brand>
+	<Brand>Normaks</Brand>
+	<Brand>Nortenha</Brand>
+	<Brand>Northtrek</Brand>
+	<Brand>Novex</Brand>
+	<Brand>O&apos;Green</Brand>
+	<Brand>Observe</Brand>
+	<Brand>Odyking</Brand>
+	<Brand>Ohtsu</Brand>
+	<Brand>Onyx</Brand>
+	<Brand>Opals</Brand>
+	<Brand>Opera</Brand>
+	<Brand>Orium</Brand>
+	<Brand>Ornate</Brand>
+	<Brand>Ortec</Brand>
+	<Brand>Otani</Brand>
+	<Brand>Ovation</Brand>
+	<Brand>Overtake</Brand>
+	<Brand>Ozka</Brand>
+	<Brand>PDW</Brand>
+	<Brand>POWERTRAC</Brand>
+	<Brand>Pace</Brand>
+	<Brand>Pallyking</Brand>
+	<Brand>Pandagomme</Brand>
+	<Brand>Pantera</Brand>
+	<Brand>Panzer</Brand>
+	<Brand>Paragon</Brand>
+	<Brand>Parnelli Jones</Brand>
+	<Brand>Passage</Brand>
+	<Brand>Pathfinder</Brand>
+	<Brand>Patriot</Brand>
+	<Brand>Paxaro</Brand>
+	<Brand>Pearly</Brand>
+	<Brand>Pegasus</Brand>
+	<Brand>Performer</Brand>
+	<Brand>Permanent</Brand>
+	<Brand>Petlas</Brand>
+	<Brand>Phantom</Brand>
+	<Brand>Pharos</Brand>
+	<Brand>Phoenix</Brand>
+	<Brand>Pinnacle</Brand>
+	<Brand>Pinso</Brand>
+	<Brand>Pirelli</Brand>
+	<Brand>Pitbull</Brand>
+	<Brand>Platin</Brand>
+	<Brand>Pneu Vranik</Brand>
+	<Brand>Pneumant</Brand>
+	<Brand>Pneus</Brand>
+	<Brand>Point S</Brand>
+	<Brand>Power 2000</Brand>
+	<Brand>Power King</Brand>
+	<Brand>Power Tire</Brand>
+	<Brand>Powerhub</Brand>
+	<Brand>Predator</Brand>
+	<Brand>Premada</Brand>
+	<Brand>Premiorri</Brand>
+	<Brand>Premium Forged</Brand>
+	<Brand>Premme</Brand>
+	<Brand>Presa</Brand>
+	<Brand>President</Brand>
+	<Brand>Prestivo</Brand>
+	<Brand>Pride Speed</Brand>
+	<Brand>Primewell</Brand>
+	<Brand>Primus</Brand>
+	<Brand>Prinx</Brand>
+	<Brand>Pro Comp</Brand>
+	<Brand>Profil</Brand>
+	<Brand>Proma</Brand>
+	<Brand>Prometer</Brand>
+	<Brand>Prostor</Brand>
+	<Brand>Provato</Brand>
+	<Brand>Quantum</Brand>
+	<Brand>RBP</Brand>
+	<Brand>RST</Brand>
+	<Brand>RT-PRO</Brand>
+	<Brand>Racealone</Brand>
+	<Brand>Radar Tyres</Brand>
+	<Brand>Radburg</Brand>
+	<Brand>Raiden</Brand>
+	<Brand>Rapid</Brand>
+	<Brand>Rapid River</Brand>
+	<Brand>Rasakutire</Brand>
+	<Brand>Rauffan</Brand>
+	<Brand>Razi</Brand>
+	<Brand>Redtyre</Brand>
+	<Brand>Regal</Brand>
+	<Brand>Reifeg</Brand>
+	<Brand>Remington</Brand>
+	<Brand>Renova-Reifen</Brand>
+	<Brand>Replay</Brand>
+	<Brand>Republic</Brand>
+	<Brand>Respa</Brand>
+	<Brand>Reynolds</Brand>
+	<Brand>Rhino</Brand>
+	<Brand>Ridge Runner</Brand>
+	<Brand>Rigdon</Brand>
+	<Brand>Riken</Brand>
+	<Brand>Riostone</Brand>
+	<Brand>Risen</Brand>
+	<Brand>Road Hugger</Brand>
+	<Brand>Road Runner</Brand>
+	<Brand>RoadClaw</Brand>
+	<Brand>RoadOne</Brand>
+	<Brand>RoadX</Brand>
+	<Brand>Roadares</Brand>
+	<Brand>Roadboss</Brand>
+	<Brand>Roadcruza</Brand>
+	<Brand>Roadguider</Brand>
+	<Brand>Roadhog</Brand>
+	<Brand>Roadking</Brand>
+	<Brand>Roadlux</Brand>
+	<Brand>Roadmarch</Brand>
+	<Brand>Roadmaster</Brand>
+	<Brand>Roadmax</Brand>
+	<Brand>Roador</Brand>
+	<Brand>Roadshine</Brand>
+	<Brand>Roadstone</Brand>
+	<Brand>RockBuster</Brand>
+	<Brand>Rockblade</Brand>
+	<Brand>Rockstar</Brand>
+	<Brand>Rockstone</Brand>
+	<Brand>Rocky Mountain</Brand>
+	<Brand>Rosava</Brand>
+	<Brand>Rotalla</Brand>
+	<Brand>Rotex</Brand>
+	<Brand>Routeway</Brand>
+	<Brand>Rovelo</Brand>
+	<Brand>Roxxis</Brand>
+	<Brand>Royal Black</Brand>
+	<Brand>Rubber Wheels</Brand>
+	<Brand>Rubbercraft</Brand>
+	<Brand>Runderneuert </Brand>
+	<Brand>Runtek</Brand>
+	<Brand>Runway</Brand>
+	<Brand>Rydanz</Brand>
+	<Brand>SHLK</Brand>
+	<Brand>SKAD Original</Brand>
+	<Brand>STA</Brand>
+	<Brand>Saetta</Brand>
+	<Brand>Saferich</Brand>
+	<Brand>Saffiro</Brand>
+	<Brand>Sagitar</Brand>
+	<Brand>Sailun</Brand>
+	<Brand>Sailwin</Brand>
+	<Brand>Sakura</Brand>
+	<Brand>Samama</Brand>
+	<Brand>Satoya</Brand>
+	<Brand>Sava</Brand>
+	<Brand>Savini</Brand>
+	<Brand>Saxon</Brand>
+	<Brand>Scason</Brand>
+	<Brand>Seam Tyre</Brand>
+	<Brand>Sebring</Brand>
+	<Brand>Security</Brand>
+	<Brand>Securo</Brand>
+	<Brand>Seha</Brand>
+	<Brand>Seiberling</Brand>
+	<Brand>Semperit</Brand>
+	<Brand>Sentinel</Brand>
+	<Brand>Sentury</Brand>
+	<Brand>Shibata</Brand>
+	<Brand>Shibatire</Brand>
+	<Brand>Sigma</Brand>
+	<Brand>Sigma Regent</Brand>
+	<Brand>Signet</Brand>
+	<Brand>Silverstone</Brand>
+	<Brand>Sime</Brand>
+	<Brand>Simex</Brand>
+	<Brand>Sinorient</Brand>
+	<Brand>Skidless Tire</Brand>
+	<Brand>Skyfire</Brand>
+	<Brand>Solar</Brand>
+	<Brand>Solideal</Brand>
+	<Brand>Solidway</Brand>
+	<Brand>Sonar</Brand>
+	<Brand>Sonix</Brand>
+	<Brand>Sonny</Brand>
+	<Brand>Spectra</Brand>
+	<Brand>Speedways</Brand>
+	<Brand>Sportiva</Brand>
+	<Brand>Sportrak</Brand>
+	<Brand>Sprut</Brand>
+	<Brand>Stampede</Brand>
+	<Brand>Star Performer</Brand>
+	<Brand>Starco</Brand>
+	<Brand>Starfire</Brand>
+	<Brand>Stark</Brand>
+	<Brand>Starmaxx</Brand>
+	<Brand>Starstone</Brand>
+	<Brand>Sterling</Brand>
+	<Brand>Strata</Brand>
+	<Brand>Streamstone</Brand>
+	<Brand>Strial</Brand>
+	<Brand>Stunner</Brand>
+	<Brand>Sumaxx</Brand>
+	<Brand>Sumic</Brand>
+	<Brand>Sumitomo</Brand>
+	<Brand>Summit tires</Brand>
+	<Brand>Sumo</Brand>
+	<Brand>Sunew</Brand>
+	<Brand>Sunfull</Brand>
+	<Brand>Sunitrac</Brand>
+	<Brand>Sunny</Brand>
+	<Brand>Sunote</Brand>
+	<Brand>Sunstone</Brand>
+	<Brand>Suntek</Brand>
+	<Brand>Sunwide</Brand>
+	<Brand>Supercargo</Brand>
+	<Brand>Superguider</Brand>
+	<Brand>Superia</Brand>
+	<Brand>Supermax</Brand>
+	<Brand>Superstone</Brand>
+	<Brand>SureDrive</Brand>
+	<Brand>Suretrac</Brand>
+	<Brand>Synergy</Brand>
+	<Brand>Syron</Brand>
+	<Brand>TBB Tires</Brand>
+	<Brand>TIRENSA</Brand>
+	<Brand>TREBL</Brand>
+	<Brand>Taigiro</Brand>
+	<Brand>Taihao</Brand>
+	<Brand>Taitong</Brand>
+	<Brand>Targum</Brand>
+	<Brand>Tatko</Brand>
+	<Brand>Taurus</Brand>
+	<Brand>Taxat</Brand>
+	<Brand>Teamstar</Brand>
+	<Brand>Techking</Brand>
+	<Brand>Technic</Brand>
+	<Brand>Tecnica</Brand>
+	<Brand>Tekpro</Brand>
+	<Brand>Telstar Tire</Brand>
+	<Brand>Tempra</Brand>
+	<Brand>Teraflex</Brand>
+	<Brand>Tercelo</Brand>
+	<Brand>Terraking</Brand>
+	<Brand>Terralion</Brand>
+	<Brand>Tesche Tires</Brand>
+	<Brand>Three-A</Brand>
+	<Brand>Thunderer</Brand>
+	<Brand>Tianfu</Brand>
+	<Brand>Tianli</Brand>
+	<Brand>Tigar</Brand>
+	<Brand>Timax</Brand>
+	<Brand>Timberland</Brand>
+	<Brand>TipTyre</Brand>
+	<Brand>Titan</Brand>
+	<Brand>Toledo</Brand>
+	<Brand>Tomason</Brand>
+	<Brand>Tomket</Brand>
+	<Brand>Topline</Brand>
+	<Brand>Toptrust</Brand>
+	<Brand>Torero</Brand>
+	<Brand>Tornado</Brand>
+	<Brand>Tornel</Brand>
+	<Brand>Torque</Brand>
+	<Brand>Tourador</Brand>
+	<Brand>Touring</Brand>
+	<Brand>Tow-Master</Brand>
+	<Brand>Toyo</Brand>
+	<Brand>Tracmax</Brand>
+	<Brand>Trail</Brand>
+	<Brand>TrailCutter</Brand>
+	<Brand>Trailer King</Brand>
+	<Brand>Transking</Brand>
+	<Brand>Transmaster</Brand>
+	<Brand>Transtone</Brand>
+	<Brand>Travelstar</Brand>
+	<Brand>Traxx-Plus</Brand>
+	<Brand>Trayal</Brand>
+	<Brand>Trazano</Brand>
+	<Brand>Treadwright</Brand>
+	<Brand>Trelleborg</Brand>
+	<Brand>Tri Ace</Brand>
+	<Brand>Triangle</Brand>
+	<Brand>Tristar</Brand>
+	<Brand>Tunga</Brand>
+	<Brand>Tyfoon</Brand>
+	<Brand>Tyrex</Brand>
+	<Brand>Ultraforce</Brand>
+	<Brand>Ultramile</Brand>
+	<Brand>Uniglory</Brand>
+	<Brand>Unigrip</Brand>
+	<Brand>Uniroyal</Brand>
+	<Brand>Unistar</Brand>
+	<Brand>Universal</Brand>
+	<Brand>V-Plus</Brand>
+	<Brand>VSP</Brand>
+	<Brand>Valino</Brand>
+	<Brand>Valleystone</Brand>
+	<Brand>Vanderbilt</Brand>
+	<Brand>Vee Rubber</Brand>
+	<Brand>Veento</Brand>
+	<Brand>Venezia</Brand>
+	<Brand>Venom Power</Brand>
+	<Brand>Vercelli</Brand>
+	<Brand>Versatyre</Brand>
+	<Brand>Viatti</Brand>
+	<Brand>Victorun</Brand>
+	<Brand>Vida</Brand>
+	<Brand>Viking</Brand>
+	<Brand>Vinmax</Brand>
+	<Brand>Virbac</Brand>
+	<Brand>Vitora</Brand>
+	<Brand>Vitour</Brand>
+	<Brand>Vittos</Brand>
+	<Brand>Vizzoni</Brand>
+	<Brand>Vogue</Brand>
+	<Brand>Volcano</Brand>
+	<Brand>Volcato</Brand>
+	<Brand>Volex</Brand>
+	<Brand>Voyager</Brand>
+	<Brand>Vredestein</Brand>
+	<Brand>Vulcan</Brand>
+	<Brand>W&amp;M</Brand>
+	<Brand>Wanda</Brand>
+	<Brand>Wanli</Brand>
+	<Brand>Wanlining</Brand>
+	<Brand>Warrior</Brand>
+	<Brand>Waterfall</Brand>
+	<Brand>Weathermate</Brand>
+	<Brand>Weds Kranze</Brand>
+	<Brand>Weeksai</Brand>
+	<Brand>Westlake</Brand>
+	<Brand>Widetrack</Brand>
+	<Brand>Wideway</Brand>
+	<Brand>Wild Country</Brand>
+	<Brand>Wild Spirit</Brand>
+	<Brand>Wild Trail</Brand>
+	<Brand>Wildwolfking</Brand>
+	<Brand>Winda</Brand>
+	<Brand>Windforce</Brand>
+	<Brand>Windpower</Brand>
+	<Brand>Winmax</Brand>
+	<Brand>Winrun</Brand>
+	<Brand>Winter Tact</Brand>
+	<Brand>Wolfsburg</Brand>
+	<Brand>Wolftyres</Brand>
+	<Brand>Woosh Wheels</Brand>
+	<Brand>Woosung</Brand>
+	<Brand>Work</Brand>
+	<Brand>Wuyi</Brand>
+	<Brand>X&apos;trike</Brand>
+	<Brand>X-pounce</Brand>
+	<Brand>XBRI</Brand>
+	<Brand>XCent</Brand>
+	<Brand>Xtyre</Brand>
+	<Brand>YAZD TIRE</Brand>
+	<Brand>YOMAR TIRES</Brand>
+	<Brand>Yatai</Brand>
+	<Brand>Yatone</Brand>
+	<Brand>Yeada</Brand>
+	<Brand>Yellow Hat</Brand>
+	<Brand>YellowSea</Brand>
+	<Brand>Yokohama</Brand>
+	<Brand>Yonking</Brand>
+	<Brand>Yusta</Brand>
+	<Brand>Z Tyre</Brand>
+	<Brand>ZLD-100 EXTRA</Brand>
+	<Brand>ZMAX</Brand>
+	<Brand>Zaramec</Brand>
+	<Brand>Zatas</Brand>
+	<Brand>Zealion</Brand>
+	<Brand>Zeetex</Brand>
+	<Brand>Zeker</Brand>
+	<Brand>Zeknova</Brand>
+	<Brand>Zelda</Brand>
+	<Brand>Zenna</Brand>
+	<Brand>Zerex</Brand>
+	<Brand>Zestino</Brand>
+	<Brand>Zeta</Brand>
+	<Brand>Zetro</Brand>
+	<Brand>Zetum</Brand>
+	<Brand>Zextour</Brand>
+	<Brand>Zhongyi</Brand>
+	<Brand>Ziarelli Mario</Brand>
+	<Brand>iFree Original</Brand>
+	<Brand>iLink</Brand>
+	<Brand>stomil</Brand>
+	<Brand>Авторос</Brand>
+	<Brand>Алтайшина</Brand>
+	<Brand>Барнаул</Brand>
+	<Brand>Белая церковь</Brand>
+	<Brand>Белшина</Brand>
+	<Brand>Волтайр</Brand>
+	<Brand>Воронеж</Brand>
+	<Brand>Днепрошина</Brand>
+	<Brand>ЕШЗ</Brand>
+	<Brand>ЕШЗ (Ереванский Шинный Завод)</Brand>
+	<Brand>КАМА (Нижнекамский шинный завод)</Brand>
+	<Brand>КШЗ (Кировский шинный завод)</Brand>
+	<Brand>КрШЗ (Красноярский шинный завод)</Brand>
+	<Brand>Красный Треугольник</Brand>
+	<Brand>Красный Яр</Brand>
+	<Brand>МШЗ (Московский шинный завод)</Brand>
+	<Brand>Мастер-Спорт</Brand>
+	<Brand>НИИШП</Brand>
+	<Brand>НК-437</Brand>
+	<Brand>Омскшина</Brand>
+	<Brand>Трэкол</Brand>
+	<Brand>Ураган</Brand>
+	<Brand>Уралшина</Brand>
+	<Brand>ЧОЗ (ООО &quot;Челябинский опытный завод&quot;)</Brand>
+	<Brand>Шины СССР</Brand>
+	<Brand>Юг-Авто</Brand>
+	<Brand>ЯШЗ (Ярославский шинный завод)</Brand>
+</BrandValues>
