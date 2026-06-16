@@ -21,15 +21,12 @@ ROUND_METHOD = 'nearest'
 
 # ===================== НОРМАЛИЗАЦИЯ МОДЕЛЕЙ И БРЕНДОВ =====================
 MODEL_REFERENCE_FILE = "models_reference.xml"
-
-# Пути к справочникам размеров и индексов
 DIAMETER_REFERENCE_FILE = "diameter.xml"
 PROFILE_REFERENCE_FILE = "profile.xml"
 WIDTH_REFERENCE_FILE = "width.xml"
 LOADINDEX_REFERENCE_FILE = "loadindex.xml"
 
 def normalize_string(s: str) -> str:
-    """Нормализует строку для сравнения (без потери оригинального регистра)."""
     if not s:
         return ""
     for sep in ['-', '_', '/', '\\', '–', '—']:
@@ -40,16 +37,9 @@ def normalize_string(s: str) -> str:
     return s
 
 def load_model_mapping(xml_path: str):
-    """
-    Загружает справочник моделей и брендов.
-    Возвращает: (model_map, brand_map)
-      model_map: { norm_brand: { norm_model: orig_model } }
-      brand_map: { norm_brand: orig_brand }
-    """
     if not os.path.exists(xml_path):
         print(f"⚠️ Файл {xml_path} не найден. Нормализация отключена.")
         return {}, {}
-
     try:
         tree = ET.parse(xml_path)
         root = tree.getroot()
@@ -60,8 +50,7 @@ def load_model_mapping(xml_path: str):
             if not brand:
                 continue
             brand_norm = normalize_string(brand)
-            brand_map[brand_norm] = brand   # сохраняем оригинальное имя бренда
-
+            brand_map[brand_norm] = brand
             models = {}
             for model in make.findall("model"):
                 model_name = model.get("name", "").strip()
@@ -70,7 +59,6 @@ def load_model_mapping(xml_path: str):
                     models[model_norm] = model_name
             if models:
                 model_map[brand_norm] = models
-
         print(f"✅ Загружено {len(brand_map)} брендов со списками моделей из {xml_path}")
         return model_map, brand_map
     except Exception as e:
@@ -78,7 +66,6 @@ def load_model_mapping(xml_path: str):
         return {}, {}
 
 def load_values_set(xml_path: str, tag: str) -> set:
-    """Загружает допустимые значения из XML-файла (теги <tag>). Возвращает множество нормализованных строк (float с 2 знаками)."""
     if not os.path.exists(xml_path):
         print(f"⚠️ Файл {xml_path} не найден. Валидация отключена.")
         return set()
@@ -91,10 +78,9 @@ def load_values_set(xml_path: str, tag: str) -> set:
             if val:
                 try:
                     num = float(val.replace(",", "."))
-                    # Приводим к строке с двумя знаками для сравнения
                     normalized = f"{num:.2f}"
                 except ValueError:
-                    normalized = val  # не число, но у нас числа
+                    normalized = val
                 valid.add(normalized)
         print(f"✅ Загружено {len(valid)} значений из {xml_path}")
         return valid
@@ -103,7 +89,7 @@ def load_values_set(xml_path: str, tag: str) -> set:
         return set()
 
 def load_int_set(xml_path: str, tag: str) -> set:
-    """Загружает целочисленные допустимые значения из XML (например, индексы нагрузки)."""
+    """Загружает целочисленные значения, игнорируя дробные типа '112/110'."""
     if not os.path.exists(xml_path):
         print(f"⚠️ Файл {xml_path} не найден. Валидация отключена.")
         return set()
@@ -118,7 +104,7 @@ def load_int_set(xml_path: str, tag: str) -> set:
                     num = int(val)
                     valid.add(num)
                 except ValueError:
-                    pass  # игнорируем некорректные значения
+                    pass  # пропускаем дробные значения
         print(f"✅ Загружено {len(valid)} значений из {xml_path}")
         return valid
     except Exception as e:
@@ -146,7 +132,6 @@ EXCLUDED_BRANDS = [
 ]
 
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
-
 EXCLUDED_CATEGORY = ["Грузовая"]
 
 EXCLUDED_ARTICLES = [
@@ -263,7 +248,6 @@ def get_additional_image_urls(item):
         return []
     brand_clean = clean_name(brand)
     model_clean = clean_name(model)
-
     width = item.get("width", "")
     profile = item.get("profile", "") or item.get("height", "")
     diameter = item.get("diameter", "")
@@ -274,7 +258,6 @@ def get_additional_image_urls(item):
             width, profile, diameter = match.groups()
         else:
             return []
-
     base_filename = f"{width}_{profile}_{diameter}_{brand_clean}_{model_clean}"
     urls = []
     for i in range(1, 5):
@@ -305,7 +288,7 @@ def check_image_exists(url, cache):
     if url in cache:
         return cache[url]
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        headers = {"User-Agent": "Mozilla/5.0"}
         response = requests.head(url, timeout=HEAD_TIMEOUT, headers=headers)
         exists = response.status_code == 200
     except:
@@ -375,7 +358,6 @@ def calculate_price_per_one(item, diameter):
 
 # ===================== ФУНКЦИЯ ДЛЯ ПРОВЕРКИ, ЯВЛЯЕТСЯ ЛИ ТОВАР ДИСКОМ =====================
 def is_disk(item):
-    """Возвращает True, если товар — диск (не шина)"""
     goods_type = item.get("Тип_товара", "").lower()
     if goods_type == "диск":
         return True
@@ -385,7 +367,7 @@ def is_disk(item):
     return False
 
 # ===================== ФОРМИРОВАНИЕ XML ДЛЯ АВИТО =====================
-def add_ad_to_root(root, item, diameter, image_cache=None):
+def add_ad_to_root(root, item, diameter, image_cache=None, zero_counter=None):
     total_stock = safe_float(item.get("countAll", 0))
     if total_stock == 0:
         total_stock = safe_float(item.get("rest", 0))
@@ -394,12 +376,22 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
 
     quantity = 4 if total_stock >= 4 else 1
 
+    # Расчёт цены
+    price_per_one = calculate_price_per_one(item, diameter)
+    total_price = price_per_one * quantity
+    total_price = round_price(total_price, ROUND_STEP, ROUND_METHOD)
+
+    # Проверка на нулевую цену после расчёта
+    if total_price <= 0:
+        if zero_counter is not None:
+            zero_counter[0] += 1
+        return
+
     ad = ET.SubElement(root, "Ad")
 
-    # --- Адрес ---
     ET.SubElement(ad, "Address").text = "Новосибирская область, Новосибирск, Фабричная улица, 43"
 
-    # --- Идентификатор ---
+    # Идентификатор
     article = item.get("article", "") or item.get("cae", "")
     width = item.get("width", "")
     profile = item.get("profile", "") or item.get("height", "")
@@ -413,7 +405,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     unique_id = re.sub(r'[^a-zA-Zа-яА-ЯёЁ0-9\-]', '', unique_id)
     ET.SubElement(ad, "Id").text = unique_id
 
-    # --- Заголовок ---
+    # Заголовок
     title_parts = []
     if item.get("brand"):
         title_parts.append(item.get("brand"))
@@ -424,7 +416,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     title = " ".join(title_parts) if title_parts else "Шина"
     ET.SubElement(ad, "Title").text = title
 
-    # --- Описание ---
+    # Описание
     name = item.get("name", "")
     if not name:
         name = f"{item.get('brand', '')} {item.get('model', '')} {width}/{profile}R{diam_str}".strip()
@@ -444,10 +436,9 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ])
     ET.SubElement(ad, "Description").text = description
 
-    # --- Контактный телефон ---
     ET.SubElement(ad, "ContactPhone").text = "8 913 703-55-88"
 
-    # --- Изображения ---
+    # Изображения
     images_elem = ET.SubElement(ad, "Images")
     fallback_img = item.get("img", "")
     brand = item.get("brand", "").strip()
@@ -470,29 +461,20 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
         img = ET.SubElement(images_elem, "Image")
         img.set("url", fallback_img)
 
-    # --- Цена за лот ---
-    price_per_one = calculate_price_per_one(item, diameter)
-    total_price = price_per_one * quantity
-    total_price = round_price(total_price, ROUND_STEP, ROUND_METHOD)
     ET.SubElement(ad, "Price").text = str(total_price)
 
-    # --- Категория и тип товара ---
     ET.SubElement(ad, "Category").text = "Запчасти и аксессуары"
     ET.SubElement(ad, "GoodsType").text = "Шины, диски и колёса"
     ET.SubElement(ad, "AdType").text = "Товар приобретен на продажу"
     ET.SubElement(ad, "ProductType").text = "Легковые шины"
-
-    # --- Количество ---
     ET.SubElement(ad, "Quantity").text = f"за {quantity} шт."
 
-    # --- Параметры шин ---
     ET.SubElement(ad, "Brand").text = item.get("brand", "")
     ET.SubElement(ad, "Model").text = item.get("model", "")
     ET.SubElement(ad, "TireSectionWidth").text = str(item.get("width", ""))
     ET.SubElement(ad, "RimDiameter").text = str(item.get("diameter", ""))
     ET.SubElement(ad, "TireAspectRatio").text = str(item.get("profile", "") or item.get("height", ""))
 
-    # Сезонность
     season = item.get("season", "").lower()
     if season == "зима":
         studded = str(item.get("studded", "") or item.get("spikes", "")).lower()
@@ -508,21 +490,16 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
         tire_type = "Всесезонные"
     ET.SubElement(ad, "TireType").text = tire_type
 
-    # Индексы (необязательные, но если есть – уже прошли валидацию)
     if item.get("load_index"):
         ET.SubElement(ad, "LoadIndex").text = str(item["load_index"])
     if item.get("speed_index"):
         ET.SubElement(ad, "SpeedIndex").text = str(item["speed_index"])
 
-    # RunFlat
     runflat = item.get("runflat", "")
     if runflat:
         ET.SubElement(ad, "RunFlat").text = "Да" if runflat.lower() in ("да", "yes", "runflat") else "Нет"
 
-    # Состояние
     ET.SubElement(ad, "Condition").text = "Новое"
-
-    # Статус объявления
     ET.SubElement(ad, "AdStatus").text = "Free"
 
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
@@ -534,17 +511,14 @@ def main():
 
     print("🔄 Загрузка данных завершена. Обработка...")
 
-    # 1. Загружаем справочник брендов и моделей
     model_mapping, brand_map = load_model_mapping(MODEL_REFERENCE_FILE)
     valid_brands_norms = set(brand_map.keys())
 
-    # 2. Загружаем справочники размеров и индексов
     valid_diameters = load_values_set(DIAMETER_REFERENCE_FILE, "RimDiameter")
     valid_profiles = load_values_set(PROFILE_REFERENCE_FILE, "TireAspectRatio")
     valid_widths = load_values_set(WIDTH_REFERENCE_FILE, "TireSectionWidth")
     valid_loadindexes = load_int_set(LOADINDEX_REFERENCE_FILE, "LoadIndex")
 
-    # 3. Подготовка лога ошибок валидации
     log_file = "validation_errors.log"
     with open(log_file, "w", encoding="utf-8") as f:
         f.write("Артикул\tБренд\tМодель\tПараметр\tЗначение\tПричина\n")
@@ -564,7 +538,8 @@ def main():
     excluded_season = 0
     excluded_disk = 0
     excluded_validation = 0
-    excluded_zero_price = 0
+    excluded_zero_retail = 0
+    zero_price_counter = [0]   # для отслеживания внутри add_ad_to_root
 
     for item in data:
         name = item.get("name", "")
@@ -572,46 +547,39 @@ def main():
             excluded_zb += 1
             continue
 
-        # Коррекция бренда Ikon (Nokian Tyres) -> Ikon Tyres
         if item.get("brand") == "Ikon (Nokian Tyres)":
             item["brand"] = "Ikon Tyres"
-
         if "name" in item and "(Nokian Tyres)" in item["name"]:
             item["name"] = item["name"].replace("(Nokian Tyres)", "").strip()
             item["name"] = re.sub(r'\s+', ' ', item["name"])
 
-        # Исключаем товары с нулевой ценой (retail)
         original_retail = safe_float(item.get("retail", 0))
         if original_retail <= 0:
-            excluded_zero_price += 1
+            excluded_zero_retail += 1
             continue
 
         brand = item.get("brand", "")
         if brand in EXCLUDED_BRANDS_FROM_EXPORT:
             continue
 
-        # ---------- Строгая валидация бренда ----------
+        # --- Валидация бренда ---
         if not brand:
             log_invalid(item, "Brand", "", "пустой бренд")
             excluded_validation += 1
             continue
-
         brand_norm = normalize_string(brand)
         if brand_norm not in valid_brands_norms:
             log_invalid(item, "Brand", brand, f"не найден в справочнике (норм: {brand_norm})")
             excluded_validation += 1
             continue
-
-        # Замена на каноническое написание из справочника
         item["brand"] = brand_map[brand_norm]
 
-        # ---------- Валидация модели ----------
+        # --- Валидация модели ---
         model = item.get("model", "")
         if not model:
             log_invalid(item, "Model", "", "пустая модель")
             excluded_validation += 1
             continue
-
         if brand_norm in model_mapping:
             models_dict = model_mapping[brand_norm]
             model_norm = normalize_string(model)
@@ -626,7 +594,7 @@ def main():
             excluded_validation += 1
             continue
 
-        # ---------- Валидация диаметра ----------
+        # --- Валидация диаметра ---
         diam_str = str(item.get("diameter", "")).strip()
         if not diam_str:
             log_invalid(item, "RimDiameter", "", "пустой диаметр")
@@ -644,7 +612,7 @@ def main():
             excluded_validation += 1
             continue
 
-        # ---------- Валидация ширины ----------
+        # --- Валидация ширины ---
         width_str = str(item.get("width", "")).strip()
         if not width_str:
             log_invalid(item, "TireSectionWidth", "", "пустая ширина")
@@ -662,7 +630,7 @@ def main():
             excluded_validation += 1
             continue
 
-        # ---------- Валидация профиля (высоты) ----------
+        # --- Валидация профиля ---
         profile_str = str(item.get("profile", "") or item.get("height", "")).strip()
         if not profile_str:
             log_invalid(item, "TireAspectRatio", "", "пустая высота профиля")
@@ -680,21 +648,26 @@ def main():
             excluded_validation += 1
             continue
 
-        # ---------- Валидация индекса нагрузки (если указан) ----------
-        load_index_raw = item.get("load_index", "")
+        # --- Валидация индекса нагрузки ---
+        load_index_raw = str(item.get("load_index", "")).strip()
         if load_index_raw:
+            # Обработка составных индексов "106/104" -> берём первую часть
+            if '/' in load_index_raw:
+                load_index_raw = load_index_raw.split('/')[0].strip()
             try:
                 li = int(load_index_raw)
                 if li not in valid_loadindexes:
-                    log_invalid(item, "LoadIndex", str(load_index_raw), "отсутствует в справочнике")
+                    log_invalid(item, "LoadIndex", str(item.get("load_index", "")), "отсутствует в справочнике")
                     excluded_validation += 1
                     continue
+                else:
+                    item["load_index"] = str(li)   # заменяем на чистое число
             except ValueError:
-                log_invalid(item, "LoadIndex", str(load_index_raw), "некорректное число")
+                log_invalid(item, "LoadIndex", str(item.get("load_index", "")), "некорректное число")
                 excluded_validation += 1
                 continue
 
-        # ---------- Остальные проверки ----------
+        # --- Остальные проверки ---
         if is_disk(item):
             excluded_disk += 1
             continue
@@ -710,7 +683,6 @@ def main():
                 excluded_season += 1
                 continue
 
-        # Товар прошёл все проверки
         total_products += 1
         all_items.append((item, diameter))
 
@@ -718,9 +690,9 @@ def main():
             for url in get_all_image_urls(item):
                 unique_urls.add(url)
 
-    print(f"🔍 Всего товаров после всех фильтров: {total_products}")
-    print(f"🔍 Исключено по валидации (бренд/модель/размеры/индексы): {excluded_validation}")
-    print(f"🔍 Исключено с нулевой ценой: {excluded_zero_price}")
+    print(f"🔍 Всего товаров после фильтров: {total_products}")
+    print(f"🔍 Исключено по валидации: {excluded_validation}")
+    print(f"🔍 Исключено с нулевой розничной ценой: {excluded_zero_retail}")
     print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
     # Кэширование изображений
@@ -739,7 +711,7 @@ def main():
 
             def check_url(url):
                 try:
-                    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+                    headers = {"User-Agent": "Mozilla/5.0"}
                     response = requests.head(url, timeout=HEAD_TIMEOUT, headers=headers)
                     return url, response.status_code == 200
                 except:
@@ -766,18 +738,20 @@ def main():
 
     for item, diameter in all_items:
         add_ad_to_root(root, item, diameter,
-                       image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
+                       image_cache=image_cache if IMAGE_CHECK_ENABLED else None,
+                       zero_counter=zero_price_counter)
 
     tree = ET.ElementTree(root)
     output_file = "avito_export2.xml"
     tree.write(output_file, encoding="utf-8", xml_declaration=True)
 
-    print(f"✅ Итоговый XML для Авито создан: {output_file}, всего объявлений: {total_products}")
+    print(f"✅ Итоговый XML для Авито создан: {output_file}, всего объявлений в файле: {len(tree.getroot().findall('Ad'))}")
     print(f"   - Пропущено (ЗБ): {excluded_zb}")
     print(f"   - Исключено по артикулу: {excluded_article}")
     print(f"   - Исключено дисков: {excluded_disk}")
     print(f"   - Исключено по валидации: {excluded_validation}")
-    print(f"   - Исключено с нулевой ценой: {excluded_zero_price}")
+    print(f"   - Исключено с нулевой розничной ценой: {excluded_zero_retail}")
+    print(f"   - Исключено с нулевой ценой после расчёта: {zero_price_counter[0]}")
     if SEASON_EXCLUDE_ENABLED:
         print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
 
