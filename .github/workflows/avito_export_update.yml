@@ -40,7 +40,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: image_cache.json
-          key: image-cache-${{ runner.os }}-${{ hashFiles('avito_export.py') }}
+          key: image-cache-${{ runner.os }}-${{ hashFiles('avito_export2.py') }}
           restore-keys: |
             image-cache-${{ runner.os }}-
 
