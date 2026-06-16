@@ -19,6 +19,11 @@ API_PASSWORD = "rWp7mFWXRKOq"
 ROUND_STEP = 10
 ROUND_METHOD = 'nearest'
 
+BRAND_REPLACEMENTS = {
+    "Ikon": "Ikon Tyres",
+    # добавьте другие, если появятся предупреждения
+}
+
 # ===================== НОРМАЛИЗАЦИЯ МОДЕЛЕЙ ПО СПРАВОЧНИКУ =====================
 MODEL_REFERENCE_FILE = "models_reference.xml"   # путь к вашему XML-файлу
 
@@ -122,6 +127,13 @@ GLOBAL_COEFF = {
 
 BRAND_COEFFS = {
     "ikon": {
+        "default": 0.88,
+        "diameter_ranges": [
+            {"min": 13, "max": 15, "coeff": 0.905},
+            {"min": 17, "max": 22, "coeff": 0.88},
+        ],
+    },
+      "ikon tyres": {
         "default": 0.88,
         "diameter_ranges": [
             {"min": 13, "max": 15, "coeff": 0.905},
@@ -392,7 +404,7 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "Description").text = description
 
     # --- Контактный телефон (замените на реальный) ---
-    ET.SubElement(ad, "ContactPhone").text = "+7 905 207-04-90"
+    ET.SubElement(ad, "ContactPhone").text = "8 913 703-55-88"
 
     # --- Изображения ---
     images_elem = ET.SubElement(ad, "Images")
@@ -433,7 +445,10 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     ET.SubElement(ad, "Quantity").text = f"за {quantity} шт."
 
     # --- Параметры шин ---
-    ET.SubElement(ad, "Brand").text = item.get("brand", "")
+    brand_for_xml = item.get("brand", "")
+    if brand_for_xml in BRAND_REPLACEMENTS:
+        brand_for_xml = BRAND_REPLACEMENTS[brand_for_xml]
+    ET.SubElement(ad, "Brand").text = brand_for_xml
     ET.SubElement(ad, "Model").text = item.get("model", "")
     ET.SubElement(ad, "TireSectionWidth").text = str(item.get("width", ""))
     ET.SubElement(ad, "RimDiameter").text = str(item.get("diameter", ""))
@@ -556,6 +571,7 @@ def main():
         if IMAGE_REPLACE_ENABLED:
             for url in get_all_image_urls(item):
                 unique_urls.add(url)
+
 
     print(f"🔍 Всего товаров после фильтров (только шины): {total_products}")
     print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
