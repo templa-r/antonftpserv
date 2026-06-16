@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - 'avito_export2.py'          # запуск при изменении скрипта
+      - 'avito_export3.py'          # запуск при изменении скрипта
   schedule:
     # Каждый день в 4:10 по Новосибирску (UTC+7) = 21:10 UTC предыдущего дня
     - cron: "10 21 * * *"
@@ -40,7 +40,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: image_cache.json
-          key: image-cache-${{ runner.os }}-${{ hashFiles('avito_export2.py') }}
+          key: image-cache-${{ runner.os }}-${{ hashFiles('avito_export3.py') }}
           restore-keys: |
             image-cache-${{ runner.os }}-
 
@@ -56,7 +56,7 @@ jobs:
           pip install requests
 
       - name: Run avito export script
-        run: python avito_export2.py
+        run: python avito_export3.py
         env:
           IMAGE_CACHE_REFRESH: ${{ inputs.refresh_cache == true && 'true' || 'false' }}
         continue-on-error: false
@@ -70,7 +70,7 @@ jobs:
           if [ ! -f image_cache.json ]; then
             echo '{}' > image_cache.json
           fi
-          git add avito_export.xml image_cache.json
+          git add avito_export3.xml image_cache.json
           if git diff-index --quiet HEAD; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
@@ -82,7 +82,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git commit -m 'Daily update of avito_export2.xml'
+          git commit -m 'Daily update of avito_export3.xml'
           git pull --rebase origin main
           git push
         env:
