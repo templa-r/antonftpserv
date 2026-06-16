@@ -389,12 +389,22 @@ def is_disk(item):
     return False
 
 # ===================== ФОРМИРОВАНИЕ XML ДЛЯ АВИТО =====================
-def add_ad_to_root(root, item, diameter, image_cache=None):
+def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
+    if seen_ids is None:
+        seen_ids = set()
+
     total_stock = safe_float(item.get("countAll", 0))
     if total_stock == 0:
         total_stock = safe_float(item.get("rest", 0))
     if total_stock <= 0:
         return
+
+    unique_id = make_id(item)
+
+    # Пропускаем дубликаты ID в рамках текущего файла
+    if unique_id in seen_ids:
+        return
+    seen_ids.add(unique_id)
 
     quantity = 4 if total_stock >= 4 else 1
 
@@ -402,16 +412,15 @@ def add_ad_to_root(root, item, diameter, image_cache=None):
     total_price = price_per_one * quantity
     total_price = round_price(total_price, ROUND_STEP, ROUND_METHOD)
 
+    # Принудительная минимальная цена, чтобы избежать 0
     if total_price <= 0:
-        # Не выгружаем товары с нулевой итоговой ценой
-        return
+        print(f"⚠️ Внимание: товар {unique_id} имел нулевую цену, установлено минимальное значение {ROUND_STEP}")
+        total_price = ROUND_STEP
 
     ad = ET.SubElement(root, "Ad")
 
     ET.SubElement(ad, "Address").text = "Новосибирская область, Новосибирск, Фабричная улица, 43"
 
-    # Идентификатор
-    unique_id = make_id(item)
     ET.SubElement(ad, "Id").text = unique_id
 
     # Заголовок
@@ -554,7 +563,7 @@ def main():
     excluded_disk = 0
     excluded_validation = 0
     excluded_zero_retail = 0
-    excluded_by_id = 0      # новый счётчик
+    excluded_by_id = 0
 
     for item in data:
         name = item.get("name", "")
@@ -753,14 +762,16 @@ def main():
     else:
         print("🔍 Проверка существования файлов отключена.")
 
-    # Создание XML
+    # Создание XML с защитой от дубликатов
     root = ET.Element("Ads")
     root.set("formatVersion", "3")
     root.set("target", "Avito.ru")
 
+    seen_ids = set()   # множество для отслеживания уникальных ID в файле
     for item, diameter in all_items:
         add_ad_to_root(root, item, diameter,
-                       image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
+                       image_cache=image_cache if IMAGE_CHECK_ENABLED else None,
+                       seen_ids=seen_ids)
 
     tree = ET.ElementTree(root)
     output_file = "avito_export2.xml"
