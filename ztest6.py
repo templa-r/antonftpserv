@@ -91,8 +91,8 @@ BRAND_COEFFS = {
     "hankook": {
         "default": 0.915,
         "diameter_ranges": [
-            {"min": 13, "max": 16, "value": 600},
-            {"min": 17, "max": 22, "value": 600},
+            {"min": 13, "max": 16, "value": 800},
+            {"min": 17, "max": 22, "value": 900},
         ],
     },
     "pirelli": {
