@@ -96,7 +96,7 @@ SEASON_EXCLUDE_VALUE = "зима"
 EXCLUDED_BRANDS = [
     "Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
-    "Kelly", "Nitto", "Кама"
+    "Kelly", "Nitto", "Кама", "Hankook"
 ]
 
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
@@ -129,14 +129,7 @@ BRAND_COEFFS = {
         ],
     },
     "laufenn": 0.905,
-    "bridgestone": 0.965,
-    "hankook": {
-        "default": 0.915,
-        "diameter_ranges": [
-            {"min": 13, "max": 16, "coeff": 0.907},
-            {"min": 17, "max": 22, "coeff": 0.906},
-        ],
-    },
+    "bridgestone": 0.965
 }
 
 IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Sonix"]
