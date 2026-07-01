@@ -126,7 +126,7 @@ SEASON_EXCLUDE_VALUE = "зима"
 EXCLUDED_BRANDS = [
     "Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
-    "Kelly", "Nitto", "Кама"
+    "Kelly", "Nitto", "Кама", "Hankook"
 ]
 
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
@@ -186,8 +186,8 @@ BRAND_COEFFS = {
     },
 }
 
-IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Sonix", "Haankook"]
-MIN_MARGIN = 500
+IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Sonix", "Hankook"]
+MIN_MARGIN = 50
 
 MODEL_RULES = {
     ("autograph", "autograph ice 9 suv"): {
