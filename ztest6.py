@@ -103,7 +103,7 @@ BRAND_COEFFS = {
     },
 }
 
-IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Sonix", "Haankook"]
+IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Sonix", "Hankook"]
 MIN_MARGIN = 500
 
 MODEL_RULES = {
