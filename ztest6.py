@@ -88,7 +88,6 @@ BRAND_COEFFS = {
     },
     "laufenn": 0.905,
     "bridgestone": 0.965,
-    },
     "pirelli": {
         "diameter_ranges": [
             {"min": 13, "max": 16, "value": 700},
