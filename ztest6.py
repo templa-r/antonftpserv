@@ -156,14 +156,9 @@ def get_coeff_from_settings(settings, diameter):
     return coeff, round_step, round_method
 
 def apply_brand_adjustment(brand_settings, base_price, diameter):
-    """
-    Применяет к цене настройки бренда: либо коэффициент (coeff), либо фиксированное значение (value).
-    base_price – оптовая цена (price) для добавок, или розница для коэффициентов.
-    """
     if not isinstance(brand_settings, dict):
         return base_price * brand_settings
 
-    # Проверяем диапазоны диаметров
     if diameter is not None and "diameter_ranges" in brand_settings:
         for r in brand_settings["diameter_ranges"]:
             if r["min"] <= diameter <= r["max"]:
@@ -172,7 +167,6 @@ def apply_brand_adjustment(brand_settings, base_price, diameter):
                 elif "coeff" in r:
                     return base_price * r["coeff"]
 
-    # Если нет диапазонов или диаметр не подошел
     if "default" in brand_settings:
         default = brand_settings["default"]
         if isinstance(default, (int, float)):
@@ -316,7 +310,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                     else:
                         brand_settings = BRAND_COEFFS.get(brand)
                         if brand_settings is not None:
-                            # Определяем, есть ли в настройках бренда value (добавка к оптовой)
                             use_wholesale = False
                             if isinstance(brand_settings, dict):
                                 if 'value' in brand_settings:
@@ -365,7 +358,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         else:
             element.text = str(value)
 
-    # --- ФОРМИРОВАНИЕ ТЕГА IMAGES ---
+    # --- ФОРМИРОВАНИЕ ТЕГА IMAGES (НОВАЯ ЛОГИКА) ---
     if replace_images and IMAGE_REPLACE_ENABLED:
         brand = item.get("brand", "").strip()
         model = item.get("model", "").strip()
@@ -373,6 +366,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
 
         s3_urls = []
         short_url = None
+        brand_clean = None
         if brand and model:
             brand_clean = clean_name(brand)
             model_clean = clean_name(model)
@@ -392,35 +386,39 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                 filename = short_url[short_url.rfind('/')+1:] if '/' in short_url else short_url
                 existing_s3[short_url] = filename
 
-        main_url = None
-        main_filename = None
-        if short_url and short_url in existing_s3:
-            main_url = short_url
-            main_filename = existing_s3[short_url]
-        elif fallback_url:
-            main_url = fallback_url
-            main_filename = fallback_url[fallback_url.rfind('/')+1:] if '/' in fallback_url else fallback_url
-
-        if main_url:
-            if short_url and short_url in existing_s3:
-                photo_dir = main_url[:main_url.rfind('/')+1]
+        # Если есть хотя бы одно S3-изображение
+        if existing_s3:
+            # Определяем PhotoDir как S3 папку бренда
+            if brand_clean:
+                photo_dir = f"{IMAGE_BASE_URL}/{brand_clean}/"
             else:
-                photo_dir = main_url[:main_url.rfind('/')+1] if '/' in main_url else ""
+                # fallback: из первого URL
+                first_url = next(iter(existing_s3))
+                photo_dir = first_url[:first_url.rfind('/')+1]
 
-            additional_filenames = []
+            # Собираем имена файлов: сначала короткое имя, если есть
+            filenames = []
+            if short_url and short_url in existing_s3:
+                filenames.append(existing_s3[short_url])
+            # Затем все остальные (дополнительные)
             for url, fname in existing_s3.items():
-                if url != main_url and fname not in additional_filenames:
-                    additional_filenames.append(fname)
+                if url != short_url and fname not in filenames:
+                    filenames.append(fname)
 
             images_elem = ET.SubElement(product, "Images")
             images_elem.set("PhotoDir", photo_dir)
-
-            img_main = ET.SubElement(images_elem, "Image")
-            img_main.set("name", main_filename)
-
-            for fname in additional_filenames:
+            for fname in filenames:
                 img_elem = ET.SubElement(images_elem, "Image")
                 img_elem.set("name", fname)
+        else:
+            # Нет S3-фото, используем fallback (от поставщика)
+            if fallback_url:
+                photo_dir = fallback_url[:fallback_url.rfind('/')+1] if '/' in fallback_url else ""
+                main_filename = fallback_url[fallback_url.rfind('/')+1:] if '/' in fallback_url else fallback_url
+                images_elem = ET.SubElement(product, "Images")
+                images_elem.set("PhotoDir", photo_dir)
+                img_main = ET.SubElement(images_elem, "Image")
+                img_main.set("name", main_filename)
 
     inSet_elem = ET.SubElement(product, "inSet")
     inSet_elem.text = "1"
