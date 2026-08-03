@@ -147,7 +147,6 @@ EXCLUDED_IDS = {
     "6924590215191-215-60-16",
     "6924590215221-215-55-17",
     "RA86201-1250-80-15",
-
 }
 
 # ===================== КОЭФФИЦИЕНТЫ ЦЕН =====================
@@ -184,14 +183,20 @@ BRAND_COEFFS = {
             {"min": 17, "max": 22, "coeff": 0.906},
         ],
     },
+    # Pirelli УБРАН из BRAND_COEFFS, теперь в FIXED_ADDITIONS
+}
+
+# Фиксированные надбавки для брендов (в рублях), применяются вместо коэффициентов
+FIXED_ADDITIONS = {
     "pirelli": {
-        "default": 0.985,
         "diameter_ranges": [
-            {"min": 13, "max": 16, "coeff": 0.985},
-            {"min": 17, "max": 22, "coeff": 0.985},
+            {"min": 13, "max": 16, "value": 800},
+            {"min": 17, "max": 22, "value": 1200},
         ],
+        "default": 0,  # если диаметр вне диапазона, надбавка 0
     },
 }
+
 IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Sonix", "Hankook"]
 MIN_MARGIN = 50
 
@@ -341,48 +346,62 @@ def calculate_price_per_one(item, diameter):
     if is_excluded or not apply_coeff:
         final_price = original_retail
     else:
-        rule = MODEL_RULES.get((brand, model))
-        if rule:
-            rule_type = rule["type"]
-            if rule_type == "fixed":
-                adjusted_retail = safe_float(rule["value"])
-            elif rule_type == "add_to_field":
-                base_val = safe_float(item.get(rule["field"], "0"))
-                adjusted_retail = base_val + rule["value"]
-            elif rule_type == "add_to_field_by_diameter":
-                add_value = None
-                if diameter is not None:
-                    for r in rule["ranges"]:
-                        if r["min"] <= diameter <= r["max"]:
-                            add_value = r["value"]
-                            break
-                if add_value is not None:
-                    base_val = safe_float(item.get(rule["field"], "0"))
-                    adjusted_retail = base_val + add_value
-                else:
-                    if rule.get("default") is not None:
-                        base_val = safe_float(item.get(rule["field"], "0"))
-                        adjusted_retail = base_val + rule["default"]
-                    else:
-                        adjusted_retail = original_retail
-            else:
-                adjusted_retail = original_retail
+        # Проверяем, есть ли фиксированная надбавка для бренда
+        if brand in FIXED_ADDITIONS:
+            add_settings = FIXED_ADDITIONS[brand]
+            add_value = None
+            if diameter is not None and "diameter_ranges" in add_settings:
+                for r in add_settings["diameter_ranges"]:
+                    if r["min"] <= diameter <= r["max"]:
+                        add_value = r["value"]
+                        break
+            if add_value is None:
+                add_value = add_settings.get("default", 0)
+            final_price = original_retail + add_value
         else:
-            brand_settings = BRAND_COEFFS.get(brand)
-            if brand_settings is not None:
-                coeff = get_coeff_from_settings(brand_settings, diameter)
+            # Стандартная логика с коэффициентами
+            rule = MODEL_RULES.get((brand, model))
+            if rule:
+                rule_type = rule["type"]
+                if rule_type == "fixed":
+                    adjusted_retail = safe_float(rule["value"])
+                elif rule_type == "add_to_field":
+                    base_val = safe_float(item.get(rule["field"], "0"))
+                    adjusted_retail = base_val + rule["value"]
+                elif rule_type == "add_to_field_by_diameter":
+                    add_value = None
+                    if diameter is not None:
+                        for r in rule["ranges"]:
+                            if r["min"] <= diameter <= r["max"]:
+                                add_value = r["value"]
+                                break
+                    if add_value is not None:
+                        base_val = safe_float(item.get(rule["field"], "0"))
+                        adjusted_retail = base_val + add_value
+                    else:
+                        if rule.get("default") is not None:
+                            base_val = safe_float(item.get(rule["field"], "0"))
+                            adjusted_retail = base_val + rule["default"]
+                        else:
+                            adjusted_retail = original_retail
+                else:
+                    adjusted_retail = original_retail
             else:
-                coeff = get_coeff_from_settings(GLOBAL_COEFF, diameter)
-            adjusted_retail = original_retail * coeff
+                brand_settings = BRAND_COEFFS.get(brand)
+                if brand_settings is not None:
+                    coeff = get_coeff_from_settings(brand_settings, diameter)
+                else:
+                    coeff = get_coeff_from_settings(GLOBAL_COEFF, diameter)
+                adjusted_retail = original_retail * coeff
 
-        if price_val > 0:
-            margin = adjusted_retail - price_val
-            if margin < MIN_MARGIN:
-                final_price = original_retail
+            if price_val > 0:
+                margin = adjusted_retail - price_val
+                if margin < MIN_MARGIN:
+                    final_price = original_retail
+                else:
+                    final_price = adjusted_retail
             else:
                 final_price = adjusted_retail
-        else:
-            final_price = adjusted_retail
 
     return round_price(final_price, ROUND_STEP, ROUND_METHOD)
 
