@@ -187,10 +187,10 @@ BRAND_COEFFS = {
     "pirelli": {
         "default": 0.985,
         "diameter_ranges": [
-            {"min": 13, "max": 16, "value": 800},
-            {"min": 17, "max": 22, "value": 1200},
+            {"min": 13, "max": 16, "coeff": 0.985},   # или другой коэффициент
+            {"min": 17, "max": 22, "coeff": 0.985},
         ],
-}
+    },
 IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Sonix", "Hankook"]
 MIN_MARGIN = 50
 
