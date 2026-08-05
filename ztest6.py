@@ -637,24 +637,8 @@ if S3_ENABLED:
                 config=Config(signature_version='s3v4')
             )
             
-            # Вычисляем SHA256 файла
-            def sha256_of_file(filename):
-                hash_sha256 = hashlib.sha256()
-                with open(filename, "rb") as f:
-                    for chunk in iter(lambda: f.read(4096), b""):
-                        hash_sha256.update(chunk)
-                return hash_sha256.hexdigest()
-            
-            content_sha256 = sha256_of_file('aztyre_full.xml')
-            
-            # Загружаем с явным указанием SHA256
-            with open('aztyre_full.xml', 'rb') as f:
-                s3_client.put_object(
-                    Bucket=S3_BUCKET,
-                    Key=S3_KEY,
-                    Body=f.read(),
-                    ContentSHA256=content_sha256
-                )
+            # Загружаем файл
+            s3_client.upload_file('aztyre_full.xml', S3_BUCKET, S3_KEY)
             print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
         else:
             print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
