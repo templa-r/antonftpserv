@@ -621,6 +621,7 @@ if S3_ENABLED:
     try:
         import subprocess
         import sys
+        import os
         
         S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
         S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
@@ -629,6 +630,11 @@ if S3_ENABLED:
         S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
         
         if S3_ACCESS_KEY and S3_SECRET_KEY:
+            # Проверяем существование файла
+            if not os.path.exists("aztyre_full.xml"):
+                print("❌ Файл aztyre_full.xml не найден!")
+                raise FileNotFoundError("aztyre_full.xml not found")
+            
             # Устанавливаем переменные окружения для awscli
             env = os.environ.copy()
             env["AWS_ACCESS_KEY_ID"] = S3_ACCESS_KEY
@@ -641,27 +647,21 @@ if S3_ENABLED:
                 print("⚠️ Устанавливаем awscli...")
                 subprocess.run([sys.executable, "-m", "pip", "install", "awscli"], check=True)
             
-            # Первая попытка: без явного указания подписи (используем v4 по умолчанию)
+            # Используем s3api put-object с явной подписью v4
             cmd = [
-                "aws", "s3", "cp",
-                "aztyre_full.xml",
-                f"s3://{S3_BUCKET}/{S3_KEY}",
-                "--endpoint-url", S3_ENDPOINT
+                "aws", "s3api", "put-object",
+                "--bucket", S3_BUCKET,
+                "--key", S3_KEY,
+                "--body", "aztyre_full.xml",
+                "--endpoint-url", S3_ENDPOINT,
+                "--signature-version", "v4"
             ]
             print(f"🔍 Выполняем: {' '.join(cmd)}")
             result = subprocess.run(cmd, env=env, capture_output=True, text=True)
             if result.returncode == 0:
                 print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
             else:
-                # Если не сработало, пробуем с явным указанием версии подписи
-                print("⚠️ Первая попытка не удалась, пробуем с --signature-version v4")
-                cmd_with_sig = cmd + ["--signature-version", "v4"]
-                print(f"🔍 Выполняем: {' '.join(cmd_with_sig)}")
-                result = subprocess.run(cmd_with_sig, env=env, capture_output=True, text=True)
-                if result.returncode == 0:
-                    print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
-                else:
-                    print(f"❌ Ошибка при загрузке в S3: {result.stderr}")
+                print(f"❌ Ошибка при загрузке в S3: {result.stderr}")
         else:
             print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
     except Exception as e:
