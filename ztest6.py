@@ -6,6 +6,7 @@ import re
 import json
 import time
 import traceback
+import hashlib  # <-- добавлен для вычисления SHA256
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from requests.adapters import HTTPAdapter
@@ -628,19 +629,32 @@ if S3_ENABLED:
         S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
         
         if S3_ACCESS_KEY and S3_SECRET_KEY:
-            # КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: отключаем проверку SHA256
             s3_client = boto3.client(
                 's3',
                 endpoint_url=S3_ENDPOINT,
                 aws_access_key_id=S3_ACCESS_KEY,
                 aws_secret_access_key=S3_SECRET_KEY,
-                config=Config(
-                    signature_version='s3v4',
-                    s3={'payload_signing_enabled': False}  # <--- ОТКЛЮЧАЕМ SHA256
-                )
+                config=Config(signature_version='s3v4')
             )
             
-            s3_client.upload_file('aztyre_full.xml', S3_BUCKET, S3_KEY)
+            # Вычисляем SHA256 файла
+            def sha256_of_file(filename):
+                hash_sha256 = hashlib.sha256()
+                with open(filename, "rb") as f:
+                    for chunk in iter(lambda: f.read(4096), b""):
+                        hash_sha256.update(chunk)
+                return hash_sha256.hexdigest()
+            
+            content_sha256 = sha256_of_file('aztyre_full.xml')
+            
+            # Загружаем с явным указанием SHA256
+            with open('aztyre_full.xml', 'rb') as f:
+                s3_client.put_object(
+                    Bucket=S3_BUCKET,
+                    Key=S3_KEY,
+                    Body=f.read(),
+                    ContentSHA256=content_sha256
+                )
             print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
         else:
             print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
