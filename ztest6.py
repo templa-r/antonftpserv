@@ -621,7 +621,6 @@ if S3_ENABLED:
     try:
         import subprocess
         import sys
-        import os
         
         S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
         S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
@@ -630,7 +629,7 @@ if S3_ENABLED:
         S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
         
         if S3_ACCESS_KEY and S3_SECRET_KEY:
-            # Проверяем существование файла
+            # Проверяем наличие файла
             if not os.path.exists("aztyre_full.xml"):
                 print("❌ Файл aztyre_full.xml не найден!")
                 raise FileNotFoundError("aztyre_full.xml not found")
@@ -640,21 +639,26 @@ if S3_ENABLED:
             env["AWS_ACCESS_KEY_ID"] = S3_ACCESS_KEY
             env["AWS_SECRET_ACCESS_KEY"] = S3_SECRET_KEY
             
-            # Проверяем, установлен ли awscli
+            # Проверяем/устанавливаем awscli
             try:
                 subprocess.run(["aws", "--version"], check=True, capture_output=True)
             except FileNotFoundError:
                 print("⚠️ Устанавливаем awscli...")
                 subprocess.run([sys.executable, "-m", "pip", "install", "awscli"], check=True)
             
-            # Используем s3api put-object с явной подписью v4
+            # Устанавливаем версию подписи (делаем один раз)
+            subprocess.run(
+                ["aws", "configure", "set", "default.s3.signature_version", "s3v4"],
+                env=env, check=True
+            )
+            
+            # Загружаем файл через s3api (без --signature-version)
             cmd = [
                 "aws", "s3api", "put-object",
                 "--bucket", S3_BUCKET,
                 "--key", S3_KEY,
                 "--body", "aztyre_full.xml",
-                "--endpoint-url", S3_ENDPOINT,
-                "--signature-version", "v4"
+                "--endpoint-url", S3_ENDPOINT
             ]
             print(f"🔍 Выполняем: {' '.join(cmd)}")
             result = subprocess.run(cmd, env=env, capture_output=True, text=True)
