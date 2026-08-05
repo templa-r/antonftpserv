@@ -641,18 +641,27 @@ if S3_ENABLED:
                 print("⚠️ Устанавливаем awscli...")
                 subprocess.run([sys.executable, "-m", "pip", "install", "awscli"], check=True)
             
+            # Первая попытка: без явного указания подписи (используем v4 по умолчанию)
             cmd = [
                 "aws", "s3", "cp",
                 "aztyre_full.xml",
                 f"s3://{S3_BUCKET}/{S3_KEY}",
-                "--endpoint-url", S3_ENDPOINT,
-                "--signature-version", "s3v4"
+                "--endpoint-url", S3_ENDPOINT
             ]
+            print(f"🔍 Выполняем: {' '.join(cmd)}")
             result = subprocess.run(cmd, env=env, capture_output=True, text=True)
             if result.returncode == 0:
                 print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
             else:
-                print(f"❌ Ошибка при загрузке в S3: {result.stderr}")
+                # Если не сработало, пробуем с явным указанием версии подписи
+                print("⚠️ Первая попытка не удалась, пробуем с --signature-version v4")
+                cmd_with_sig = cmd + ["--signature-version", "v4"]
+                print(f"🔍 Выполняем: {' '.join(cmd_with_sig)}")
+                result = subprocess.run(cmd_with_sig, env=env, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
+                else:
+                    print(f"❌ Ошибка при загрузке в S3: {result.stderr}")
         else:
             print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
     except Exception as e:
