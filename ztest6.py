@@ -634,19 +634,19 @@ if S3_ENABLED:
                 print("❌ Файл aztyre_full.xml не найден!")
                 raise FileNotFoundError("aztyre_full.xml not found")
             
-            # Устанавливаем переменные окружения для awscli
+            # Устанавливаем переменные окружения
             env = os.environ.copy()
             env["AWS_ACCESS_KEY_ID"] = S3_ACCESS_KEY
             env["AWS_SECRET_ACCESS_KEY"] = S3_SECRET_KEY
             
-            # Проверяем, установлен ли awscli
+            # Убеждаемся, что awscli установлен
             try:
                 subprocess.run(["aws", "--version"], check=True, capture_output=True)
             except:
                 print("⚠️ Устанавливаем awscli...")
                 subprocess.run([sys.executable, "-m", "pip", "install", "awscli"], check=True)
             
-            # Устанавливаем версию подписи через aws configure
+            # Настраиваем версию подписи через aws configure (как в успешном ls)
             subprocess.run(
                 ["aws", "configure", "set", "default.s3.signature_version", "s3v4"],
                 env=env,
@@ -654,7 +654,7 @@ if S3_ENABLED:
                 capture_output=True
             )
             
-            # Загружаем файл через aws s3 cp
+            # Выполняем загрузку через aws s3 cp (без --signature-version)
             cmd = [
                 "aws", "s3", "cp",
                 "aztyre_full.xml",
@@ -666,9 +666,13 @@ if S3_ENABLED:
             if result.returncode == 0:
                 print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
             else:
-                print(f"❌ Ошибка при загрузке в S3: {result.stderr}")
+                print(f"❌ Ошибка при загрузке в S3: {result.stderr if result.stderr else result.stdout}")
         else:
             print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Ошибка при выполнении команды: {e}")
+        print(f"Стандартный вывод: {e.stdout}")
+        print(f"Стандартный вывод ошибок: {e.stderr}")
     except Exception as e:
         print(f"❌ Ошибка при загрузке в S3: {e}")
 else:
