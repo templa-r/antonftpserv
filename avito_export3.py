@@ -5,6 +5,8 @@ import xml.etree.ElementTree as ET
 import re
 import json
 import time
+import subprocess
+import sys
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict
@@ -183,7 +185,6 @@ BRAND_COEFFS = {
             {"min": 17, "max": 22, "coeff": 0.906},
         ],
     },
-    # Pirelli УБРАН из BRAND_COEFFS, теперь в FIXED_ADDITIONS
 }
 
 # Фиксированные надбавки для брендов (в рублях), применяются вместо коэффициентов
@@ -193,7 +194,7 @@ FIXED_ADDITIONS = {
             {"min": 13, "max": 16, "value": 800},
             {"min": 17, "max": 22, "value": 1200},
         ],
-        "default": 0,  # если диаметр вне диапазона, надбавка 0
+        "default": 0,
     },
 }
 
@@ -346,7 +347,6 @@ def calculate_price_per_one(item, diameter):
     if is_excluded or not apply_coeff:
         final_price = original_retail
     else:
-        # Проверяем, есть ли фиксированная надбавка для бренда
         if brand in FIXED_ADDITIONS:
             add_settings = FIXED_ADDITIONS[brand]
             add_value = None
@@ -359,7 +359,6 @@ def calculate_price_per_one(item, diameter):
                 add_value = add_settings.get("default", 0)
             final_price = original_retail + add_value
         else:
-            # Стандартная логика с коэффициентами
             rule = MODEL_RULES.get((brand, model))
             if rule:
                 rule_type = rule["type"]
@@ -428,7 +427,6 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
 
     unique_id = make_id(item)
 
-    # Пропускаем дубликаты ID в рамках текущего файла
     if unique_id in seen_ids:
         return
     seen_ids.add(unique_id)
@@ -439,7 +437,6 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
     total_price = price_per_one * quantity
     total_price = round_price(total_price, ROUND_STEP, ROUND_METHOD)
 
-    # Не выгружаем товары с нулевой ценой
     if total_price <= 0:
         return
 
@@ -537,7 +534,6 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
         tire_type = "Всесезонные"
     ET.SubElement(ad, "TireType").text = tire_type
 
-    # Индекс нагрузки (только если задан и не пуст)
     load_index_val = str(item.get("load_index", "")).strip()
     if load_index_val:
         ET.SubElement(ad, "LoadIndex").text = load_index_val
@@ -612,7 +608,6 @@ def main():
         if brand in EXCLUDED_BRANDS_FROM_EXPORT:
             continue
 
-        # --- Валидация бренда ---
         if not brand:
             log_invalid(item, "Brand", "", "пустой бренд")
             excluded_validation += 1
@@ -624,7 +619,6 @@ def main():
             continue
         item["brand"] = brand_map[brand_norm]
 
-        # --- Валидация модели ---
         model = item.get("model", "")
         if not model:
             log_invalid(item, "Model", "", "пустая модель")
@@ -644,7 +638,6 @@ def main():
             excluded_validation += 1
             continue
 
-        # --- Валидация диаметра ---
         diam_str = str(item.get("diameter", "")).strip()
         if not diam_str:
             log_invalid(item, "RimDiameter", "", "пустой диаметр")
@@ -662,7 +655,6 @@ def main():
             excluded_validation += 1
             continue
 
-        # --- Валидация ширины ---
         width_str = str(item.get("width", "")).strip()
         if not width_str:
             log_invalid(item, "TireSectionWidth", "", "пустая ширина")
@@ -680,7 +672,6 @@ def main():
             excluded_validation += 1
             continue
 
-        # --- Валидация профиля ---
         profile_str = str(item.get("profile", "") or item.get("height", "")).strip()
         if not profile_str:
             log_invalid(item, "TireAspectRatio", "", "пустая высота профиля")
@@ -698,7 +689,6 @@ def main():
             excluded_validation += 1
             continue
 
-        # --- Валидация индекса нагрузки ---
         load_index_raw = str(item.get("load_index", "")).strip()
         if load_index_raw:
             if '/' in load_index_raw:
@@ -718,12 +708,10 @@ def main():
         else:
             item.pop("load_index", None)
 
-        # --- Проверка по ID исключения ---
         if make_id(item) in EXCLUDED_IDS:
             excluded_by_id += 1
             continue
 
-        # --- Остальные проверки ---
         if is_disk(item):
             excluded_disk += 1
             continue
@@ -752,7 +740,6 @@ def main():
     print(f"🔍 Исключено по ID (EXCLUDED_IDS): {excluded_by_id}")
     print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
-    # Кэширование изображений
     image_cache = {}
     check_time = 0
     if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
@@ -788,7 +775,6 @@ def main():
     else:
         print("🔍 Проверка существования файлов отключена.")
 
-    # Создание XML с защитой от дубликатов
     root = ET.Element("Ads")
     root.set("formatVersion", "3")
     root.set("target", "Avito.ru")
@@ -812,6 +798,65 @@ def main():
     print(f"   - Исключено по ID: {excluded_by_id}")
     if SEASON_EXCLUDE_ENABLED:
         print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
+
+    # ===================== ЗАГРУЗКА XML В S3 =====================
+    S3_ENABLED = os.getenv("S3_ENABLED", "false").lower() == "true"
+
+    if S3_ENABLED:
+        try:
+            S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
+            S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
+            S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
+            S3_KEY = os.getenv("S3_KEY", "exports/avito_export3.xml")
+            S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
+
+            if S3_ACCESS_KEY and S3_SECRET_KEY:
+                if not os.path.exists(output_file):
+                    print(f"❌ Файл {output_file} не найден!")
+                    raise FileNotFoundError(f"{output_file} not found")
+
+                file_size = os.path.getsize(output_file)
+                print(f"📄 Размер файла: {file_size} байт")
+                if file_size == 0:
+                    print("❌ Файл пуст, загрузка отменена")
+                    raise ValueError("File is empty")
+
+                print("🔧 Устанавливаем s3cmd...")
+                subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"], check=True, capture_output=True)
+
+                host_base = S3_ENDPOINT.replace('https://', '').replace('http://', '')
+                config_content = f"""[default]
+access_key = {S3_ACCESS_KEY}
+secret_key = {S3_SECRET_KEY}
+host_base = {host_base}
+host_bucket = {host_base}
+use_https = True
+signature_v2 = False
+"""
+                with open("/tmp/s3cfg", "w") as f:
+                    f.write(config_content)
+
+                cmd = [
+                    "s3cmd", "--config=/tmp/s3cfg", "put",
+                    output_file,
+                    f"s3://{S3_BUCKET}/{S3_KEY}"
+                ]
+                print(f"🔍 Выполняем: {' '.join(cmd)}")
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
+                else:
+                    print(f"❌ Ошибка при загрузке в S3:")
+                    if result.stderr:
+                        print(result.stderr)
+                    if result.stdout:
+                        print(result.stdout)
+            else:
+                print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
+        except Exception as e:
+            print(f"❌ Ошибка при загрузке в S3: {e}")
+    else:
+        print("ℹ️ S3: загрузка отключена (S3_ENABLED=false)")
 
 if __name__ == "__main__":
     main()
