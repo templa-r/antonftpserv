@@ -619,8 +619,8 @@ S3_ENABLED = True
 
 if S3_ENABLED:
     try:
-        import boto3
-        from botocore.client import Config
+        import subprocess
+        import sys
         
         S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
         S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
@@ -629,22 +629,32 @@ if S3_ENABLED:
         S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
         
         if S3_ACCESS_KEY and S3_SECRET_KEY:
-            # Минимальная конфигурация
-            s3_client = boto3.client(
-                's3',
-                endpoint_url=S3_ENDPOINT,
-                aws_access_key_id=S3_ACCESS_KEY,
-                aws_secret_access_key=S3_SECRET_KEY,
-                config=Config(signature_version='s3v4')
-            )
+            # Устанавливаем переменные окружения для awscli
+            env = os.environ.copy()
+            env["AWS_ACCESS_KEY_ID"] = S3_ACCESS_KEY
+            env["AWS_SECRET_ACCESS_KEY"] = S3_SECRET_KEY
             
-            # Пробуем upload_file (он сам вычисляет SHA256)
-            s3_client.upload_file('aztyre_full.xml', S3_BUCKET, S3_KEY)
-            print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
+            # Проверяем, установлен ли awscli
+            try:
+                subprocess.run(["aws", "--version"], check=True, capture_output=True)
+            except FileNotFoundError:
+                print("⚠️ Устанавливаем awscli...")
+                subprocess.run([sys.executable, "-m", "pip", "install", "awscli"], check=True)
+            
+            cmd = [
+                "aws", "s3", "cp",
+                "aztyre_full.xml",
+                f"s3://{S3_BUCKET}/{S3_KEY}",
+                "--endpoint-url", S3_ENDPOINT,
+                "--signature-version", "s3v4"
+            ]
+            result = subprocess.run(cmd, env=env, capture_output=True, text=True)
+            if result.returncode == 0:
+                print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
+            else:
+                print(f"❌ Ошибка при загрузке в S3: {result.stderr}")
         else:
             print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
-    except ImportError:
-        print("⚠️ S3: библиотека boto3 не установлена, загрузка пропущена")
     except Exception as e:
         print(f"❌ Ошибка при загрузке в S3: {e}")
 else:
