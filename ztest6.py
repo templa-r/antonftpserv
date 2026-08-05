@@ -8,6 +8,8 @@ import time
 import traceback
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # ===================== НАСТРОЙКИ =====================
 API_URL = "https://ka2.sibzapaska.ru:16500/API/hs/V2/GetTires"
@@ -434,8 +436,14 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         product.tag = "tyres"
 
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
+# Настройка повторных попыток для основного запроса
+session = requests.Session()
+retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+session.mount('https://', HTTPAdapter(max_retries=retries))
+session.mount('http://', HTTPAdapter(max_retries=retries))
+
 auth = base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
-response = requests.get(API_URL, headers={"Authorization": f"Basic {auth}"})
+response = session.get(API_URL, headers={"Authorization": f"Basic {auth}"}, timeout=30)
 response.raise_for_status()
 data = response.json()
 
@@ -620,12 +628,16 @@ if S3_ENABLED:
         S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
         
         if S3_ACCESS_KEY and S3_SECRET_KEY:
+            # КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: отключаем проверку SHA256
             s3_client = boto3.client(
                 's3',
                 endpoint_url=S3_ENDPOINT,
                 aws_access_key_id=S3_ACCESS_KEY,
                 aws_secret_access_key=S3_SECRET_KEY,
-                config=Config(signature_version='s3v4')
+                config=Config(
+                    signature_version='s3v4',
+                    s3={'payload_signing_enabled': False}  # <--- ОТКЛЮЧАЕМ SHA256
+                )
             )
             
             s3_client.upload_file('aztyre_full.xml', S3_BUCKET, S3_KEY)
