@@ -639,25 +639,26 @@ if S3_ENABLED:
             env["AWS_ACCESS_KEY_ID"] = S3_ACCESS_KEY
             env["AWS_SECRET_ACCESS_KEY"] = S3_SECRET_KEY
             
-            # Проверяем/устанавливаем awscli
+            # Проверяем, установлен ли awscli
             try:
                 subprocess.run(["aws", "--version"], check=True, capture_output=True)
-            except FileNotFoundError:
+            except:
                 print("⚠️ Устанавливаем awscli...")
                 subprocess.run([sys.executable, "-m", "pip", "install", "awscli"], check=True)
             
-            # Устанавливаем версию подписи (делаем один раз)
+            # Устанавливаем версию подписи через aws configure
             subprocess.run(
                 ["aws", "configure", "set", "default.s3.signature_version", "s3v4"],
-                env=env, check=True
+                env=env,
+                check=True,
+                capture_output=True
             )
             
-            # Загружаем файл через s3api (без --signature-version)
+            # Загружаем файл через aws s3 cp
             cmd = [
-                "aws", "s3api", "put-object",
-                "--bucket", S3_BUCKET,
-                "--key", S3_KEY,
-                "--body", "aztyre_full.xml",
+                "aws", "s3", "cp",
+                "aztyre_full.xml",
+                f"s3://{S3_BUCKET}/{S3_KEY}",
                 "--endpoint-url", S3_ENDPOINT
             ]
             print(f"🔍 Выполняем: {' '.join(cmd)}")
