@@ -619,8 +619,8 @@ S3_ENABLED = True
 
 if S3_ENABLED:
     try:
-        import subprocess
-        import sys
+        import boto3
+        from botocore.client import Config
         
         S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
         S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
@@ -633,46 +633,32 @@ if S3_ENABLED:
             if not os.path.exists("aztyre_full.xml"):
                 print("❌ Файл aztyre_full.xml не найден!")
                 raise FileNotFoundError("aztyre_full.xml not found")
+            file_size = os.path.getsize("aztyre_full.xml")
+            print(f"📄 Размер файла: {file_size} байт")
+            if file_size == 0:
+                print("❌ Файл пуст, загрузка отменена")
+                raise ValueError("File is empty")
             
-            # Устанавливаем переменные окружения
-            env = os.environ.copy()
-            env["AWS_ACCESS_KEY_ID"] = S3_ACCESS_KEY
-            env["AWS_SECRET_ACCESS_KEY"] = S3_SECRET_KEY
-            
-            # Проверяем, установлен ли awscli
-            try:
-                subprocess.run(["aws", "--version"], check=True, capture_output=True)
-            except:
-                print("⚠️ Устанавливаем awscli...")
-                subprocess.run([sys.executable, "-m", "pip", "install", "awscli"], check=True)
-            
-            # Настраиваем версию подписи (как в успешном ls)
-            subprocess.run(
-                ["aws", "configure", "set", "default.s3.signature_version", "s3v4"],
-                env=env,
-                check=True,
-                capture_output=True
+            # Создаём клиент с отключённой подписью payload
+            s3_client = boto3.client(
+                's3',
+                endpoint_url=S3_ENDPOINT,
+                aws_access_key_id=S3_ACCESS_KEY,
+                aws_secret_access_key=S3_SECRET_KEY,
+                config=Config(
+                    signature_version='s3v4',
+                    s3={'payload_signing_enabled': False}
+                )
             )
             
-            # Выполняем загрузку через aws s3 cp
-            cmd = [
-                "aws", "s3", "cp",
-                "aztyre_full.xml",
-                f"s3://{S3_BUCKET}/{S3_KEY}",
-                "--endpoint-url", S3_ENDPOINT
-            ]
-            print(f"🔍 Выполняем: {' '.join(cmd)}")
-            result = subprocess.run(cmd, env=env, capture_output=True, text=True)
-            if result.returncode == 0:
-                print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
-            else:
-                print(f"❌ Ошибка при загрузке в S3: {result.stderr if result.stderr else result.stdout}")
+            # Загружаем файл через upload_fileobj
+            with open('aztyre_full.xml', 'rb') as f:
+                s3_client.upload_fileobj(f, S3_BUCKET, S3_KEY)
+            print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
         else:
             print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Ошибка при выполнении команды: {e}")
-        print(f"Стандартный вывод: {e.stdout}")
-        print(f"Стандартный вывод ошибок: {e.stderr}")
+    except ImportError:
+        print("⚠️ S3: библиотека boto3 не установлена, загрузка пропущена")
     except Exception as e:
         print(f"❌ Ошибка при загрузке в S3: {e}")
 else:
