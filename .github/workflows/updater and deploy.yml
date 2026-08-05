@@ -1,4 +1,4 @@
-name: Update Products and Deploy to Pages
+name: Update Products and Upload to S3
         
 on:
   push:
@@ -15,14 +15,10 @@ on:
         type: boolean
 
 permissions:
-  contents: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  contents: write   # только для коммита и пуша файлов в репозиторий
 
 jobs:
-  deploy:
+  update:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -37,7 +33,7 @@ jobs:
           restore-keys: |
             image-cache-${{ runner.os }}-
 
-      # ---------- Блок обновления ----------
+      # ---------- Установка Python и зависимостей ----------
       - name: Set up Python
         if: github.event_name != 'push'
         uses: actions/setup-python@v5
@@ -50,6 +46,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests boto3
 
+      # ---------- Запуск основного скрипта ----------
       - name: Run update tyres
         if: github.event_name != 'push'
         run: python ztest6.py
@@ -63,11 +60,12 @@ jobs:
           S3_ENDPOINT: https://s3.ru1.storage.beget.cloud
         continue-on-error: true
 
-      - name: Run test
+      - name: Run test (optional)
         if: github.event_name != 'push'
         run: python ztest5.py
         continue-on-error: true
 
+      # ---------- Коммит и пуш изменений (необязательно, если файлы в S3 уже есть) ----------
       - name: Check for changes
         id: changes
         if: github.event_name != 'push' && always()
