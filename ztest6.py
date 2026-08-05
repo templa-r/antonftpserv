@@ -604,3 +604,37 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
     print(f"   - Проверено URL: {len(unique_urls)} (из них новых: {len(new_urls) if 'new_urls' in locals() else 0}) за {check_time:.2f} сек")
 else:
     print(f"   - Проверка URL отключена (IMAGE_CHECK_ENABLED=False)")
+
+# ===================== ЗАГРУЗКА XML В S3 =====================
+S3_ENABLED = os.getenv("S3_ENABLED", "false").lower() == "true"
+
+if S3_ENABLED:
+    try:
+        import boto3
+        from botocore.client import Config
+        
+        S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
+        S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
+        S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
+        S3_KEY = os.getenv("S3_KEY", "exports/aztyre_full.xml")
+        S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
+        
+        if S3_ACCESS_KEY and S3_SECRET_KEY:
+            s3_client = boto3.client(
+                's3',
+                endpoint_url=S3_ENDPOINT,
+                aws_access_key_id=S3_ACCESS_KEY,
+                aws_secret_access_key=S3_SECRET_KEY,
+                config=Config(signature_version='s3v4')
+            )
+            
+            s3_client.upload_file('aztyre_full.xml', S3_BUCKET, S3_KEY)
+            print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
+        else:
+            print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
+    except ImportError:
+        print("⚠️ S3: библиотека boto3 не установлена, загрузка пропущена")
+    except Exception as e:
+        print(f"❌ Ошибка при загрузке в S3: {e}")
+else:
+    print("ℹ️ S3: загрузка отключена (S3_ENABLED=false)")
