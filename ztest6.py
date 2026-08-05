@@ -629,22 +629,17 @@ if S3_ENABLED:
         S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
         
         if S3_ACCESS_KEY and S3_SECRET_KEY:
-            # Создаём клиент с отключённой подписью payload и виртуальным стилем
+            # Минимальная конфигурация
             s3_client = boto3.client(
                 's3',
                 endpoint_url=S3_ENDPOINT,
                 aws_access_key_id=S3_ACCESS_KEY,
                 aws_secret_access_key=S3_SECRET_KEY,
-                config=Config(
-                    signature_version='s3v4',
-                    s3={'payload_signing_enabled': False},
-                    addressing_style='virtual'  # используем виртуальный хост
-                )
+                config=Config(signature_version='s3v4')
             )
             
-            # Загружаем файл через upload_fileobj (без многопоточности)
-            with open('aztyre_full.xml', 'rb') as f:
-                s3_client.upload_fileobj(f, S3_BUCKET, S3_KEY)
+            # Пробуем upload_file (он сам вычисляет SHA256)
+            s3_client.upload_file('aztyre_full.xml', S3_BUCKET, S3_KEY)
             print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
         else:
             print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
