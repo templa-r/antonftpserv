@@ -606,7 +606,7 @@ else:
     print(f"   - Проверка URL отключена (IMAGE_CHECK_ENABLED=False)")
 
 # ===================== ЗАГРУЗКА XML В S3 =====================
-S3_ENABLED = os.getenv("S3_ENABLED", "false").lower() == "true"
+S3_ENABLED = True
 
 if S3_ENABLED:
     try:
