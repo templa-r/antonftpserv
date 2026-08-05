@@ -6,7 +6,7 @@ import re
 import json
 import time
 import traceback
-import hashlib  # <-- добавлен для вычисления SHA256
+import hashlib
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from requests.adapters import HTTPAdapter
@@ -639,14 +639,14 @@ if S3_ENABLED:
             env["AWS_ACCESS_KEY_ID"] = S3_ACCESS_KEY
             env["AWS_SECRET_ACCESS_KEY"] = S3_SECRET_KEY
             
-            # Убеждаемся, что awscli установлен
+            # Проверяем, установлен ли awscli
             try:
                 subprocess.run(["aws", "--version"], check=True, capture_output=True)
             except:
                 print("⚠️ Устанавливаем awscli...")
                 subprocess.run([sys.executable, "-m", "pip", "install", "awscli"], check=True)
             
-            # Настраиваем версию подписи через aws configure (как в успешном ls)
+            # Настраиваем версию подписи (как в успешном ls)
             subprocess.run(
                 ["aws", "configure", "set", "default.s3.signature_version", "s3v4"],
                 env=env,
@@ -654,7 +654,7 @@ if S3_ENABLED:
                 capture_output=True
             )
             
-            # Выполняем загрузку через aws s3 cp (без --signature-version)
+            # Выполняем загрузку через aws s3 cp
             cmd = [
                 "aws", "s3", "cp",
                 "aztyre_full.xml",
