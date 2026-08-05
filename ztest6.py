@@ -640,36 +640,31 @@ if S3_ENABLED:
                 print("❌ Файл пуст, загрузка отменена")
                 raise ValueError("File is empty")
             
-            # Устанавливаем переменные окружения
-            env = os.environ.copy()
-            env["AWS_ACCESS_KEY_ID"] = S3_ACCESS_KEY
-            env["AWS_SECRET_ACCESS_KEY"] = S3_SECRET_KEY
+            # Устанавливаем s3cmd
+            print("🔧 Устанавливаем s3cmd...")
+            subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"], check=True, capture_output=True)
             
-            # Проверяем, установлен ли awscli
-            try:
-                subprocess.run(["aws", "--version"], check=True, capture_output=True)
-            except:
-                print("⚠️ Устанавливаем awscli...")
-                subprocess.run([sys.executable, "-m", "pip", "install", "awscli"], check=True)
+            # Создаём временный конфиг
+            host_base = S3_ENDPOINT.replace('https://', '').replace('http://', '')
+            config_content = f"""[default]
+access_key = {S3_ACCESS_KEY}
+secret_key = {S3_SECRET_KEY}
+host_base = {host_base}
+host_bucket = {host_base}
+use_https = True
+signature_v2 = False
+"""
+            with open("/tmp/s3cfg", "w") as f:
+                f.write(config_content)
             
-            # Настраиваем конфигурацию aws (версия подписи и эндпоинт)
-            subprocess.run(
-                ["aws", "configure", "set", "default.s3.signature_version", "s3v4"],
-                env=env, check=True, capture_output=True
-            )
-            subprocess.run(
-                ["aws", "configure", "set", "default.s3.endpoint_url", S3_ENDPOINT],
-                env=env, check=True, capture_output=True
-            )
-            
-            # Выполняем загрузку (эндпоинт уже в конфиге)
+            # Выполняем загрузку
             cmd = [
-                "aws", "s3", "cp",
+                "s3cmd", "--config=/tmp/s3cfg", "put",
                 "aztyre_full.xml",
                 f"s3://{S3_BUCKET}/{S3_KEY}"
             ]
             print(f"🔍 Выполняем: {' '.join(cmd)}")
-            result = subprocess.run(cmd, env=env, capture_output=True, text=True)
+            result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
                 print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
             else:
@@ -680,10 +675,6 @@ if S3_ENABLED:
                     print(result.stdout)
         else:
             print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Ошибка при выполнении команды: {e}")
-        print(f"Стандартный вывод: {e.stdout}")
-        print(f"Стандартный вывод ошибок: {e.stderr}")
     except Exception as e:
         print(f"❌ Ошибка при загрузке в S3: {e}")
 else:
