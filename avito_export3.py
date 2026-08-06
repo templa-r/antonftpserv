@@ -132,7 +132,7 @@ EXCLUDED_BRANDS = [
 ]
 
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
-EXCLUDED_CATEGORY = ["Грузовая"]
+EXCLUDED_CATEGORY = ["Грузовая"]   # исключаем только "Грузовая", "Легкогрузовые" остаются
 
 EXCLUDED_ARTICLES = [
     "195/75R16C Laufenn X FIT VAN LV01",
@@ -416,6 +416,9 @@ def is_disk(item):
 
 # ===================== ФОРМИРОВАНИЕ XML ДЛЯ АВИТО =====================
 def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
+    """
+    Возвращает строку с причиной пропуска или 'added' при успехе.
+    """
     if seen_ids is None:
         seen_ids = set()
 
@@ -423,27 +426,24 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
     if total_stock == 0:
         total_stock = safe_float(item.get("rest", 0))
     if total_stock <= 0:
-        return
+        return "no_stock"
 
     unique_id = make_id(item)
-
     if unique_id in seen_ids:
-        return
+        return "duplicate_id"
     seen_ids.add(unique_id)
 
     quantity = 4 if total_stock >= 4 else 1
-
     price_per_one = calculate_price_per_one(item, diameter)
     total_price = price_per_one * quantity
     total_price = round_price(total_price, ROUND_STEP, ROUND_METHOD)
 
     if total_price <= 0:
-        return
+        return "zero_price"
 
     ad = ET.SubElement(root, "Ad")
 
     ET.SubElement(ad, "Address").text = "Новосибирская область, Новосибирск, Фабричная улица, 43"
-
     ET.SubElement(ad, "Id").text = unique_id
 
     # Заголовок
@@ -479,7 +479,6 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
         "✉️ Звоните или пишите в чат - отвечаю быстро"
     ])
     ET.SubElement(ad, "Description").text = description
-
     ET.SubElement(ad, "ContactPhone").text = "8 913 703-55-88"
 
     # Изображения
@@ -506,7 +505,6 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
         img.set("url", fallback_img)
 
     ET.SubElement(ad, "Price").text = str(total_price)
-
     ET.SubElement(ad, "Category").text = "Запчасти и аксессуары"
     ET.SubElement(ad, "GoodsType").text = "Шины, диски и колёса"
     ET.SubElement(ad, "AdType").text = "Товар приобретен на продажу"
@@ -537,7 +535,6 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
     load_index_val = str(item.get("load_index", "")).strip()
     if load_index_val:
         ET.SubElement(ad, "LoadIndex").text = load_index_val
-
     if item.get("speed_index"):
         ET.SubElement(ad, "SpeedIndex").text = str(item["speed_index"])
 
@@ -547,6 +544,8 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
 
     ET.SubElement(ad, "Condition").text = "Новое"
     ET.SubElement(ad, "AdStatus").text = "Free"
+
+    return "added"
 
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
 def main():
@@ -586,6 +585,9 @@ def main():
     excluded_validation = 0
     excluded_zero_retail = 0
     excluded_by_id = 0
+
+    # Доп. статистика по категориям (для анализа)
+    category_stats = defaultdict(int)
 
     for item in data:
         name = item.get("name", "")
@@ -727,6 +729,10 @@ def main():
                 excluded_season += 1
                 continue
 
+        # Собираем статистику по категориям для анализа
+        cat = item.get("category", "не указана")
+        category_stats[cat] += 1
+
         total_products += 1
         all_items.append((item, diameter))
 
@@ -740,6 +746,12 @@ def main():
     print(f"🔍 Исключено по ID (EXCLUDED_IDS): {excluded_by_id}")
     print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
+    # Вывод статистики по категориям
+    print("\n📊 Статистика по категориям (из товаров, прошедших фильтры):")
+    for cat, cnt in sorted(category_stats.items(), key=lambda x: -x[1]):
+        print(f"   {cat}: {cnt}")
+
+    # Кэширование изображений
     image_cache = {}
     check_time = 0
     if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
@@ -775,21 +787,39 @@ def main():
     else:
         print("🔍 Проверка существования файлов отключена.")
 
+    # Создание XML с защитой от дубликатов и сбором статистики добавления
     root = ET.Element("Ads")
     root.set("formatVersion", "3")
     root.set("target", "Avito.ru")
 
     seen_ids = set()
+    add_stats = {
+        "added": 0,
+        "no_stock": 0,
+        "duplicate_id": 0,
+        "zero_price": 0,
+        "other": 0
+    }
+
     for item, diameter in all_items:
-        add_ad_to_root(root, item, diameter,
-                       image_cache=image_cache if IMAGE_CHECK_ENABLED else None,
-                       seen_ids=seen_ids)
+        result = add_ad_to_root(root, item, diameter,
+                                image_cache=image_cache if IMAGE_CHECK_ENABLED else None,
+                                seen_ids=seen_ids)
+        add_stats[result] = add_stats.get(result, 0) + 1
 
     tree = ET.ElementTree(root)
     output_file = "avito_export3.xml"
     tree.write(output_file, encoding="utf-8", xml_declaration=True)
 
-    print(f"✅ Итоговый XML для Авито создан: {output_file}, всего объявлений в файле: {len(tree.getroot().findall('Ad'))}")
+    print(f"\n✅ Итоговый XML для Авито создан: {output_file}, всего объявлений в файле: {len(tree.getroot().findall('Ad'))}")
+    print(f"\n📊 Статистика добавления объявлений:")
+    print(f"   - Успешно добавлено: {add_stats.get('added', 0)}")
+    print(f"   - Нет остатка: {add_stats.get('no_stock', 0)}")
+    print(f"   - Дубликат ID: {add_stats.get('duplicate_id', 0)}")
+    print(f"   - Нулевая цена: {add_stats.get('zero_price', 0)}")
+    print(f"   - Другие причины: {add_stats.get('other', 0)}")
+
+    print(f"\n📊 Общая статистика:")
     print(f"   - Пропущено (ЗБ): {excluded_zb}")
     print(f"   - Исключено по артикулу: {excluded_article}")
     print(f"   - Исключено дисков: {excluded_disk}")
@@ -816,7 +846,7 @@ def main():
                     raise FileNotFoundError(f"{output_file} not found")
 
                 file_size = os.path.getsize(output_file)
-                print(f"📄 Размер файла: {file_size} байт")
+                print(f"\n📄 Размер файла: {file_size} байт")
                 if file_size == 0:
                     print("❌ Файл пуст, загрузка отменена")
                     raise ValueError("File is empty")
@@ -860,3 +890,4 @@ signature_v2 = False
 
 if __name__ == "__main__":
     main()
+    
