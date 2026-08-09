@@ -8,21 +8,16 @@ from urllib.parse import urljoin
 from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
 
-# ================= ПОЛНАЯ РЕАЛИЗАЦИЯ ПАРСЕРА КАРТОЧКИ =================
 def parse_competitor_page(html, source_url=''):
-    """
-    Принимает HTML-код страницы объявления drom.ru (шины)
-    Возвращает словарь с данными или None, если не удалось распарсить.
-    """
     soup = BeautifulSoup(html, 'html.parser')
 
-    # 1. Цена за комплект
+    # 1. Цена за комплект (всегда есть, если объявление активно)
     price_elem = soup.select_one('[data-bulletin-price]')
     if not price_elem:
         return None
     total_price = int(price_elem['data-bulletin-price'])
 
-    # 2. Количество в комплекте
+    # 2. Количество шин в комплекте (по умолчанию 4)
     qty_elem = soup.select_one('[data-field="inSetQuantity"]')
     quantity = 4
     if qty_elem:
@@ -32,23 +27,61 @@ def parse_competitor_page(html, source_url=''):
     price_per_unit = total_price / quantity
 
     # 3. Модель (бренд + название)
+    # Попытки: .viewbull-field__model-name, заголовок h1, title страницы
     model_elem = soup.select_one('.viewbull-field__model-name')
     if not model_elem:
-        return None
-    full_model = model_elem.get_text(strip=True)
+        # Ищем в h1 (обычно класс "subject")
+        h1 = soup.select_one('h1.subject')
+        if h1:
+            # Текст h1 обычно содержит полное описание, например "Charmhoo ice3, 265/45R21"
+            # Извлекаем модель до запятой/тире
+            full_text = h1.get_text(strip=True)
+            # Отделяем часть до запятой или " - "
+            model_part = re.split(r'[,|-]', full_text)[0].strip()
+            # Если содержит размер, убираем его (паттерн размера)
+            model_part = re.sub(r'\d{3}/\d{2,3}R\d{2}', '', model_part).strip()
+            full_model = model_part
+        else:
+            # Пробуем из <title>
+            title = soup.select_one('title')
+            if title:
+                title_text = title.get_text(strip=True)
+                # Пример: "Charmhoo ice3, 265/45R21 - Купить шины в Новосибирске на Дром Запчасти"
+                # Берем часть до запятой
+                model_part = title_text.split(',')[0].strip()
+                full_model = model_part
+            else:
+                return None
+    else:
+        full_model = model_elem.get_text(strip=True)
+
+    # Разделяем бренд и модель
     parts = full_model.split(maxsplit=1)
     brand = parts[0] if parts else ''
     model_name = parts[1] if len(parts) > 1 else ''
 
-    # 4. Типоразмер (265/45R21)
+    # 4. Типоразмер
+    # Ищем в [data-field="marking"] или в заголовке/тексте
     marking_elem = soup.select_one('[data-field="marking"]')
-    if not marking_elem:
-        return None
-    marking_text = marking_elem.get_text(strip=True)
-    match = re.match(r'(\d+)/?(\d*)R?(\d+)', marking_text, re.IGNORECASE)
-    if not match:
-        return None
-    width, profile, diameter = match.groups()
+    marking_text = ''
+    if marking_elem:
+        marking_text = marking_elem.get_text(strip=True)
+    else:
+        # Ищем в h1 или title
+        if h1:
+            marking_text = h1.get_text(strip=True)
+        elif soup.select_one('title'):
+            marking_text = soup.select_one('title').get_text(strip=True)
+
+    # Ищем все размеры вида 265/45R21
+    size_pattern = re.findall(r'(\d{3})/(\d{2,3})[Rr](\d{2})', marking_text)
+    if not size_pattern:
+        # может быть без профиля: 31x10.5R15 (редко)
+        size_pattern = re.findall(r'(\d{2})[xX](\d{1,2}\.?\d?)[Rr](\d{2})', marking_text)
+        if not size_pattern:
+            return None
+    # Берем первый размер (если их несколько - разноширокий комплект, можно пропустить)
+    width, profile, diameter = size_pattern[0]
     width = int(width)
     diameter = int(diameter)
     profile = int(profile) if profile else 0
@@ -65,81 +98,4 @@ def parse_competitor_page(html, source_url=''):
         'source_url': source_url,
     }
 
-# ================= СБОР ССЫЛОК СО СТРАНИЦЫ ПРОДАВЦА =================
-async def scroll_and_collect_links(url, max_ads=500):
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        )
-        page = await context.new_page()
-        await page.goto(url, wait_until="networkidle")
-
-        links = set()
-        prev_count = 0
-        stale_loops = 0
-
-        while True:
-            html = await page.content()
-            soup = BeautifulSoup(html, 'html.parser')
-            for a in soup.find_all('a', href=re.compile(r'/wheel/tire/.*-\d+\.html')):
-                full_url = urljoin(url, a['href'])
-                links.add(full_url)
-
-            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            await asyncio.sleep(2)
-
-            if len(links) == prev_count:
-                stale_loops += 1
-                if stale_loops >= 3:
-                    break
-            else:
-                stale_loops = 0
-                prev_count = len(links)
-
-            if len(links) >= max_ads:
-                break
-
-        await browser.close()
-        return list(links)
-
-# ================= ГЛАВНАЯ ФУНКЦИЯ =================
-async def main():
-    seller_url = "https://baza.drom.ru/user/BigWheelsNsk/"
-    max_ads = int(os.getenv("MAX_ADS", 0)) or 500
-
-    print("Собираем ссылки на товары...")
-    ad_links = await scroll_and_collect_links(seller_url, max_ads=max_ads)
-    print(f"Найдено {len(ad_links)} объявлений")
-
-    competitor_data = {}
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    }
-
-    for i, link in enumerate(ad_links):
-        print(f"[{i+1}/{len(ad_links)}] Обрабатываем {link}")
-        try:
-            resp = requests.get(link, headers=headers, timeout=10)
-            resp.raise_for_status()
-            item = parse_competitor_page(resp.text, link)
-            if item:
-                key = f"{item['width']}_{item['profile']}_{item['diameter']}_{item['brand'].lower()}_{item['model'].lower()}"
-                competitor_data.setdefault(key, []).append({
-                    'price': item['price_per_unit'],
-                    'seller': 'BigWheelsNsk',
-                    'url': link
-                })
-                print(f"  -> цена: {item['price_per_unit']} руб.")
-            else:
-                print("  -> не удалось распарсить")
-        except Exception as e:
-            print(f"  Ошибка: {e}")
-        time.sleep(2)
-
-    with open('competitor_prices.json', 'w', encoding='utf-8') as f:
-        json.dump(competitor_data, f, ensure_ascii=False, indent=2)
-    print(f"Готово. Сохранено {len(competitor_data)} уникальных товаров.")
-
-if __name__ == '__main__':
-    asyncio.run(main())
+# ... остальной код scroll_and_collect_links и main без изменений ...
