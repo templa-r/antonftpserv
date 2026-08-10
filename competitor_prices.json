@@ -1,37 +1,58 @@
 {
-  "205_50_17_mazzini_snowleopard 2": [
+  "275_30_20_zeta_alventi": [
     {
-      "price": 5850.0,
+      "price": 9875.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-mazzini-snow-leopard-2-205-50r17-131453775.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-raznoshirokaja-rezina-275-30r20-245-35r20-134920520.html"
     }
   ],
-  "245_40_18_zmax_winternova stud ii": [
+  "265_40_21_mazzini_eco602": [
     {
-      "price": 9570.0,
+      "price": 9720.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-245-40r18-131494308.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-265-40r21-mazzini-eco602-115920628.html"
     }
   ],
-  "235_55_18_mazzini_nitro grip g5": [
+  "235_55_20_sonix_winter x pro studs 69": [
     {
-      "price": 7475.0,
+      "price": 10730.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-235-55r18-mazzini-nitro-grip-g5-135012277.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-sonix-winter-xpro-studs-69-235-55r20-123621069.html"
     }
   ],
-  "285_40_22_sonix_winter x pro studs 69": [
+  "215_60_16_sonix_winter x pro studs 68": [
     {
-      "price": 15040.0,
+      "price": 6310.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-sonix-winter-xpro-studs-69-285-40r22-131490544.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-sonix-winter-x-pro-studs-68-215-60r16-132766936.html"
     }
   ],
-  "275_35_19_zeta_alventi": [
+  "265_50_20_sonix_winter x pro studs 69": [
     {
-      "price": 8375.0,
+      "price": 11660.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-275-35r19-245-40r19-134916695.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-sonix-winter-xpro-studs-69-265-50r20-132578717.html"
+    }
+  ],
+  "245_45_18_mazzini_falconer f1": [
+    {
+      "price": 6650.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-245-45r18-mazzini-falconer-f1-135012300.html"
+    }
+  ],
+  "235_50_19_zeta_impero": [
+    {
+      "price": 8200.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-235-50r19-134949733.html"
+    }
+  ],
+  "225_55_19_zeta_impero": [
+    {
+      "price": 6950.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-225-55r19-119508232.html"
     }
   ]
 }
