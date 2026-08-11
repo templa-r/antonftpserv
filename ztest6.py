@@ -93,8 +93,8 @@ BRAND_COEFFS = {
     "bridgestone": 0.965,
     "pirelli": {
         "diameter_ranges": [
-            {"min": 13, "max": 16, "value": 700},
-            {"min": 17, "max": 22, "value": 700},
+            {"min": 13, "max": 16, "value": 900},
+            {"min": 17, "max": 22, "value": 1100},
         ],
     },
     "formula": {
