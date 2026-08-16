@@ -1,37 +1,65 @@
 {
-  "315_30_22_bearway_bw118": [
+  "205_75_16_zeta_ztr18": [
     {
-      "price": 18750.0,
+      "price": 5200.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-315-30r22-i-275-35r22-135526939.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-205-75r16-135502968.html"
     }
   ],
-  "265_40_21_mazzini_eco602": [
+  "275_45_21_sonix_winter x pro 999": [
     {
-      "price": 9720.0,
+      "price": 9550.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-265-40r21-mazzini-eco602-115920628.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-sonix-winter-x-pro-999-275-45r21-122821613.html"
     }
   ],
-  "205_50_17_sailun_ice blazer arctic evo": [
+  "225_45_17_mazzini_snowleopard": [
     {
-      "price": 6375.0,
+      "price": 5300.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-205-50r17-131451581.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-mazzini-snow-leopard-225-45r17-123659236.html"
     }
   ],
-  "195_55_16_sonix_winter x pro studs 68": [
+  "275_40_20_zeta_impero": [
     {
-      "price": 5460.0,
+      "price": 8700.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-sonix-winter-x-pro-studs-68-195-55r16-131464519.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-raznoshirokaja-rezina-275-40r20-i-245-45r20-136675118.html"
     }
   ],
-  "235_45_18_zeta_alventi": [
+  "245_40_18_mazzini_eco607": [
     {
-      "price": 6425.0,
+      "price": 6540.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-235-45r18-134901831.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-245-40r18-mazzini-eco607-98y-xl-133218273.html"
+    }
+  ],
+  "265_45_21_powertrac_snowpro stud 02": [
+    {
+      "price": 12450.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-265-45r21-powertrac-snowpro-stud-02-124368411.html"
+    }
+  ],
+  "265_45_21_charmhoo_ice3": [
+    {
+      "price": 6350.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-265-45r21-charmhoo-ice-3-114437975.html"
+    }
+  ],
+  "245_40_18_zmax_winternova stud ii": [
+    {
+      "price": 9570.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-245-40r18-131494308.html"
+    }
+  ],
+  "235_45_17_mazzini_ice leopard 2": [
+    {
+      "price": 7190.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-mazzini-ice-leopard-2-235-45r17-131677590.html"
     }
   ]
 }
