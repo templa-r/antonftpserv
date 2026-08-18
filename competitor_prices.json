@@ -1,44 +1,65 @@
 {
-  "195_55_15_sailun_ice blazer arctic evo": [
+  "255_35_19_mazzini_eco607": [
     {
-      "price": 4950.0,
+      "price": 7850.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-195-55r15-131451490.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-255-35r19-mazzini-eco607-98y-xl-135145782.html"
     }
   ],
-  "185_60_14_sonix_winter x pro studs 68": [
+  "315_35_20_zeta_impero": [
     {
-      "price": 3950.0,
+      "price": 10950.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-sonix-winter-xpro-studs-68-185-60r14-123158927.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-raznoshirokaja-rezina-275-40r20-i-315-35r20-127882780.html"
     }
   ],
-  "215_55_18_mazzini_ecosaver": [
+  "235_45_17_mazzini_ice leopard 2": [
     {
-      "price": 5940.0,
+      "price": 7190.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-215-55r18-mazzini-ecosaver-118932421.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-mazzini-ice-leopard-2-235-45r17-131677590.html"
     }
   ],
-  "265_45_21_charmhoo_ice3": [
+  "245_45_19_mazzini_varenna": [
     {
-      "price": 7500.0,
+      "price": 8000.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-265-45r21-charmhoo-ice-3-131458919.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-245-45r19-mazzini-varenna-119830745.html"
     }
   ],
-  "315_35_22_sonix_winter x pro studs 69": [
+  "225_45_18_sonix_winter x pro studs 69": [
     {
-      "price": 15630.0,
+      "price": 7540.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-315-35r22-zad-i-275-40r22-pered-132706419.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-225-45r18-132655439.html"
     }
   ],
-  "275_30_20_sonix_l-zeal 56": [
+  "245_50_20_compasal_winter stud": [
     {
-      "price": 8800.0,
+      "price": 8735.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-245-35r20-i-275-30r20-sonix-l-zeal-56-133221696.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-compasal-winter-stud-245-50r20-131387243.html"
+    }
+  ],
+  "275_30_20_zeta_alventi": [
+    {
+      "price": 9875.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-raznoshirokaja-rezina-275-30r20-245-35r20-134920520.html"
+    }
+  ],
+  "275_35_19_zeta_alventi": [
+    {
+      "price": 8375.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-275-35r19-245-40r19-134916695.html"
+    }
+  ],
+  "275_70_16_mazzini_ecosaver": [
+    {
+      "price": 7700.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-275-70r16-mazzini-ecosaver-115792889.html"
     }
   ]
 }
