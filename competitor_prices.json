@@ -1,44 +1,51 @@
 {
-  "275_70_16_mazzini_ecosaver": [
+  "225_55_19_zeta_impero": [
     {
-      "price": 7700.0,
+      "price": 6950.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-275-70r16-mazzini-ecosaver-115792889.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-225-55r19-119508232.html"
     }
   ],
-  "235_60_18_zeta_impero": [
+  "315_30_22_bearway_bw118": [
     {
-      "price": 7950.0,
+      "price": 18750.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-235-60r18-135087460.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-315-30r22-i-275-35r22-135526939.html"
     }
   ],
-  "245_45_19_mazzini_snowleopard 2": [
+  "275_40_20_zeta_impero": [
     {
-      "price": 7420.0,
+      "price": 9737.5,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-mazzini-snow-leopard-2-245-45r19-123286486.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-275-40r20-136675165.html"
     }
   ],
-  "185_60_14_sonix_winter x pro studs 68": [
+  "275_50_22_sonix_winter x pro studs 69": [
     {
-      "price": 3950.0,
+      "price": 16310.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-sonix-winter-xpro-studs-68-185-60r14-123158927.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-sonix-winter-xpro-studs-69-275-50r22-131490563.html"
     }
   ],
-  "255_35_19_mazzini_snowleopard 3": [
+  "315_35_21_ilink_wintervorhut stud ii": [
     {
-      "price": 7070.0,
+      "price": 13275.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-255-35r19-131645633.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-315-35r21-zad-i-275-40r21-pered-131023233.html"
     }
   ],
-  "265_60_18_massimo_stella s1": [
+  "255_55_20_massimo_vitto": [
     {
-      "price": 10000.0,
+      "price": 9130.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novye-letnie-shiny-265-60r18-massimo-stella-s1-135145017.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-255-55r20-massimo-vitto-115897125.html"
+    }
+  ],
+  "275_45_21_sonix_winter x pro 999": [
+    {
+      "price": 9550.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-sonix-winter-x-pro-999-275-45r21-122821613.html"
     }
   ]
 }
