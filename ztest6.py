@@ -38,7 +38,7 @@ SEASON_EXCLUDE_VALUE = "зима"
 EXCLUDED_BRANDS = [
     "Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
-    "Kelly", "Nitto", "Кама", "Roadcruza", "Hankook"
+    "Kelly", "Nitto", "Кама", "Roadcruza"
 ]
 
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
@@ -91,6 +91,15 @@ BRAND_COEFFS = {
     },
     "laufenn": 0.905,
     "bridgestone": 0.965,
+    "hankook": {
+        "diameter_ranges": [
+            {"min": 13, "max": 14, "value": 800},
+            {"min": 15, "max": 16, "value": 900},
+            {"min": 17, "max": 18, "value": 950},
+            {"min": 19, "max": 20, "value": 1000},
+            {"min": 17, "max": 18, "value": 1100},
+        ],
+    },
     "pirelli": {
         "diameter_ranges": [
             {"min": 13, "max": 16, "value": 1000},
@@ -105,7 +114,9 @@ BRAND_COEFFS = {
     },
 }
 
-IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Sonix", "Hankook"]
+IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
+    "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
+    "Kelly", "Nitto", "Кама", "Roadcruza"]
 MIN_MARGIN = 500
 
 MODEL_RULES = {
