@@ -1,16 +1,16 @@
 {
-  "265_45_21_powertrac_snowpro stud 02": [
-    {
-      "price": 12450.0,
-      "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-265-45r21-powertrac-snowpro-stud-02-124368411.html"
-    }
-  ],
   "265_45_21_charmhoo_ice3": [
     {
       "price": 9200.0,
       "seller": "BigWheelsNsk",
       "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-265-45r21-charmhoo-ice-3-131458919.html"
+    }
+  ],
+  "265_45_21_powertrac_snowpro stud 02": [
+    {
+      "price": 12450.0,
+      "seller": "BigWheelsNsk",
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-265-45r21-powertrac-snowpro-stud-02-124368411.html"
     }
   ]
 }
