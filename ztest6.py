@@ -85,10 +85,10 @@ BRAND_COEFFS = {
     "ikon": {
         "default": 0.88,
         "diameter_ranges": [
-            {"min": 13, "max": 14, "value": 600},
+            {"min": 13, "max": 14, "value": 700},
             {"min": 15, "max": 16, "value": 800},
-            {"min": 17, "max": 22, "coeff": 0.89},
-        ],
+            {"min": 17, "max": 22, о"coeff": 0.89},
+        ],о
     },
     "laufenn": 0.905,
     "bridgestone": 0.965,
