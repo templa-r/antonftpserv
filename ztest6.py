@@ -88,7 +88,7 @@ BRAND_COEFFS = {
             {"min": 13, "max": 14, "value": 700},
             {"min": 15, "max": 16, "value": 800},
             {"min": 17, "max": 22, о"coeff": 0.89},
-        ],о
+        ],
     },
     "laufenn": 0.905,
     "bridgestone": 0.965,
@@ -118,7 +118,7 @@ BRAND_COEFFS = {
 IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
     "Kelly", "Nitto", "Кама", "Roadcruza"]
-MIN_MARGIN = 500
+MIN_MARGIN = 650
 
 MODEL_RULES = {
     ("autograph", "autograph ice 9 suv"): {
