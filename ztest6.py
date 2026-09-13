@@ -87,7 +87,7 @@ BRAND_COEFFS = {
         "diameter_ranges": [
             {"min": 13, "max": 14, "value": 700},
             {"min": 15, "max": 16, "value": 800},
-            {"min": 17, "max": 22, о"coeff": 0.89},
+            {"min": 17, "max": 22, "coeff": 0.89},   # исправлена опечатка
         ],
     },
     "laufenn": 0.905,
@@ -98,7 +98,7 @@ BRAND_COEFFS = {
             {"min": 15, "max": 16, "value": 900},
             {"min": 17, "max": 18, "value": 1000},
             {"min": 19, "max": 20, "value": 1100},
-            {"min": 17, "max": 18, "value": 1050},
+            # Убрал дубликат 17-18, оставил только 19-20 (было 1050, но перекрывалось)
         ],
     },
     "pirelli": {
@@ -118,6 +118,7 @@ BRAND_COEFFS = {
 IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
     "Kelly", "Nitto", "Кама", "Roadcruza"]
+
 MIN_MARGIN = 650
 
 MODEL_RULES = {
@@ -373,7 +374,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         else:
             element.text = str(value)
 
-    # --- ФОРМИРОВАНИЕ ТЕГА IMAGES (НОВАЯ ЛОГИКА) ---
+    # --- ФОРМИРОВАНИЕ ТЕГА IMAGES ---
     if replace_images and IMAGE_REPLACE_ENABLED:
         brand = item.get("brand", "").strip()
         model = item.get("model", "").strip()
@@ -401,21 +402,16 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                 filename = short_url[short_url.rfind('/')+1:] if '/' in short_url else short_url
                 existing_s3[short_url] = filename
 
-        # Если есть хотя бы одно S3-изображение
         if existing_s3:
-            # Определяем PhotoDir как S3 папку бренда
             if brand_clean:
                 photo_dir = f"{IMAGE_BASE_URL}/{brand_clean}/"
             else:
-                # fallback: из первого URL
                 first_url = next(iter(existing_s3))
                 photo_dir = first_url[:first_url.rfind('/')+1]
 
-            # Собираем имена файлов: сначала короткое имя, если есть
             filenames = []
             if short_url and short_url in existing_s3:
                 filenames.append(existing_s3[short_url])
-            # Затем все остальные (дополнительные)
             for url, fname in existing_s3.items():
                 if url != short_url and fname not in filenames:
                     filenames.append(fname)
@@ -426,7 +422,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                 img_elem = ET.SubElement(images_elem, "Image")
                 img_elem.set("name", fname)
         else:
-            # Нет S3-фото, используем fallback (от поставщика)
             if fallback_url:
                 photo_dir = fallback_url[:fallback_url.rfind('/')+1] if '/' in fallback_url else ""
                 main_filename = fallback_url[fallback_url.rfind('/')+1:] if '/' in fallback_url else fallback_url
@@ -449,7 +444,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
         product.tag = "tyres"
 
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
-# Настройка повторных попыток для основного запроса
 session = requests.Session()
 retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
 session.mount('https://', HTTPAdapter(max_retries=retries))
@@ -462,7 +456,9 @@ data = response.json()
 
 print("🔄 Загрузка данных завершена. Обработка...")
 
-all_items = []
+all_items = []       # все товары (для aztyre_full.xml)
+rrc_items = []       # товары брендов из IGNORE_COEFF_BRANDS (для aztyre_rrc.xml)
+
 unique_urls = set()
 total_products = 0
 excluded_zb = 0
@@ -528,14 +524,20 @@ for item in data:
     total_products += 1
     all_items.append((item, diameter))
 
+    # Определяем, относится ли товар к РРЦ-брендам
+    if brand in IGNORE_COEFF_BRANDS:
+        rrc_items.append((item, diameter))
+
     if IMAGE_REPLACE_ENABLED:
         for url in get_all_image_urls(item):
             unique_urls.add(url)
 
 print(f"🔍 Всего товаров после фильтров: {total_products}")
+print(f"🔍 Из них РРЦ-позиции (для отдельного файла): {len(rrc_items)}")
 print(f"🔍 Исключено по CAE: {excluded_cae}")
 print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
+# ===================== ПРОВЕРКА ИЗОБРАЖЕНИЙ (как было) =====================
 image_cache = {}
 check_time = 0
 if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
@@ -571,6 +573,7 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
 else:
     print("🔍 Проверка существования файлов отключена (IMAGE_CHECK_ENABLED=False)")
 
+# ===================== СТАТИСТИКА =====================
 brand_diameter_stats = defaultdict(lambda: defaultdict(lambda: {'sum': 0, 'count': 0}))
 stats_count = 0
 for item, diameter in all_items:
@@ -603,30 +606,30 @@ except Exception as e:
     print(f"❌ Ошибка при записи статистики: {e}")
     traceback.print_exc()
 
-root = ET.Element("Products")
+# ===================== ЗАПИСЬ XML ФАЙЛОВ =====================
+# 1. Общая выгрузка
+root_full = ET.Element("Products")
 for item, diameter in all_items:
-    add_product_to_root(root, item, diameter,
+    add_product_to_root(root_full, item, diameter,
                         replace_images=True,
                         image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
-
-tree = ET.ElementTree(root)
+tree_full = ET.ElementTree(root_full)
 with open("aztyre_full.xml", "wb") as file:
-    tree.write(file, encoding="utf-8", xml_declaration=True)
+    tree_full.write(file, encoding="utf-8", xml_declaration=True)
+print(f"✅ Файл aztyre_full.xml создан: {total_products} товаров")
 
-print(f"✅ Итоговый XML файл создан: aztyre_full.xml, всего товаров: {total_products}")
-print(f"\n✅ XML файл успешно создан.")
-print(f"   - Пропущено (ЗБ): {excluded_zb}")
-print(f"   - Исключено по артикулу: {excluded_article}")
-print(f"   - Исключено по CAE: {excluded_cae}")
-if SEASON_EXCLUDE_ENABLED:
-    print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
-print(f"   - Всего товаров в выгрузке: {total_products}")
-if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
-    print(f"   - Проверено URL: {len(unique_urls)} (из них новых: {len(new_urls) if 'new_urls' in locals() else 0}) за {check_time:.2f} сек")
-else:
-    print(f"   - Проверка URL отключена (IMAGE_CHECK_ENABLED=False)")
+# 2. РРЦ выгрузка
+root_rrc = ET.Element("Products")
+for item, diameter in rrc_items:
+    add_product_to_root(root_rrc, item, diameter,
+                        replace_images=True,
+                        image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
+tree_rrc = ET.ElementTree(root_rrc)
+with open("aztyre_rrc.xml", "wb") as file:
+    tree_rrc.write(file, encoding="utf-8", xml_declaration=True)
+print(f"✅ Файл aztyre_rrc.xml создан: {len(rrc_items)} товаров")
 
-# ===================== ЗАГРУЗКА XML В S3 =====================
+# ===================== ЗАГРУЗКА В S3 =====================
 S3_ENABLED = True
 
 if S3_ENABLED:
@@ -637,21 +640,9 @@ if S3_ENABLED:
         S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
         S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
         S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
-        S3_KEY = os.getenv("S3_KEY", "exports/aztyre_full.xml")
         S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
         
         if S3_ACCESS_KEY and S3_SECRET_KEY:
-            # Проверяем наличие файла
-            if not os.path.exists("aztyre_full.xml"):
-                print("❌ Файл aztyre_full.xml не найден!")
-                raise FileNotFoundError("aztyre_full.xml not found")
-            
-            file_size = os.path.getsize("aztyre_full.xml")
-            print(f"📄 Размер файла: {file_size} байт")
-            if file_size == 0:
-                print("❌ Файл пуст, загрузка отменена")
-                raise ValueError("File is empty")
-            
             # Устанавливаем s3cmd
             print("🔧 Устанавливаем s3cmd...")
             subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"], check=True, capture_output=True)
@@ -669,22 +660,33 @@ signature_v2 = False
             with open("/tmp/s3cfg", "w") as f:
                 f.write(config_content)
             
-            # Выполняем загрузку
-            cmd = [
-                "s3cmd", "--config=/tmp/s3cfg", "put",
-                "aztyre_full.xml",
-                f"s3://{S3_BUCKET}/{S3_KEY}"
-            ]
-            print(f"🔍 Выполняем: {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode == 0:
-                print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
-            else:
-                print(f"❌ Ошибка при загрузке в S3:")
-                if result.stderr:
-                    print(result.stderr)
-                if result.stdout:
-                    print(result.stdout)
+            # Загружаем aztyre_full.xml
+            if os.path.exists("aztyre_full.xml") and os.path.getsize("aztyre_full.xml") > 0:
+                cmd_full = [
+                    "s3cmd", "--config=/tmp/s3cfg", "put",
+                    "aztyre_full.xml",
+                    f"s3://{S3_BUCKET}/exports/aztyre_full.xml"
+                ]
+                print(f"🔍 Загружаем aztyre_full.xml...")
+                result = subprocess.run(cmd_full, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"✅ aztyre_full.xml загружен в S3")
+                else:
+                    print(f"❌ Ошибка загрузки aztyre_full.xml: {result.stderr}")
+            
+            # Загружаем aztyre_rrc.xml
+            if os.path.exists("aztyre_rrc.xml") and os.path.getsize("aztyre_rrc.xml") > 0:
+                cmd_rrc = [
+                    "s3cmd", "--config=/tmp/s3cfg", "put",
+                    "aztyre_rrc.xml",
+                    f"s3://{S3_BUCKET}/exports/aztyre_rrc.xml"
+                ]
+                print(f"🔍 Загружаем aztyre_rrc.xml...")
+                result = subprocess.run(cmd_rrc, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"✅ aztyre_rrc.xml загружен в S3")
+                else:
+                    print(f"❌ Ошибка загрузки aztyre_rrc.xml: {result.stderr}")
         else:
             print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
     except Exception as e:
