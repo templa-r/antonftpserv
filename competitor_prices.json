@@ -1,93 +1,44 @@
 {
-  "275_40_19_mazzini_varenna": [
+  "185_55_16_mazzini_eco307": [
     {
-      "price": 8525.0,
+      "price": 5560.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-raznoshirokaja-letnjaja-rezina-275-40r19-245-45r19-134946039.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-185-55r16-mazzini-eco307-87v-xl-125569627.html"
     }
   ],
-  "265_45_20_mazzini_eco606": [
+  "275_30_20_zeta_alventi": [
     {
-      "price": 11870.0,
+      "price": 9875.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novye-letnie-shiny-265-45r20-mazzini-eco606-104w-xl-125659498.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-raznoshirokaja-rezina-275-30r20-245-35r20-134920520.html"
     }
   ],
-  "275_45_20_mazzini_eco607": [
-    {
-      "price": 11860.0,
-      "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-275-45r20-mazzini-eco607-110v-xl-125658657.html"
-    }
-  ],
-  "265_75_16_maxxis_bighorn mt-764": [
-    {
-      "price": 20620.0,
-      "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-265-75r16lt-maxxis-bighorn-mt-764-112-109n-126014677.html"
-    }
-  ],
-  "225_45_17_mazzini_falconer f1": [
-    {
-      "price": 5450.0,
-      "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-225-45r17-mazzini-falconer-f1-135418589.html"
-    }
-  ],
-  "275_50_22_sonix_winter x pro studs 69": [
-    {
-      "price": 16460.0,
-      "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-shipovannaja-rezina-sonix-winter-xpro-studs-69-275-50r22-131490563.html"
-    }
-  ],
-  "275_65_20_maxxis_razr mt mt-772": [
-    {
-      "price": 33210.0,
-      "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-275-65r20lt-maxxis-razr-mt-772-126-123q-125879449.html"
-    }
-  ],
-  "215_45_17_mazzini_falconer f1": [
+  "205_45_17_mazzini_nitro grip g5": [
     {
       "price": 5375.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-215-45r17-mazzini-falconer-f1-135011982.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-205-45r17-mazzini-nitro-grip-g5-134944914.html"
     }
   ],
-  "225_45_18_mazzini_eco605": [
+  "235_35_19_zeta_alventi": [
     {
-      "price": 6650.0,
+      "price": 6450.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-225-45r18-mazzini-eco605-plus-87w-136835465.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-235-35r19-135087501.html"
     }
   ],
-  "265_75_16_maxxis_razr mt mt-772": [
+  "245_40_17_mazzini_eco607": [
     {
-      "price": 26770.0,
+      "price": 6300.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-265-75r16lt-maxxis-razr-mt-772-123-120q-126011721.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-245-40r17-mazzini-eco607-115872830.html"
     }
   ],
-  "225_50_18_zeta_impero": [
+  "195_55_15_sailun_ice blazer arctic evo": [
     {
-      "price": 6500.0,
+      "price": 4950.0,
       "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-225-50r18-135506415.html"
-    }
-  ],
-  "305_45_22_mazzini_eco607": [
-    {
-      "price": 15710.0,
-      "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-305-45r22-mazzini-eco607-118w-125675263.html"
-    }
-  ],
-  "235_55_19_mazzini_varenna": [
-    {
-      "price": 8275.0,
-      "seller": "BigWheelsNsk",
-      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-letnjaja-rezina-235-55r19-mazzini-varenna-135512306.html"
+      "url": "https://baza.drom.ru/novosibirsk/wheel/tire/novaja-zimnjaja-rezina-195-55r15-131451490.html"
     }
   ]
 }
