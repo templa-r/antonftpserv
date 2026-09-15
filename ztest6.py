@@ -87,7 +87,7 @@ BRAND_COEFFS = {
         "diameter_ranges": [
             {"min": 13, "max": 14, "value": 700},
             {"min": 15, "max": 16, "value": 800},
-            {"min": 17, "max": 22, "coeff": 0.89},   # исправлена опечатка
+            {"min": 17, "max": 22, "coeff": 0.89},
         ],
     },
     "laufenn": 0.905,
@@ -98,7 +98,6 @@ BRAND_COEFFS = {
             {"min": 15, "max": 16, "value": 900},
             {"min": 17, "max": 18, "value": 1000},
             {"min": 19, "max": 20, "value": 1100},
-            # Убрал дубликат 17-18, оставил только 19-20 (было 1050, но перекрывалось)
         ],
     },
     "pirelli": {
@@ -172,16 +171,29 @@ def get_coeff_from_settings(settings, diameter):
     return coeff, round_step, round_method
 
 def apply_brand_adjustment(brand_settings, base_price, diameter):
+    """
+    Применяет настройки бренда. Если diameter = None, но есть диапазоны —
+    берём первый диапазон как fallback.
+    """
     if not isinstance(brand_settings, dict):
         return base_price * brand_settings
 
-    if diameter is not None and "diameter_ranges" in brand_settings:
-        for r in brand_settings["diameter_ranges"]:
+    ranges = brand_settings.get("diameter_ranges", [])
+    if diameter is not None:
+        for r in ranges:
             if r["min"] <= diameter <= r["max"]:
                 if "value" in r:
                     return base_price + r["value"]
                 elif "coeff" in r:
                     return base_price * r["coeff"]
+    else:
+        # Диаметр неизвестен — используем первый диапазон как fallback
+        if ranges:
+            r = ranges[0]
+            if "value" in r:
+                return base_price + r["value"]
+            elif "coeff" in r:
+                return base_price * r["coeff"]
 
     if "default" in brand_settings:
         default = brand_settings["default"]
@@ -265,7 +277,11 @@ def check_image_exists(url, cache):
     return exists
 
 # ===================== ДОБАВЛЕНИЕ ТОВАРА В XML =====================
+# Счётчик аномалий для отчёта
+anomaly_count = 0
+
 def add_product_to_root(root, item, diameter, replace_images=True, image_cache=None):
+    global anomaly_count
     product = ET.SubElement(root, "Product")
 
     for key, value in item.items():
@@ -286,6 +302,7 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                            category in EXCLUDED_CATEGORY)
 
             original_retail = safe_float(value)
+            price_val = safe_float(item.get("price", 0))
             apply_coeff = True
             if brand in [b.lower() for b in IGNORE_COEFF_BRANDS]:
                 apply_coeff = False
@@ -347,7 +364,6 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                             coeff, _, _ = get_coeff_from_settings(GLOBAL_COEFF, diameter)
                             adjusted_retail = original_retail * coeff
 
-                    price_val = safe_float(item.get("price", 0))
                     if price_val > 0:
                         margin = adjusted_retail - price_val
                         if margin < MIN_MARGIN:
@@ -358,6 +374,15 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
                         final_price = adjusted_retail
             except Exception:
                 final_price = original_retail
+
+            # ===== ЗАЩИТА ОТ АНОМАЛЬНО НИЗКИХ ЦЕН =====
+            if price_val > 0 and final_price is not None and final_price < price_val + MIN_MARGIN:
+                print(f"⚠️ Аномалия: {item.get('name')} | brand={brand} | "
+                      f"retail_api={original_retail} | price={price_val} | "
+                      f"final_before={final_price} → поднято до {price_val + MIN_MARGIN}")
+                final_price = price_val + MIN_MARGIN
+                anomaly_count += 1
+            # ==========================================
 
             step = ROUND_STEP
             method = ROUND_METHOD
@@ -456,9 +481,8 @@ data = response.json()
 
 print("🔄 Загрузка данных завершена. Обработка...")
 
-all_items = []       # все товары (для aztyre_full.xml)
-rrc_items = []       # товары брендов из IGNORE_COEFF_BRANDS (для aztyre_rrc.xml)
-
+all_items = []
+rrc_items = []
 unique_urls = set()
 total_products = 0
 excluded_zb = 0
@@ -524,7 +548,6 @@ for item in data:
     total_products += 1
     all_items.append((item, diameter))
 
-    # Определяем, относится ли товар к РРЦ-брендам
     if brand in IGNORE_COEFF_BRANDS:
         rrc_items.append((item, diameter))
 
@@ -537,7 +560,7 @@ print(f"🔍 Из них РРЦ-позиции (для отдельного фа
 print(f"🔍 Исключено по CAE: {excluded_cae}")
 print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
-# ===================== ПРОВЕРКА ИЗОБРАЖЕНИЙ (как было) =====================
+# ===================== ПРОВЕРКА ИЗОБРАЖЕНИЙ =====================
 image_cache = {}
 check_time = 0
 if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
@@ -629,6 +652,8 @@ with open("aztyre_rrc.xml", "wb") as file:
     tree_rrc.write(file, encoding="utf-8", xml_declaration=True)
 print(f"✅ Файл aztyre_rrc.xml создан: {len(rrc_items)} товаров")
 
+print(f"\n📊 Всего аномалий (цена ниже закупки + {MIN_MARGIN}): {anomaly_count}")
+
 # ===================== ЗАГРУЗКА В S3 =====================
 S3_ENABLED = True
 
@@ -643,11 +668,9 @@ if S3_ENABLED:
         S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
         
         if S3_ACCESS_KEY and S3_SECRET_KEY:
-            # Устанавливаем s3cmd
             print("🔧 Устанавливаем s3cmd...")
             subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"], check=True, capture_output=True)
             
-            # Создаём временный конфиг
             host_base = S3_ENDPOINT.replace('https://', '').replace('http://', '')
             config_content = f"""[default]
 access_key = {S3_ACCESS_KEY}
