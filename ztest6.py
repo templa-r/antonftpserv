@@ -25,7 +25,7 @@ INCLUDE_PRICE_TAG = False
 # Если True — РРЦ-позиции (IGNORE_COEFF_BRANDS) НЕ попадут в aztyre_full.xml,
 #              но останутся в aztyre_rrc.xml.
 # Если False — РРЦ-позиции попадут и в full, и в rrc файлы.
-EXCLUDE_RRC_FROM_FULL = True
+EXCLUDE_RRC_FROM_FULL = False
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
