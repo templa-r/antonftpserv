@@ -21,6 +21,12 @@ ROUND_STEP = 10
 ROUND_METHOD = 'nearest'
 INCLUDE_PRICE_TAG = False
 
+# ===================== СВИТЧЕРЫ =====================
+# Если True — РРЦ-позиции (IGNORE_COEFF_BRANDS) НЕ попадут в aztyre_full.xml,
+#              но останутся в aztyre_rrc.xml.
+# Если False — РРЦ-позиции попадут и в full, и в rrc файлы.
+EXCLUDE_RRC_FROM_FULL = True
+
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
 IMAGE_CHECK_ENABLED = True
@@ -30,6 +36,11 @@ IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true
 
 MAX_WORKERS = 50
 HEAD_TIMEOUT = 1
+
+# ===================== РУЧНЫЕ ЦЕНЫ =====================
+MANUAL_PRICES = {
+    "5918800": 15000,  # Pirelli Ice Zero 245/60R18 109H XL шип
+}
 
 # ===================== ФИЛЬТРЫ =====================
 SEASON_EXCLUDE_ENABLED = False
@@ -271,13 +282,14 @@ def check_image_exists(url, cache):
     cache[url] = exists
     return exists
 
-# ===================== СЧЁТЧИК АНОМАЛИЙ =====================
+# ===================== СЧЁТЧИКИ =====================
 anomaly_count = 0
 no_price_count = 0
+manual_price_count = 0
 
 # ===================== ДОБАВЛЕНИЕ ТОВАРА В XML =====================
 def add_product_to_root(root, item, diameter, replace_images=True, image_cache=None):
-    global anomaly_count, no_price_count
+    global anomaly_count, no_price_count, manual_price_count
     product = ET.SubElement(root, "Product")
 
     for key, value in item.items():
@@ -294,100 +306,101 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
             brand = item.get("brand", "").strip().lower()
             model = item.get("model", "").strip().lower()
             category = item.get("category", "")
+            article = str(item.get("article", "")).strip()
             is_excluded = (brand in [b.lower() for b in EXCLUDED_BRANDS] or
                            category in EXCLUDED_CATEGORY)
 
             original_retail = safe_float(value)
             price_val = safe_float(item.get("price", 0))
 
-            # === ОТЛАДКА: позиции без закупки ===
-            if price_val == 0:
-                print(f"❗ Нет закупки: {item.get('name')} | article={item.get('article')} | "
-                      f"brand={brand} | retail_api={original_retail} | "
-                      f"price_raw='{item.get('price')}'")
-                no_price_count += 1
-            # =====================================
+            # === РУЧНАЯ ЦЕНА ===
+            manual_price = MANUAL_PRICES.get(article)
+            if manual_price is not None:
+                final_price = manual_price
+                manual_price_count += 1
+                print(f"🔧 Ручная цена {manual_price} применена для: "
+                      f"{item.get('name')} | article={article}")
+            else:
+                apply_coeff = True
+                if brand in [b.lower() for b in IGNORE_COEFF_BRANDS]:
+                    apply_coeff = False
 
-            apply_coeff = True
-            if brand in [b.lower() for b in IGNORE_COEFF_BRANDS]:
-                apply_coeff = False
-
-            final_price = None
-            try:
-                if is_excluded or not apply_coeff:
-                    final_price = original_retail
-                else:
-                    rule = MODEL_RULES.get((brand, model))
-                    if rule:
-                        rule_type = rule["type"]
-                        if rule_type == "fixed":
-                            adjusted_retail = safe_float(rule["value"])
-                        elif rule_type == "add_to_field":
-                            base_val = safe_float(item.get(rule["field"], "0"))
-                            adjusted_retail = base_val + rule["value"]
-                        elif rule_type == "add_to_field_by_diameter":
-                            if diameter is not None:
-                                add_value = None
-                                for r in rule["ranges"]:
-                                    if r["min"] <= diameter <= r["max"]:
-                                        add_value = r["value"]
-                                        break
-                                if add_value is not None:
-                                    base_val = safe_float(item.get(rule["field"], "0"))
-                                    adjusted_retail = base_val + add_value
-                                else:
-                                    if rule.get("default") is not None:
+                final_price = None
+                try:
+                    if is_excluded or not apply_coeff:
+                        final_price = original_retail
+                    else:
+                        rule = MODEL_RULES.get((brand, model))
+                        if rule:
+                            rule_type = rule["type"]
+                            if rule_type == "fixed":
+                                adjusted_retail = safe_float(rule["value"])
+                            elif rule_type == "add_to_field":
+                                base_val = safe_float(item.get(rule["field"], "0"))
+                                adjusted_retail = base_val + rule["value"]
+                            elif rule_type == "add_to_field_by_diameter":
+                                if diameter is not None:
+                                    add_value = None
+                                    for r in rule["ranges"]:
+                                        if r["min"] <= diameter <= r["max"]:
+                                            add_value = r["value"]
+                                            break
+                                    if add_value is not None:
                                         base_val = safe_float(item.get(rule["field"], "0"))
-                                        adjusted_retail = base_val + rule["default"]
+                                        adjusted_retail = base_val + add_value
                                     else:
-                                        adjusted_retail = original_retail
+                                        if rule.get("default") is not None:
+                                            base_val = safe_float(item.get(rule["field"], "0"))
+                                            adjusted_retail = base_val + rule["default"]
+                                        else:
+                                            adjusted_retail = original_retail
+                                else:
+                                    adjusted_retail = original_retail
                             else:
                                 adjusted_retail = original_retail
                         else:
-                            adjusted_retail = original_retail
-                    else:
-                        brand_settings = BRAND_COEFFS.get(brand)
-                        if brand_settings is not None:
-                            use_wholesale = False
-                            if isinstance(brand_settings, dict):
-                                if 'value' in brand_settings:
-                                    use_wholesale = True
-                                elif 'diameter_ranges' in brand_settings:
-                                    for r in brand_settings['diameter_ranges']:
-                                        if 'value' in r:
-                                            use_wholesale = True
-                                            break
-                            if use_wholesale:
-                                wholesale = safe_float(item.get("price", 0))
-                                if wholesale > 0:
-                                    adjusted_retail = apply_brand_adjustment(brand_settings, wholesale, diameter)
+                            brand_settings = BRAND_COEFFS.get(brand)
+                            if brand_settings is not None:
+                                use_wholesale = False
+                                if isinstance(brand_settings, dict):
+                                    if 'value' in brand_settings:
+                                        use_wholesale = True
+                                    elif 'diameter_ranges' in brand_settings:
+                                        for r in brand_settings['diameter_ranges']:
+                                            if 'value' in r:
+                                                use_wholesale = True
+                                                break
+                                if use_wholesale:
+                                    wholesale = safe_float(item.get("price", 0))
+                                    if wholesale > 0:
+                                        adjusted_retail = apply_brand_adjustment(brand_settings, wholesale, diameter)
+                                    else:
+                                        adjusted_retail = apply_brand_adjustment(brand_settings, original_retail, diameter)
                                 else:
                                     adjusted_retail = apply_brand_adjustment(brand_settings, original_retail, diameter)
                             else:
-                                adjusted_retail = apply_brand_adjustment(brand_settings, original_retail, diameter)
-                        else:
-                            coeff, _, _ = get_coeff_from_settings(GLOBAL_COEFF, diameter)
-                            adjusted_retail = original_retail * coeff
+                                coeff, _, _ = get_coeff_from_settings(GLOBAL_COEFF, diameter)
+                                adjusted_retail = original_retail * coeff
 
-                    if price_val > 0:
-                        margin = adjusted_retail - price_val
-                        if margin < MIN_MARGIN:
-                            final_price = original_retail
+                        if price_val > 0:
+                            margin = adjusted_retail - price_val
+                            if margin < MIN_MARGIN:
+                                final_price = original_retail
+                            else:
+                                final_price = adjusted_retail
                         else:
                             final_price = adjusted_retail
-                    else:
-                        final_price = adjusted_retail
-            except Exception:
-                final_price = original_retail
+                except Exception:
+                    final_price = original_retail
 
-            # === ЗАЩИТА ОТ АНОМАЛЬНО НИЗКИХ ЦЕН ===
-            if price_val > 0 and final_price is not None and final_price < price_val + MIN_MARGIN:
-                print(f"⚠️ Аномалия: {item.get('name')} | brand={brand} | "
-                      f"retail_api={original_retail} | price={price_val} | "
-                      f"final_before={final_price} → поднято до {price_val + MIN_MARGIN}")
-                final_price = price_val + MIN_MARGIN
-                anomaly_count += 1
-            # =====================================
+                # === ЗАЩИТА ОТ АНОМАЛЬНО НИЗКИХ ЦЕН ===
+                if price_val > 0 and final_price is not None and final_price < price_val + MIN_MARGIN:
+                    print(f"⚠️ Аномалия: {item.get('name')} | brand={brand} | "
+                          f"retail_api={original_retail} | price={price_val} | "
+                          f"final_before={final_price} → поднято до {price_val + MIN_MARGIN}")
+                    final_price = price_val + MIN_MARGIN
+                    anomaly_count += 1
+                # ==========================================
 
             step = ROUND_STEP
             method = ROUND_METHOD
@@ -484,38 +497,20 @@ response = session.get(API_URL, headers={"Authorization": f"Basic {auth}"}, time
 response.raise_for_status()
 data = response.json()
 
-# === ОТЛАДКА: все поля первого товара из API ===
-if data:
-    print("=" * 60)
-    print("🔎 Пример полей первого товара из API:")
-    for k, v in data[0].items():
-        print(f"    {k} = {v}")
-    print("=" * 60)
-# ================================================
-
-# === ОТЛАДКА: поиск артикула 5918800 в API до фильтрации ===
-print("🔎 Поиск артикула 5918800 в API:")
-found_5918800 = False
-for it in data:
-    if str(it.get("article", "")).strip() == "5918800":
-        found_5918800 = True
-        print(f"    ✅ Найден: {it}")
-        break
-if not found_5918800:
-    print("    ❌ Артикул 5918800 не найден в ответе API")
-print("=" * 60)
-# ============================================================
-
 print("🔄 Загрузка данных завершена. Обработка...")
 
-all_items = []
-rrc_items = []
+all_items = []       # для aztyre_full.xml (без РРЦ, если свитчер включён)
+rrc_items = []       # для aztyre_rrc.xml (только РРЦ)
+
 unique_urls = set()
-total_products = 0
+total_products_full = 0
+total_products_rrc = 0
 excluded_zb = 0
 excluded_article = 0
 excluded_season = 0
 excluded_cae = 0
+excluded_no_price = 0
+excluded_from_full_rrc = 0
 
 for item in data:
     name = item.get("name", "")
@@ -572,19 +567,48 @@ for item in data:
             excluded_season += 1
             continue
 
-    total_products += 1
-    all_items.append((item, diameter))
+    # === ФИЛЬТР: пропускаем товары без цены, если нет ручной цены ===
+    price_val = safe_float(item.get("price", 0))
+    retail_val = safe_float(item.get("retail", 0))
+    article_str = str(article).strip()
 
-    if brand in IGNORE_COEFF_BRANDS:
+    if price_val == 0 and retail_val == 0:
+        if article_str in MANUAL_PRICES:
+            print(f"🔧 Товар без цены, но есть ручная цена: {name} | article={article_str} | "
+                  f"manual={MANUAL_PRICES[article_str]}")
+        else:
+            print(f"⛔ Пропускаем товар без цены: {name} | article={article_str} | brand={brand}")
+            excluded_no_price += 1
+            continue
+    # ===========================================================
+
+    # Определяем РРЦ (по бренду)
+    is_rrc = brand in IGNORE_COEFF_BRANDS
+
+    # Раскладываем по файлам
+    if is_rrc:
         rrc_items.append((item, diameter))
+        total_products_rrc += 1
+        if EXCLUDE_RRC_FROM_FULL:
+            excluded_from_full_rrc += 1
+        else:
+            all_items.append((item, diameter))
+            total_products_full += 1
+    else:
+        all_items.append((item, diameter))
+        total_products_full += 1
 
     if IMAGE_REPLACE_ENABLED:
         for url in get_all_image_urls(item):
             unique_urls.add(url)
 
-print(f"🔍 Всего товаров после фильтров: {total_products}")
-print(f"🔍 Из них РРЦ-позиции (для отдельного файла): {len(rrc_items)}")
+print(f"🔍 Свитчер EXCLUDE_RRC_FROM_FULL = {EXCLUDE_RRC_FROM_FULL}")
+print(f"🔍 Всего товаров для aztyre_full.xml: {total_products_full}")
+print(f"🔍 Всего товаров для aztyre_rrc.xml:  {total_products_rrc}")
+if EXCLUDE_RRC_FROM_FULL:
+    print(f"🔍 Исключено РРЦ-позиций из full: {excluded_from_full_rrc}")
 print(f"🔍 Исключено по CAE: {excluded_cae}")
+print(f"🔍 Исключено без цены: {excluded_no_price}")
 print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
 # ===================== ПРОВЕРКА ИЗОБРАЖЕНИЙ =====================
@@ -623,10 +647,11 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
 else:
     print("🔍 Проверка существования файлов отключена (IMAGE_CHECK_ENABLED=False)")
 
-# ===================== СТАТИСТИКА =====================
+# ===================== СТАТИСТИКА (по всем товарам) =====================
+all_items_for_stats = all_items + rrc_items
 brand_diameter_stats = defaultdict(lambda: defaultdict(lambda: {'sum': 0, 'count': 0}))
 stats_count = 0
-for item, diameter in all_items:
+for item, diameter in all_items_for_stats:
     brand = item.get("brand", "").strip()
     if not brand:
         continue
@@ -665,7 +690,7 @@ for item, diameter in all_items:
 tree_full = ET.ElementTree(root_full)
 with open("aztyre_full.xml", "wb") as file:
     tree_full.write(file, encoding="utf-8", xml_declaration=True)
-print(f"✅ Файл aztyre_full.xml создан: {total_products} товаров")
+print(f"✅ Файл aztyre_full.xml создан: {total_products_full} товаров")
 
 root_rrc = ET.Element("Products")
 for item, diameter in rrc_items:
@@ -675,11 +700,13 @@ for item, diameter in rrc_items:
 tree_rrc = ET.ElementTree(root_rrc)
 with open("aztyre_rrc.xml", "wb") as file:
     tree_rrc.write(file, encoding="utf-8", xml_declaration=True)
-print(f"✅ Файл aztyre_rrc.xml создан: {len(rrc_items)} товаров")
+print(f"✅ Файл aztyre_rrc.xml создан: {total_products_rrc} товаров")
 
 print(f"\n📊 ИТОГО:")
 print(f"   - Аномалий (цена ниже закупки + {MIN_MARGIN}): {anomaly_count}")
-print(f"   - Позиций без закупки (price=0): {no_price_count}")
+print(f"   - Позиций без цены (пропущено): {excluded_no_price}")
+print(f"   - Ручных цен применено: {manual_price_count}")
+print(f"   - РРЦ исключено из full: {excluded_from_full_rrc if EXCLUDE_RRC_FROM_FULL else 0}")
 
 # ===================== ЗАГРУЗКА В S3 =====================
 S3_ENABLED = True
