@@ -14,6 +14,11 @@ on:
         required: false
         default: false
         type: boolean
+      only_whitelist_brands:
+        description: 'Выгружать ТОЛЬКО белый список брендов'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -54,6 +59,7 @@ jobs:
         run: python avito_export3.py
         env:
           IMAGE_CACHE_REFRESH: ${{ inputs.refresh_cache == true && 'true' || 'false' }}
+          ONLY_WHITELIST_BRANDS: ${{ inputs.only_whitelist_brands == true && 'true' || 'false' }}
           S3_ENABLED: true
           S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
           S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
