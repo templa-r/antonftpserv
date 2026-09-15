@@ -52,7 +52,7 @@ EXCLUDED_ARTICLES = [
     "33x10,50-16 NORTEC ET-500 111N TL АШК",
 ]
 
-# ===================== ИСКЛЮЧЕНИЯ ПО CAE (АРТИКУЛАМ) =====================
+# ===================== ИСКЛЮЧЕНИЯ ПО CAE =====================
 EXCLUDE_CAE_ENABLED = True
 EXCLUDED_CAE = [
     "КА-00049127", "КА-00049119", "КА-00049010", "КА-00049170", "КА-00049171",
@@ -171,10 +171,6 @@ def get_coeff_from_settings(settings, diameter):
     return coeff, round_step, round_method
 
 def apply_brand_adjustment(brand_settings, base_price, diameter):
-    """
-    Применяет настройки бренда. Если diameter = None, но есть диапазоны —
-    берём первый диапазон как fallback.
-    """
     if not isinstance(brand_settings, dict):
         return base_price * brand_settings
 
@@ -187,7 +183,6 @@ def apply_brand_adjustment(brand_settings, base_price, diameter):
                 elif "coeff" in r:
                     return base_price * r["coeff"]
     else:
-        # Диаметр неизвестен — используем первый диапазон как fallback
         if ranges:
             r = ranges[0]
             if "value" in r:
@@ -276,12 +271,13 @@ def check_image_exists(url, cache):
     cache[url] = exists
     return exists
 
-# ===================== ДОБАВЛЕНИЕ ТОВАРА В XML =====================
-# Счётчик аномалий для отчёта
+# ===================== СЧЁТЧИК АНОМАЛИЙ =====================
 anomaly_count = 0
+no_price_count = 0
 
+# ===================== ДОБАВЛЕНИЕ ТОВАРА В XML =====================
 def add_product_to_root(root, item, diameter, replace_images=True, image_cache=None):
-    global anomaly_count
+    global anomaly_count, no_price_count
     product = ET.SubElement(root, "Product")
 
     for key, value in item.items():
@@ -303,6 +299,15 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
 
             original_retail = safe_float(value)
             price_val = safe_float(item.get("price", 0))
+
+            # === ОТЛАДКА: позиции без закупки ===
+            if price_val == 0:
+                print(f"❗ Нет закупки: {item.get('name')} | article={item.get('article')} | "
+                      f"brand={brand} | retail_api={original_retail} | "
+                      f"price_raw='{item.get('price')}'")
+                no_price_count += 1
+            # =====================================
+
             apply_coeff = True
             if brand in [b.lower() for b in IGNORE_COEFF_BRANDS]:
                 apply_coeff = False
@@ -375,14 +380,14 @@ def add_product_to_root(root, item, diameter, replace_images=True, image_cache=N
             except Exception:
                 final_price = original_retail
 
-            # ===== ЗАЩИТА ОТ АНОМАЛЬНО НИЗКИХ ЦЕН =====
+            # === ЗАЩИТА ОТ АНОМАЛЬНО НИЗКИХ ЦЕН ===
             if price_val > 0 and final_price is not None and final_price < price_val + MIN_MARGIN:
                 print(f"⚠️ Аномалия: {item.get('name')} | brand={brand} | "
                       f"retail_api={original_retail} | price={price_val} | "
                       f"final_before={final_price} → поднято до {price_val + MIN_MARGIN}")
                 final_price = price_val + MIN_MARGIN
                 anomaly_count += 1
-            # ==========================================
+            # =====================================
 
             step = ROUND_STEP
             method = ROUND_METHOD
@@ -478,6 +483,28 @@ auth = base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
 response = session.get(API_URL, headers={"Authorization": f"Basic {auth}"}, timeout=30)
 response.raise_for_status()
 data = response.json()
+
+# === ОТЛАДКА: все поля первого товара из API ===
+if data:
+    print("=" * 60)
+    print("🔎 Пример полей первого товара из API:")
+    for k, v in data[0].items():
+        print(f"    {k} = {v}")
+    print("=" * 60)
+# ================================================
+
+# === ОТЛАДКА: поиск артикула 5918800 в API до фильтрации ===
+print("🔎 Поиск артикула 5918800 в API:")
+found_5918800 = False
+for it in data:
+    if str(it.get("article", "")).strip() == "5918800":
+        found_5918800 = True
+        print(f"    ✅ Найден: {it}")
+        break
+if not found_5918800:
+    print("    ❌ Артикул 5918800 не найден в ответе API")
+print("=" * 60)
+# ============================================================
 
 print("🔄 Загрузка данных завершена. Обработка...")
 
@@ -630,7 +657,6 @@ except Exception as e:
     traceback.print_exc()
 
 # ===================== ЗАПИСЬ XML ФАЙЛОВ =====================
-# 1. Общая выгрузка
 root_full = ET.Element("Products")
 for item, diameter in all_items:
     add_product_to_root(root_full, item, diameter,
@@ -641,7 +667,6 @@ with open("aztyre_full.xml", "wb") as file:
     tree_full.write(file, encoding="utf-8", xml_declaration=True)
 print(f"✅ Файл aztyre_full.xml создан: {total_products} товаров")
 
-# 2. РРЦ выгрузка
 root_rrc = ET.Element("Products")
 for item, diameter in rrc_items:
     add_product_to_root(root_rrc, item, diameter,
@@ -652,7 +677,9 @@ with open("aztyre_rrc.xml", "wb") as file:
     tree_rrc.write(file, encoding="utf-8", xml_declaration=True)
 print(f"✅ Файл aztyre_rrc.xml создан: {len(rrc_items)} товаров")
 
-print(f"\n📊 Всего аномалий (цена ниже закупки + {MIN_MARGIN}): {anomaly_count}")
+print(f"\n📊 ИТОГО:")
+print(f"   - Аномалий (цена ниже закупки + {MIN_MARGIN}): {anomaly_count}")
+print(f"   - Позиций без закупки (price=0): {no_price_count}")
 
 # ===================== ЗАГРУЗКА В S3 =====================
 S3_ENABLED = True
@@ -683,7 +710,6 @@ signature_v2 = False
             with open("/tmp/s3cfg", "w") as f:
                 f.write(config_content)
             
-            # Загружаем aztyre_full.xml
             if os.path.exists("aztyre_full.xml") and os.path.getsize("aztyre_full.xml") > 0:
                 cmd_full = [
                     "s3cmd", "--config=/tmp/s3cfg", "put",
@@ -697,7 +723,6 @@ signature_v2 = False
                 else:
                     print(f"❌ Ошибка загрузки aztyre_full.xml: {result.stderr}")
             
-            # Загружаем aztyre_rrc.xml
             if os.path.exists("aztyre_rrc.xml") and os.path.getsize("aztyre_rrc.xml") > 0:
                 cmd_rrc = [
                     "s3cmd", "--config=/tmp/s3cfg", "put",
