@@ -19,6 +19,17 @@ API_PASSWORD = "rWp7mFWXRKOq"
 ROUND_STEP = 10
 ROUND_METHOD = 'nearest'
 
+# ===================== РЕЖИМ "ТОЛЬКО БЕЛЫЙ СПИСОК БРЕНДОВ" =====================
+# Включается через переменную окружения ONLY_WHITELIST_BRANDS=true
+ONLY_WHITELIST_BRANDS = os.getenv("ONLY_WHITELIST_BRANDS", "false").lower() == "true"
+
+# Бренды, которые нужно выгружать в этом режиме
+WHITELIST_BRANDS = [
+    "Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
+    "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
+    "Kelly", "Nitto", "Кама", "Hankook"
+]
+
 # ===================== НОРМАЛИЗАЦИЯ МОДЕЛЕЙ И БРЕНДОВ =====================
 MODEL_REFERENCE_FILE = "models_reference.xml"
 DIAMETER_REFERENCE_FILE = "diameter.xml"
@@ -132,7 +143,7 @@ EXCLUDED_BRANDS = [
 ]
 
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
-EXCLUDED_CATEGORY = ["Грузовая"]   # исключаем только "Грузовая", "Легкогрузовые" остаются
+EXCLUDED_CATEGORY = ["Грузовая"]
 
 EXCLUDED_ARTICLES = [
     "195/75R16C Laufenn X FIT VAN LV01",
@@ -187,7 +198,6 @@ BRAND_COEFFS = {
     },
 }
 
-# Фиксированные надбавки для брендов (в рублях), применяются вместо коэффициентов
 FIXED_ADDITIONS = {
     "pirelli": {
         "diameter_ranges": [
@@ -253,7 +263,6 @@ def clean_name(s):
     return re.sub(r'[^\w\-]', '_', s)
 
 def make_id(item):
-    """Создаёт уникальный идентификатор объявления (как в XML)."""
     article = item.get("article", "") or item.get("cae", "")
     width = item.get("width", "")
     profile = item.get("profile", "") or item.get("height", "")
@@ -416,9 +425,6 @@ def is_disk(item):
 
 # ===================== ФОРМИРОВАНИЕ XML ДЛЯ АВИТО =====================
 def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
-    """
-    Возвращает строку с причиной пропуска или 'added' при успехе.
-    """
     if seen_ids is None:
         seen_ids = set()
 
@@ -446,7 +452,6 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
     ET.SubElement(ad, "Address").text = "Новосибирская область, Новосибирск, Фабричная улица, 43"
     ET.SubElement(ad, "Id").text = unique_id
 
-    # Заголовок
     title_parts = []
     if item.get("brand"):
         title_parts.append(item.get("brand"))
@@ -460,7 +465,6 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
     title = " ".join(title_parts) if title_parts else "Шина"
     ET.SubElement(ad, "Title").text = title
 
-    # Описание
     name = item.get("name", "")
     if not name:
         name = f"{item.get('brand', '')} {item.get('model', '')} {width}/{profile}R{diam_str}".strip()
@@ -481,7 +485,6 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
     ET.SubElement(ad, "Description").text = description
     ET.SubElement(ad, "ContactPhone").text = "8 913 703-55-88"
 
-    # Изображения
     images_elem = ET.SubElement(ad, "Images")
     fallback_img = item.get("img", "")
     brand = item.get("brand", "").strip()
@@ -555,6 +558,10 @@ def main():
     data = response.json()
 
     print("🔄 Загрузка данных завершена. Обработка...")
+    if ONLY_WHITELIST_BRANDS:
+        print(f"⭐ Режим 'ТОЛЬКО БЕЛЫЙ СПИСОК БРЕНДОВ' включён. Бренды: {', '.join(WHITELIST_BRANDS)}")
+    else:
+        print("ℹ️ Режим 'ТОЛЬКО БЕЛЫЙ СПИСОК БРЕНДОВ' выключен.")
 
     model_mapping, brand_map = load_model_mapping(MODEL_REFERENCE_FILE)
     valid_brands_norms = set(brand_map.keys())
@@ -585,9 +592,12 @@ def main():
     excluded_validation = 0
     excluded_zero_retail = 0
     excluded_by_id = 0
+    excluded_whitelist = 0  # новый счётчик
 
-    # Доп. статистика по категориям (для анализа)
     category_stats = defaultdict(int)
+
+    # Нормализуем белый список для быстрого сравнения
+    whitelist_norms = {normalize_string(b) for b in WHITELIST_BRANDS}
 
     for item in data:
         name = item.get("name", "")
@@ -614,7 +624,15 @@ def main():
             log_invalid(item, "Brand", "", "пустой бренд")
             excluded_validation += 1
             continue
+
         brand_norm = normalize_string(brand)
+
+        # ---------- БЕЛЫЙ СПИСОК БРЕНДОВ ----------
+        if ONLY_WHITELIST_BRANDS and brand_norm not in whitelist_norms:
+            excluded_whitelist += 1
+            continue
+        # ------------------------------------------
+
         if brand_norm not in valid_brands_norms:
             log_invalid(item, "Brand", brand, f"не найден в справочнике (норм: {brand_norm})")
             excluded_validation += 1
@@ -729,7 +747,6 @@ def main():
                 excluded_season += 1
                 continue
 
-        # Собираем статистику по категориям для анализа
         cat = item.get("category", "не указана")
         category_stats[cat] += 1
 
@@ -744,150 +761,4 @@ def main():
     print(f"🔍 Исключено по валидации: {excluded_validation}")
     print(f"🔍 Исключено с нулевой розничной ценой: {excluded_zero_retail}")
     print(f"🔍 Исключено по ID (EXCLUDED_IDS): {excluded_by_id}")
-    print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
-
-    # Вывод статистики по категориям
-    print("\n📊 Статистика по категориям (из товаров, прошедших фильтры):")
-    for cat, cnt in sorted(category_stats.items(), key=lambda x: -x[1]):
-        print(f"   {cat}: {cnt}")
-
-    # Кэширование изображений
-    image_cache = {}
-    check_time = 0
-    if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
-        if IMAGE_CACHE_REFRESH and os.path.exists(IMAGE_CACHE_FILE):
-            os.remove(IMAGE_CACHE_FILE)
-            print("🔁 Кэш принудительно удалён.")
-        image_cache = load_image_cache()
-        print(f"🔍 Загружено {len(image_cache)} записей из кэша.")
-        new_urls = [url for url in unique_urls if url not in image_cache]
-        if new_urls:
-            print(f"🔍 Требуется проверить {len(new_urls)} новых URL...")
-            check_start = time.time()
-
-            def check_url(url):
-                try:
-                    headers = {"User-Agent": "Mozilla/5.0"}
-                    response = requests.head(url, timeout=HEAD_TIMEOUT, headers=headers)
-                    return url, response.status_code == 200
-                except:
-                    return url, False
-
-            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-                futures = [executor.submit(check_url, url) for url in new_urls]
-                for future in as_completed(futures):
-                    url, exists = future.result()
-                    image_cache[url] = exists
-
-            check_time = time.time() - check_start
-            print(f"✅ Проверка завершена за {check_time:.2f} сек.")
-            save_image_cache(image_cache)
-        else:
-            print("✅ Все URL уже есть в кэше, проверка не требуется.")
-    else:
-        print("🔍 Проверка существования файлов отключена.")
-
-    # Создание XML с защитой от дубликатов и сбором статистики добавления
-    root = ET.Element("Ads")
-    root.set("formatVersion", "3")
-    root.set("target", "Avito.ru")
-
-    seen_ids = set()
-    add_stats = {
-        "added": 0,
-        "no_stock": 0,
-        "duplicate_id": 0,
-        "zero_price": 0,
-        "other": 0
-    }
-
-    for item, diameter in all_items:
-        result = add_ad_to_root(root, item, diameter,
-                                image_cache=image_cache if IMAGE_CHECK_ENABLED else None,
-                                seen_ids=seen_ids)
-        add_stats[result] = add_stats.get(result, 0) + 1
-
-    tree = ET.ElementTree(root)
-    output_file = "avito_export3.xml"
-    tree.write(output_file, encoding="utf-8", xml_declaration=True)
-
-    print(f"\n✅ Итоговый XML для Авито создан: {output_file}, всего объявлений в файле: {len(tree.getroot().findall('Ad'))}")
-    print(f"\n📊 Статистика добавления объявлений:")
-    print(f"   - Успешно добавлено: {add_stats.get('added', 0)}")
-    print(f"   - Нет остатка: {add_stats.get('no_stock', 0)}")
-    print(f"   - Дубликат ID: {add_stats.get('duplicate_id', 0)}")
-    print(f"   - Нулевая цена: {add_stats.get('zero_price', 0)}")
-    print(f"   - Другие причины: {add_stats.get('other', 0)}")
-
-    print(f"\n📊 Общая статистика:")
-    print(f"   - Пропущено (ЗБ): {excluded_zb}")
-    print(f"   - Исключено по артикулу: {excluded_article}")
-    print(f"   - Исключено дисков: {excluded_disk}")
-    print(f"   - Исключено по валидации: {excluded_validation}")
-    print(f"   - Исключено с нулевой розничной ценой: {excluded_zero_retail}")
-    print(f"   - Исключено по ID: {excluded_by_id}")
-    if SEASON_EXCLUDE_ENABLED:
-        print(f"   - Исключено по сезону ({SEASON_EXCLUDE_VALUE}): {excluded_season}")
-
-    # ===================== ЗАГРУЗКА XML В S3 =====================
-    S3_ENABLED = os.getenv("S3_ENABLED", "false").lower() == "true"
-
-    if S3_ENABLED:
-        try:
-            S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
-            S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
-            S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
-            S3_KEY = os.getenv("S3_KEY", "exports/avito_export3.xml")
-            S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
-
-            if S3_ACCESS_KEY and S3_SECRET_KEY:
-                if not os.path.exists(output_file):
-                    print(f"❌ Файл {output_file} не найден!")
-                    raise FileNotFoundError(f"{output_file} not found")
-
-                file_size = os.path.getsize(output_file)
-                print(f"\n📄 Размер файла: {file_size} байт")
-                if file_size == 0:
-                    print("❌ Файл пуст, загрузка отменена")
-                    raise ValueError("File is empty")
-
-                print("🔧 Устанавливаем s3cmd...")
-                subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"], check=True, capture_output=True)
-
-                host_base = S3_ENDPOINT.replace('https://', '').replace('http://', '')
-                config_content = f"""[default]
-access_key = {S3_ACCESS_KEY}
-secret_key = {S3_SECRET_KEY}
-host_base = {host_base}
-host_bucket = {host_base}
-use_https = True
-signature_v2 = False
-"""
-                with open("/tmp/s3cfg", "w") as f:
-                    f.write(config_content)
-
-                cmd = [
-                    "s3cmd", "--config=/tmp/s3cfg", "put",
-                    output_file,
-                    f"s3://{S3_BUCKET}/{S3_KEY}"
-                ]
-                print(f"🔍 Выполняем: {' '.join(cmd)}")
-                result = subprocess.run(cmd, capture_output=True, text=True)
-                if result.returncode == 0:
-                    print(f"✅ Файл успешно загружен в S3: {S3_BUCKET}/{S3_KEY}")
-                else:
-                    print(f"❌ Ошибка при загрузке в S3:")
-                    if result.stderr:
-                        print(result.stderr)
-                    if result.stdout:
-                        print(result.stdout)
-            else:
-                print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
-        except Exception as e:
-            print(f"❌ Ошибка при загрузке в S3: {e}")
-    else:
-        print("ℹ️ S3: загрузка отключена (S3_ENABLED=false)")
-
-if __name__ == "__main__":
-    main()
-    
+    if ONLY_WHITELIST_BR
