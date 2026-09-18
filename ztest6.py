@@ -113,7 +113,7 @@ BRAND_COEFFS = {
     },
 
     # Эти бренды работают от РРЦ (retail) через коэффициенты:
-    "laufenn": 0.905,
+    "laufenn": 0.985,
     "bridgestone": 0.965,
 
     # Hankook: значение (value) к опту
