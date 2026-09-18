@@ -95,9 +95,9 @@ EXCLUDED_CAE = [
 GLOBAL_COEFF = {
     "default": 0.92,
     "diameter_ranges": [
-        {"min": 13, "max": 15, "coeff": 0.95},
-        {"min": 16, "max": 17, "coeff": 0.94},
-        {"min": 18, "max": 22, "coeff": 0.93},
+        {"min": 13, "max": 15, "coeff": 0.98},
+        {"min": 16, "max": 17, "coeff": 0.98},
+        {"min": 18, "max": 22, "coeff": 0.98},
     ],
 }
 
