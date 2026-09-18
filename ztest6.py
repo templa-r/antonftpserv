@@ -24,7 +24,7 @@ INCLUDE_PRICE_TAG = False
 # ===================== СВИТЧЕРЫ =====================
 EXCLUDE_RRC_FROM_FULL = True
 MIN_FINAL_PRICE = 2500      # минимальная итоговая цена (для дешёвых позиций)
-MIN_MARGIN = 650            # минимальная маржа от закупки (защита от убытка)
+MIN_MARGIN = 500            # минимальная маржа от закупки (защита от убытка)
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
@@ -93,7 +93,7 @@ EXCLUDED_CAE = [
 #   - смешивать coeff и value в одном бренде не рекомендуется
 
 GLOBAL_COEFF = {
-    "default": 0.92,
+    "default": 0.99,
     "diameter_ranges": [
         {"min": 13, "max": 15, "coeff": 0.98},
         {"min": 16, "max": 17, "coeff": 0.98},
