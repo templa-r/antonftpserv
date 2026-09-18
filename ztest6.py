@@ -22,14 +22,9 @@ ROUND_METHOD = 'nearest'
 INCLUDE_PRICE_TAG = False
 
 # ===================== СВИТЧЕРЫ =====================
-# Если True — РРЦ-позиции (IGNORE_COEFF_BRANDS) НЕ попадут в aztyre_full.xml,
-#              но останутся в aztyre_rrc.xml.
-# Если False — РРЦ-позиции попадут и в full, и в rrc файлы.
 EXCLUDE_RRC_FROM_FULL = True
-
-# Минимальная итоговая цена. Если после всех расчётов цена < этого значения —
-# товар исключается из выгрузки.
-MIN_FINAL_PRICE = 2500
+MIN_FINAL_PRICE = 2500      # минимальная итоговая цена (для дешёвых позиций)
+MIN_MARGIN = 650            # минимальная маржа от закупки (защита от убытка)
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
@@ -43,7 +38,7 @@ HEAD_TIMEOUT = 1
 
 # ===================== РУЧНЫЕ ЦЕНЫ =====================
 MANUAL_PRICES = {
-    "5918800": 15000,  # Pirelli Ice Zero 245/60R18 109H XL шип
+    "5918800": 15000,
 }
 
 # ===================== ФИЛЬТРЫ =====================
@@ -87,6 +82,14 @@ EXCLUDED_CAE = [
 ]
 
 # ===================== КОЭФФИЦИЕНТЫ ЦЕН =====================
+# ВАЖНО:
+#   - coeff применяется к retail (РРЦ из API)
+#   - value прибавляется к price (опт)
+#   - если у бренда есть и то, и то — coeff применяется к retail, а затем value прибавляется к результату (см. логику ниже)
+#     НО! Мы договорились: coeff всегда к retail, value всегда к price.
+#     Поэтому в одном бренде смешивать не рекомендуем. Ниже — все бренды либо с coeff (от РРЦ),
+#     либо с value (к опту).
+
 GLOBAL_COEFF = {
     "default": 0.92,
     "diameter_ranges": [
@@ -97,16 +100,21 @@ GLOBAL_COEFF = {
 }
 
 BRAND_COEFFS = {
+    # Ikon: значения (value) прибавляются к опт-цене
     "ikon": {
-        "default": 0.88,
+        "default": None,
         "diameter_ranges": [
             {"min": 13, "max": 14, "value": 700},
             {"min": 15, "max": 16, "value": 800},
-            {"min": 17, "max": 22, "coeff": 0.89},
+            {"min": 17, "max": 22, "value": 1500},   # ← было coeff: 0.89, исправлено
         ],
     },
+
+    # Эти бренды работают от РРЦ (retail) через коэффициенты:
     "laufenn": 0.905,
     "bridgestone": 0.965,
+
+    # Hankook: значение (value) к опту
     "hankook": {
         "diameter_ranges": [
             {"min": 13, "max": 14, "value": 800},
@@ -115,12 +123,16 @@ BRAND_COEFFS = {
             {"min": 19, "max": 20, "value": 1100},
         ],
     },
+
+    # Pirelli: значение (value) к опту
     "pirelli": {
         "diameter_ranges": [
             {"min": 13, "max": 16, "value": 1000},
             {"min": 17, "max": 22, "value": 1200},
         ],
     },
+
+    # Formula: значение (value) к опту
     "formula": {
         "diameter_ranges": [
             {"min": 13, "max": 16, "value": 700},
@@ -167,52 +179,40 @@ def round_price(price, step=None, method=None):
         return int(round(price / step) * step)
 
 def get_coeff_from_settings(settings, diameter):
+    """
+    Возвращает коэффициент для применения к retail.
+    """
     if not isinstance(settings, dict):
-        settings = {"coeff": settings}
-    coeff = None
+        return settings, None, None
+
     if diameter is not None and "diameter_ranges" in settings:
         for r in settings["diameter_ranges"]:
             if r["min"] <= diameter <= r["max"]:
-                coeff = r["coeff"]
-                break
-        if coeff is None and "default" in settings:
-            coeff = settings["default"]
-    if coeff is None:
-        coeff = settings.get("coeff", 0.92)
-    round_step = settings.get("round_step")
-    round_method = settings.get("round_method")
-    return coeff, round_step, round_method
+                if "coeff" in r:
+                    return r["coeff"], settings.get("round_step"), settings.get("round_method")
 
-def apply_brand_adjustment(brand_settings, base_price, diameter):
-    if not isinstance(brand_settings, dict):
-        return base_price * brand_settings
+    if "default" in settings and isinstance(settings["default"], (int, float)):
+        return settings["default"], settings.get("round_step"), settings.get("round_method")
 
-    ranges = brand_settings.get("diameter_ranges", [])
-    if diameter is not None:
-        for r in ranges:
+    if "coeff" in settings:
+        return settings["coeff"], settings.get("round_step"), settings.get("round_method")
+
+    return None, None, None
+
+def get_value_from_settings(settings, diameter):
+    """
+    Возвращает value (прибавку к опту) для бренда по диаметру.
+    """
+    if not isinstance(settings, dict):
+        return None
+    if diameter is not None and "diameter_ranges" in settings:
+        for r in settings["diameter_ranges"]:
             if r["min"] <= diameter <= r["max"]:
                 if "value" in r:
-                    return base_price + r["value"]
-                elif "coeff" in r:
-                    return base_price * r["coeff"]
-    else:
-        if ranges:
-            r = ranges[0]
-            if "value" in r:
-                return base_price + r["value"]
-            elif "coeff" in r:
-                return base_price * r["coeff"]
-
-    if "default" in brand_settings:
-        default = brand_settings["default"]
-        if isinstance(default, (int, float)):
-            return base_price * default
-    if "coeff" in brand_settings:
-        return base_price * brand_settings["coeff"]
-    if "value" in brand_settings:
-        return base_price + brand_settings["value"]
-
-    return base_price
+                    return r["value"]
+    if "value" in settings:
+        return settings["value"]
+    return None
 
 def clean_name(s):
     return re.sub(r'[^\w\-]', '_', s)
@@ -288,18 +288,20 @@ def check_image_exists(url, cache):
 low_price_count = 0
 no_price_count = 0
 manual_price_count = 0
+loss_count = 0
 
 # ===================== РАСЧЁТ ИТОГОВОЙ ЦЕНЫ =====================
 def calculate_final_price(item, diameter, is_rrc):
     """
-    Возвращает (final_price, status):
-      status может быть:
-        "manual"  — применена ручная цена
-        "ok"      — цена посчитана
-        "low"     — цена ниже MIN_FINAL_PRICE, товар исключаем
-        "no_price"— нет ни retail, ни price
+    Возвращает (final_price, status).
+    status:
+      "manual"  — ручная цена
+      "ok"      — цена посчитана
+      "low"     — цена < MIN_FINAL_PRICE (пропускаем)
+      "no_price"— нет ни retail, ни price
+      "loss"    — цена < price + MIN_MARGIN (пропускаем, убыток)
     """
-    global low_price_count, no_price_count, manual_price_count
+    global low_price_count, no_price_count, manual_price_count, loss_count
 
     brand = item.get("brand", "").strip().lower()
     model = item.get("model", "").strip().lower()
@@ -308,13 +310,13 @@ def calculate_final_price(item, diameter, is_rrc):
     original_retail = safe_float(item.get("retail", 0))
     price_val = safe_float(item.get("price", 0))
 
-    # 1. Ручная цена — приоритет над всем
+    # 1. Ручная цена
     manual_price = MANUAL_PRICES.get(article)
     if manual_price is not None:
         manual_price_count += 1
         return manual_price, "manual"
 
-    # 2. Если ни retail, ни price нет
+    # 2. Нет ни цены, ни розницы
     if original_retail == 0 and price_val == 0:
         no_price_count += 1
         return None, "no_price"
@@ -324,18 +326,19 @@ def calculate_final_price(item, diameter, is_rrc):
 
     final_price = None
     try:
-        # 3. РРЦ-бренды — retail как есть (или с коэффициентами, если так настроено)
+        # 3. РРЦ-бренды: берём retail как есть
         if is_excluded or is_rrc:
             final_price = original_retail
         else:
+            # Правило модели (например, Autograph Ice 9 SUV)
             rule = MODEL_RULES.get((brand, model))
             if rule:
                 rule_type = rule["type"]
                 if rule_type == "fixed":
-                    adjusted_retail = safe_float(rule["value"])
+                    final_price = safe_float(rule["value"])
                 elif rule_type == "add_to_field":
                     base_val = safe_float(item.get(rule["field"], "0"))
-                    adjusted_retail = base_val + rule["value"]
+                    final_price = base_val + rule["value"]
                 elif rule_type == "add_to_field_by_diameter":
                     if diameter is not None:
                         add_value = None
@@ -345,46 +348,44 @@ def calculate_final_price(item, diameter, is_rrc):
                                 break
                         if add_value is not None:
                             base_val = safe_float(item.get(rule["field"], "0"))
-                            adjusted_retail = base_val + add_value
+                            final_price = base_val + add_value
                         else:
                             if rule.get("default") is not None:
                                 base_val = safe_float(item.get(rule["field"], "0"))
-                                adjusted_retail = base_val + rule["default"]
+                                final_price = base_val + rule["default"]
                             else:
-                                adjusted_retail = original_retail
+                                final_price = original_retail
                     else:
-                        adjusted_retail = original_retail
+                        final_price = original_retail
                 else:
-                    adjusted_retail = original_retail
+                    final_price = original_retail
             else:
+                # Логика бренда
                 brand_settings = BRAND_COEFFS.get(brand)
                 if brand_settings is not None:
-                    use_wholesale = False
-                    if isinstance(brand_settings, dict):
-                        if 'value' in brand_settings:
-                            use_wholesale = True
-                        elif 'diameter_ranges' in brand_settings:
-                            for r in brand_settings['diameter_ranges']:
-                                if 'value' in r:
-                                    use_wholesale = True
-                                    break
-                    if use_wholesale:
-                        wholesale = safe_float(item.get("price", 0))
-                        if wholesale > 0:
-                            adjusted_retail = apply_brand_adjustment(brand_settings, wholesale, diameter)
-                        else:
-                            adjusted_retail = apply_brand_adjustment(brand_settings, original_retail, diameter)
+                    # Приоритет 1: value (прибавка к опту)
+                    value_add = get_value_from_settings(brand_settings, diameter)
+                    if value_add is not None and price_val > 0:
+                        final_price = price_val + value_add
                     else:
-                        adjusted_retail = apply_brand_adjustment(brand_settings, original_retail, diameter)
+                        # Приоритет 2: coeff (умножение на retail)
+                        coeff, _, _ = get_coeff_from_settings(brand_settings, diameter)
+                        if coeff is not None:
+                            final_price = original_retail * coeff
+                        else:
+                            # fallback — глобальный коэффициент
+                            coeff, _, _ = get_coeff_from_settings(GLOBAL_COEFF, diameter)
+                            final_price = original_retail * coeff
                 else:
+                    # Нет настроек бренда — глобальный коэффициент к retail
                     coeff, _, _ = get_coeff_from_settings(GLOBAL_COEFF, diameter)
-                    adjusted_retail = original_retail * coeff
+                    final_price = original_retail * coeff
 
-            final_price = adjusted_retail
-    except Exception:
-        final_price = original_retail
+        if final_price is None:
+            final_price = original_retail
 
-    if final_price is None:
+    except Exception as e:
+        print(f"⚠️ Ошибка в расчёте цены для {item.get('name')}: {e}")
         final_price = original_retail
 
     # 4. Округление
@@ -396,15 +397,19 @@ def calculate_final_price(item, diameter, is_rrc):
         method = rule.get("round_method", method)
 
     try:
-        rounded = round_price(final_price, step, method)
-        final_price = int(rounded)
+        final_price = int(round_price(final_price, step, method))
     except:
         final_price = int(final_price)
 
-    # 5. ФИЛЬТР по минимальной цене
+    # 5. ФИЛЬТР по минимальной итоговой цене
     if final_price < MIN_FINAL_PRICE:
         low_price_count += 1
         return final_price, "low"
+
+    # 6. ЗАЩИТА ОТ УБЫТКА: цена не должна быть ниже закупки + MIN_MARGIN
+    if price_val > 0 and final_price < price_val + MIN_MARGIN:
+        loss_count += 1
+        return final_price, "loss"
 
     return final_price, "ok"
 
@@ -522,6 +527,7 @@ excluded_cae = 0
 excluded_low_price = 0
 excluded_no_price = 0
 excluded_from_full_rrc = 0
+excluded_loss = 0
 
 for item in data:
     name = item.get("name", "")
@@ -592,6 +598,12 @@ for item in data:
               f"brand={brand} | article={article} → исключено")
         excluded_low_price += 1
         continue
+    if status == "loss":
+        price_val = safe_float(item.get("price", 0))
+        print(f"🚫 Убыток предотвращён: {name} | final={final_price} | "
+              f"price={price_val} | brand={brand} | article={article} → исключено")
+        excluded_loss += 1
+        continue
     if status == "manual":
         print(f"🔧 Ручная цена: {final_price} для {name} | article={article}")
 
@@ -620,6 +632,7 @@ if EXCLUDE_RRC_FROM_FULL:
 print(f"🔍 Исключено по CAE: {excluded_cae}")
 print(f"🔍 Исключено без цены: {excluded_no_price}")
 print(f"🔍 Исключено низкой цены (<{MIN_FINAL_PRICE}): {excluded_low_price}")
+print(f"🔍 Исключено убыточных (<price+{MIN_MARGIN}): {excluded_loss}")
 print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
 # ===================== ПРОВЕРКА ИЗОБРАЖЕНИЙ =====================
@@ -715,6 +728,7 @@ print(f"✅ Файл aztyre_rrc.xml создан: {total_products_rrc} това�
 print(f"\n📊 ИТОГО:")
 print(f"   - Позиций без цены (пропущено): {excluded_no_price}")
 print(f"   - Позиций с ценой < {MIN_FINAL_PRICE} (пропущено): {excluded_low_price}")
+print(f"   - Убыточных позиций (<price+{MIN_MARGIN}) (пропущено): {excluded_loss}")
 print(f"   - Ручных цен применено: {manual_price_count}")
 print(f"   - РРЦ исключено из full: {excluded_from_full_rrc if EXCLUDE_RRC_FROM_FULL else 0}")
 
