@@ -85,10 +85,7 @@ EXCLUDED_CAE = [
 # ВАЖНО:
 #   - coeff применяется к retail (РРЦ из API)
 #   - value прибавляется к price (опт)
-#   - если у бренда есть и то, и то — coeff применяется к retail, а затем value прибавляется к результату (см. логику ниже)
-#     НО! Мы договорились: coeff всегда к retail, value всегда к price.
-#     Поэтому в одном бренде смешивать не рекомендуем. Ниже — все бренды либо с coeff (от РРЦ),
-#     либо с value (к опту).
+#   - смешивать coeff и value в одном бренде не рекомендуется
 
 GLOBAL_COEFF = {
     "default": 0.92,
@@ -106,7 +103,7 @@ BRAND_COEFFS = {
         "diameter_ranges": [
             {"min": 13, "max": 14, "value": 700},
             {"min": 15, "max": 16, "value": 800},
-            {"min": 17, "max": 22, "value": 1500},   # ← было coeff: 0.89, исправлено
+            {"min": 17, "max": 22, "value": 1500},
         ],
     },
 
@@ -179,9 +176,6 @@ def round_price(price, step=None, method=None):
         return int(round(price / step) * step)
 
 def get_coeff_from_settings(settings, diameter):
-    """
-    Возвращает коэффициент для применения к retail.
-    """
     if not isinstance(settings, dict):
         return settings, None, None
 
@@ -200,9 +194,6 @@ def get_coeff_from_settings(settings, diameter):
     return None, None, None
 
 def get_value_from_settings(settings, diameter):
-    """
-    Возвращает value (прибавку к опту) для бренда по диаметру.
-    """
     if not isinstance(settings, dict):
         return None
     if diameter is not None and "diameter_ranges" in settings:
@@ -300,6 +291,7 @@ def calculate_final_price(item, diameter, is_rrc):
       "low"     — цена < MIN_FINAL_PRICE (пропускаем)
       "no_price"— нет ни retail, ни price
       "loss"    — цена < price + MIN_MARGIN (пропускаем, убыток)
+                 НЕ применяется к РРЦ-брендам (is_rrc == True)
     """
     global low_price_count, no_price_count, manual_price_count, loss_count
 
@@ -330,7 +322,6 @@ def calculate_final_price(item, diameter, is_rrc):
         if is_excluded or is_rrc:
             final_price = original_retail
         else:
-            # Правило модели (например, Autograph Ice 9 SUV)
             rule = MODEL_RULES.get((brand, model))
             if rule:
                 rule_type = rule["type"]
@@ -360,24 +351,19 @@ def calculate_final_price(item, diameter, is_rrc):
                 else:
                     final_price = original_retail
             else:
-                # Логика бренда
                 brand_settings = BRAND_COEFFS.get(brand)
                 if brand_settings is not None:
-                    # Приоритет 1: value (прибавка к опту)
                     value_add = get_value_from_settings(brand_settings, diameter)
                     if value_add is not None and price_val > 0:
                         final_price = price_val + value_add
                     else:
-                        # Приоритет 2: coeff (умножение на retail)
                         coeff, _, _ = get_coeff_from_settings(brand_settings, diameter)
                         if coeff is not None:
                             final_price = original_retail * coeff
                         else:
-                            # fallback — глобальный коэффициент
                             coeff, _, _ = get_coeff_from_settings(GLOBAL_COEFF, diameter)
                             final_price = original_retail * coeff
                 else:
-                    # Нет настроек бренда — глобальный коэффициент к retail
                     coeff, _, _ = get_coeff_from_settings(GLOBAL_COEFF, diameter)
                     final_price = original_retail * coeff
 
@@ -406,10 +392,12 @@ def calculate_final_price(item, diameter, is_rrc):
         low_price_count += 1
         return final_price, "low"
 
-    # 6. ЗАЩИТА ОТ УБЫТКА: цена не должна быть ниже закупки + MIN_MARGIN
-    if price_val > 0 and final_price < price_val + MIN_MARGIN:
-        loss_count += 1
-        return final_price, "loss"
+    # 6. ЗАЩИТА ОТ УБЫТКА — только для НЕ-РРЦ брендов
+    #    (Вариант A: РРЦ-позиции не режем по марже, доверяем РРЦ)
+    if not is_rrc and not is_excluded:
+        if price_val > 0 and final_price < price_val + MIN_MARGIN:
+            loss_count += 1
+            return final_price, "loss"
 
     return final_price, "ok"
 
@@ -586,7 +574,6 @@ for item in data:
 
     is_rrc = brand in IGNORE_COEFF_BRANDS
 
-    # Считаем итоговую цену
     final_price, status = calculate_final_price(item, diameter, is_rrc)
 
     if status == "no_price":
@@ -600,14 +587,13 @@ for item in data:
         continue
     if status == "loss":
         price_val = safe_float(item.get("price", 0))
-        print(f"🚫 Убыток предотвращён: {name} | final={final_price} | "
+        print(f"🚫 Убыток предотвращён (не-РРЦ): {name} | final={final_price} | "
               f"price={price_val} | brand={brand} | article={article} → исключено")
         excluded_loss += 1
         continue
     if status == "manual":
         print(f"🔧 Ручная цена: {final_price} для {name} | article={article}")
 
-    # Раскладываем по файлам
     if is_rrc:
         rrc_items.append((item, diameter, final_price))
         total_products_rrc += 1
@@ -632,7 +618,7 @@ if EXCLUDE_RRC_FROM_FULL:
 print(f"🔍 Исключено по CAE: {excluded_cae}")
 print(f"🔍 Исключено без цены: {excluded_no_price}")
 print(f"🔍 Исключено низкой цены (<{MIN_FINAL_PRICE}): {excluded_low_price}")
-print(f"🔍 Исключено убыточных (<price+{MIN_MARGIN}): {excluded_loss}")
+print(f"🔍 Исключено убыточных (не-РРЦ) (<price+{MIN_MARGIN}): {excluded_loss}")
 print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
 
 # ===================== ПРОВЕРКА ИЗОБРАЖЕНИЙ =====================
@@ -728,7 +714,7 @@ print(f"✅ Файл aztyre_rrc.xml создан: {total_products_rrc} това�
 print(f"\n📊 ИТОГО:")
 print(f"   - Позиций без цены (пропущено): {excluded_no_price}")
 print(f"   - Позиций с ценой < {MIN_FINAL_PRICE} (пропущено): {excluded_low_price}")
-print(f"   - Убыточных позиций (<price+{MIN_MARGIN}) (пропущено): {excluded_loss}")
+print(f"   - Убыточных (не-РРЦ) позиций (пропущено): {excluded_loss}")
 print(f"   - Ручных цен применено: {manual_price_count}")
 print(f"   - РРЦ исключено из full: {excluded_from_full_rrc if EXCLUDE_RRC_FROM_FULL else 0}")
 
