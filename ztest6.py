@@ -48,7 +48,7 @@ SEASON_EXCLUDE_VALUE = "зима"
 EXCLUDED_BRANDS = [
     "Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
-    "Kelly", "Nitto", "Кама", "Roadcruza"
+    "Kelly", "Nitto", "Кама", "Roadcruza", "ikon"
 ]
 
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
@@ -106,14 +106,6 @@ GLOBAL_COEFF = {
 
 BRAND_COEFFS = {
     # Ikon: значения (value) прибавляются к опт-цене
-    "ikon": {
-        "default": None,
-        "diameter_ranges": [
-            {"min": 13, "max": 14, "value": 700},
-            {"min": 15, "max": 16, "value": 800},
-            {"min": 17, "max": 22, "value": 1500},
-        ],
-    },
 
     # Эти бренды работают от РРЦ (retail) через коэффициенты:
     "laufenn": 0.985,
@@ -148,7 +140,7 @@ BRAND_COEFFS = {
 
 IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
-    "Kelly", "Nitto", "Кама", "Roadcruza"]
+    "Kelly", "Nitto", "Кама", "Roadcruza", "ikon"]
 
 MODEL_RULES = {
     ("autograph", "autograph ice 9 suv"): {
