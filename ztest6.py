@@ -26,6 +26,11 @@ EXCLUDE_RRC_FROM_FULL = True
 MIN_FINAL_PRICE = 2500      # минимальная итоговая цена (для дешёвых позиций)
 MIN_MARGIN = 500            # минимальная маржа от закупки (защита от убытка)
 
+# LOCAL_MODE:
+#   True  — локальный запуск: XML пишутся в папку, S3 не трогаем
+#   False — GitHub Actions: XML пишутся и загружаются в S3
+LOCAL_MODE = os.getenv("LOCAL_MODE", "true").lower() == "true"
+
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
 IMAGE_CHECK_ENABLED = True
@@ -79,12 +84,11 @@ EXCLUDED_CAE = [
     "КА-00046391", "КА-00049018", "КА-00049162", "КА-00046418", "КА-00049107",
     "КА-00049045", "КА-00049163", "КА-00046410", "КА-00049078", "КА-00049142",
     "КА-00049165", "00000026689", "КА-00049125", "КА-00049051", "КА-00072771",
-    "КА-00026972", "00000021531", "T000STD1032334", "00000017578", "T730720", 
+    "КА-00026972", "00000021531", "T000STD1032334", "00000017578", "T730720",
     "TS72014", "T729600", "TS72174", "TS72286", "TS72171", "TS72170", "44370000",
-    "T731723", "КА-00045392", "КА-00069375", "КА-00025688", "КА-00060283", 
+    "T731723", "КА-00045392", "КА-00069375", "КА-00025688", "КА-00060283",
     "КА-00070321", "00000000761", "00000000782", "КА-00074785", "КА-00074794",
     "КА-00074789",
-    # Новые добавленные CAE:
     "КА-00072012", "КА-00049032", "КА-00063171", "КА-00049057", "КА-00049024",
     "КА-00049017", "КА-00049167", "КА-00049020", "КА-00052632", "КА-00046419",
     "КА-00078067", "КА-00078066", "КА-00045402", "КА-00077826", "КА-00077831",
@@ -92,11 +96,6 @@ EXCLUDED_CAE = [
 ]
 
 # ===================== КОЭФФИЦИЕНТЫ ЦЕН =====================
-# ВАЖНО:
-#   - coeff применяется к retail (РРЦ из API)
-#   - value прибавляется к price (опт)
-#   - смешивать coeff и value в одном бренде не рекомендуется
-
 GLOBAL_COEFF = {
     "default": 0.99,
     "diameter_ranges": [
@@ -107,7 +106,6 @@ GLOBAL_COEFF = {
 }
 
 BRAND_COEFFS = {
-    # Ikon: значения (value) прибавляются к опт-цене
     "ikon": {
         "default": 0.915,
         "diameter_ranges": [
@@ -121,11 +119,9 @@ BRAND_COEFFS = {
             {"diameter": 21, "value": 2500},
         ],
     },
-    # Эти бренды работают от РРЦ (retail) через коэффициенты:
     "laufenn": 0.985,
     "bridgestone": 0.965,
 
-    # Hankook: значение (value) к опту
     "hankook": {
         "diameter_ranges": [
             {"min": 13, "max": 14, "value": 800},
@@ -135,16 +131,13 @@ BRAND_COEFFS = {
         ],
     },
 
-    # Pirelli: значение (value) к опту
     "pirelli": {
         "diameter_ranges": [
             {"min": 13, "max": 16, "value": 1000},
             {"min": 17, "max": 22, "value": 1200},
-            
         ],
     },
 
-    # Formula: значение (value) к опту
     "formula": {
         "diameter_ranges": [
             {"min": 13, "max": 16, "value": 700},
@@ -155,7 +148,7 @@ BRAND_COEFFS = {
 
 IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
-    "Kelly", "Nitto", "Кама", "Roadcruza",]
+    "Kelly", "Nitto", "Кама", "Roadcruza"]
 
 MODEL_RULES = {
     ("autograph", "autograph ice 9 suv"): {
@@ -191,26 +184,16 @@ def round_price(price, step=None, method=None):
         return int(round(price / step) * step)
 
 def get_coeff_from_settings(settings, diameter):
-    """
-    Возвращает коэффициент для применения к retail.
-    Поддерживает:
-      - {"min": 15, "max": 16, "coeff": 0.94}
-      - {"diameter": 16, "coeff": 0.94}
-      - {"diameters": [15, 16], "coeff": 0.94}
-    """
     if not isinstance(settings, dict):
         return settings, None, None
 
     if diameter is not None and "diameter_ranges" in settings:
         for r in settings["diameter_ranges"]:
             match = False
-            # диапазон
             if "min" in r and "max" in r:
                 match = r["min"] <= diameter <= r["max"]
-            # один размер
             elif "diameter" in r and isinstance(r["diameter"], (int, float)):
                 match = int(diameter) == int(r["diameter"])
-            # несколько размеров
             elif "diameters" in r and isinstance(r["diameters"], list):
                 match = int(diameter) in [int(x) for x in r["diameters"]]
 
@@ -224,16 +207,9 @@ def get_coeff_from_settings(settings, diameter):
         return settings["coeff"], settings.get("round_step"), settings.get("round_method")
 
     return None, None, None
-    
+
 
 def get_value_from_settings(settings, diameter):
-    """
-    Возвращает value (прибавку к опту) для бренда по диаметру.
-    Поддерживает:
-      - {"min": 15, "max": 16, "value": 900}
-      - {"diameter": 16, "value": 900}
-      - {"diameters": [15, 16], "value": 900}
-    """
     if not isinstance(settings, dict):
         return None
 
@@ -332,16 +308,6 @@ loss_count = 0
 
 # ===================== РАСЧЁТ ИТОГОВОЙ ЦЕНЫ =====================
 def calculate_final_price(item, diameter, is_rrc):
-    """
-    Возвращает (final_price, status).
-    status:
-      "manual"  — ручная цена
-      "ok"      — цена посчитана
-      "low"     — цена < MIN_FINAL_PRICE (пропускаем)
-      "no_price"— нет ни retail, ни price
-      "loss"    — цена < price + MIN_MARGIN (пропускаем, убыток)
-                 НЕ применяется к РРЦ-брендам (is_rrc == True)
-    """
     global low_price_count, no_price_count, manual_price_count, loss_count
 
     brand = item.get("brand", "").strip().lower()
@@ -351,13 +317,11 @@ def calculate_final_price(item, diameter, is_rrc):
     original_retail = safe_float(item.get("retail", 0))
     price_val = safe_float(item.get("price", 0))
 
-    # 1. Ручная цена
     manual_price = MANUAL_PRICES.get(article)
     if manual_price is not None:
         manual_price_count += 1
         return manual_price, "manual"
 
-    # 2. Нет ни цены, ни розницы
     if original_retail == 0 and price_val == 0:
         no_price_count += 1
         return None, "no_price"
@@ -367,7 +331,6 @@ def calculate_final_price(item, diameter, is_rrc):
 
     final_price = None
     try:
-        # 3. РРЦ-бренды: берём retail как есть
         if is_excluded or is_rrc:
             final_price = original_retail
         else:
@@ -423,7 +386,6 @@ def calculate_final_price(item, diameter, is_rrc):
         print(f"⚠️ Ошибка в расчёте цены для {item.get('name')}: {e}")
         final_price = original_retail
 
-    # 4. Округление
     step = ROUND_STEP
     method = ROUND_METHOD
     rule = MODEL_RULES.get((brand, model))
@@ -436,13 +398,10 @@ def calculate_final_price(item, diameter, is_rrc):
     except:
         final_price = int(final_price)
 
-    # 5. ФИЛЬТР по минимальной итоговой цене
     if final_price < MIN_FINAL_PRICE:
         low_price_count += 1
         return final_price, "low"
 
-    # 6. ЗАЩИТА ОТ УБЫТКА — только для НЕ-РРЦ брендов
-    #    (Вариант A: РРЦ-позиции не режем по марже, доверяем РРЦ)
     if not is_rrc and not is_excluded:
         if price_val > 0 and final_price < price_val + MIN_MARGIN:
             loss_count += 1
@@ -469,7 +428,6 @@ def add_product_to_root(root, item, diameter, final_price, replace_images=True, 
         else:
             element.text = str(value)
 
-    # --- ФОРМИРОВАНИЕ ТЕГА IMAGES ---
     if replace_images and IMAGE_REPLACE_ENABLED:
         brand = item.get("brand", "").strip()
         model = item.get("model", "").strip()
@@ -549,10 +507,11 @@ response = session.get(API_URL, headers={"Authorization": f"Basic {auth}"}, time
 response.raise_for_status()
 data = response.json()
 
-print("🔄 Загрузка данных завершена. Обработка...")
+print(f"🔄 Загрузка данных завершена. Режим: {'LOCAL' if LOCAL_MODE else 'S3'}")
+print("🔄 Обработка...")
 
-all_items = []        # для aztyre_full.xml
-rrc_items = []        # для aztyre_rrc.xml
+all_items = []
+rrc_items = []
 unique_urls = set()
 
 total_products_full = 0
@@ -739,67 +698,6 @@ except Exception as e:
     print(f"❌ Ошибка при записи статистики: {e}")
     traceback.print_exc()
 
-# ===================== ЗАГРУЗКА В S3 =====================
-S3_ENABLED = True
-
-if S3_ENABLED:
-    try:
-        import subprocess
-        import sys
-        
-        S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
-        S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
-        S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
-        S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
-        
-        if S3_ACCESS_KEY and S3_SECRET_KEY:
-            print("🔧 Устанавливаем s3cmd...")
-            subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"], check=True, capture_output=True)
-            
-            host_base = S3_ENDPOINT.replace('https://', '').replace('http://', '')
-            config_content = f"""[default]
-access_key = {S3_ACCESS_KEY}
-secret_key = {S3_SECRET_KEY}
-host_base = {host_base}
-host_bucket = {host_base}
-use_https = True
-signature_v2 = False
-"""
-            with open("/tmp/s3cfg", "w") as f:
-                f.write(config_content)
-            
-            if os.path.exists("aztyre_full.xml") and os.path.getsize("aztyre_full.xml") > 0:
-                cmd_full = [
-                    "s3cmd", "--config=/tmp/s3cfg", "put",
-                    "aztyre_full.xml",
-                    f"s3://{S3_BUCKET}/exports/aztyre_full.xml"
-                ]
-                print(f"🔍 Загружаем aztyre_full.xml...")
-                result = subprocess.run(cmd_full, capture_output=True, text=True)
-                if result.returncode == 0:
-                    print(f"✅ aztyre_full.xml загружен в S3")
-                else:
-                    print(f"❌ Ошибка загрузки aztyre_full.xml: {result.stderr}")
-            
-            if os.path.exists("aztyre_rrc.xml") and os.path.getsize("aztyre_rrc.xml") > 0:
-                cmd_rrc = [
-                    "s3cmd", "--config=/tmp/s3cfg", "put",
-                    "aztyre_rrc.xml",
-                    f"s3://{S3_BUCKET}/exports/aztyre_rrc.xml"
-                ]
-                print(f"🔍 Загружаем aztyre_rrc.xml...")
-                result = subprocess.run(cmd_rrc, capture_output=True, text=True)
-                if result.returncode == 0:
-                    print(f"✅ aztyre_rrc.xml загружен в S3")
-                else:
-                    print(f"❌ Ошибка загрузки aztyre_rrc.xml: {result.stderr}")
-        else:
-            print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
-    except Exception as e:
-        print(f"❌ Ошибка при загрузке в S3: {e}")
-else:
-    print("ℹ️ S3: загрузка отключена (S3_ENABLED=false)")
-
 # ===================== ЗАПИСЬ XML ФАЙЛОВ =====================
 root_full = ET.Element("Products")
 for item, diameter, final_price in all_items:
@@ -828,8 +726,68 @@ print(f"   - Убыточных (не-РРЦ) позиций (пропущено
 print(f"   - Ручных цен применено: {manual_price_count}")
 print(f"   - РРЦ исключено из full: {excluded_from_full_rrc if EXCLUDE_RRC_FROM_FULL else 0}")
 
+# ===================== ЗАГРУЗКА В S3 =====================
+S3_ENABLED = not LOCAL_MODE
+
+if S3_ENABLED:
+    try:
+        import subprocess
+        import sys
+
+        S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
+        S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
+        S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
+        S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
+
+        if S3_ACCESS_KEY and S3_SECRET_KEY:
+            print("🔧 Устанавливаем s3cmd...")
+            subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"], check=True, capture_output=True)
+
+            host_base = S3_ENDPOINT.replace('https://', '').replace('http://', '')
+            config_content = f"""[default]
+access_key = {S3_ACCESS_KEY}
+secret_key = {S3_SECRET_KEY}
+host_base = {host_base}
+host_bucket = {host_base}
+use_https = True
+signature_v2 = False
+"""
+            with open("/tmp/s3cfg", "w") as f:
+                f.write(config_content)
+
+            if os.path.exists("aztyre_full.xml") and os.path.getsize("aztyre_full.xml") > 0:
+                cmd_full = [
+                    "s3cmd", "--config=/tmp/s3cfg", "put",
+                    "aztyre_full.xml",
+                    f"s3://{S3_BUCKET}/exports/aztyre_full.xml"
+                ]
+                print(f"🔍 Загружаем aztyre_full.xml...")
+                result = subprocess.run(cmd_full, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"✅ aztyre_full.xml загружен в S3")
+                else:
+                    print(f"❌ Ошибка загрузки aztyre_full.xml: {result.stderr}")
+
+            if os.path.exists("aztyre_rrc.xml") and os.path.getsize("aztyre_rrc.xml") > 0:
+                cmd_rrc = [
+                    "s3cmd", "--config=/tmp/s3cfg", "put",
+                    "aztyre_rrc.xml",
+                    f"s3://{S3_BUCKET}/exports/aztyre_rrc.xml"
+                ]
+                print(f"🔍 Загружаем aztyre_rrc.xml...")
+                result = subprocess.run(cmd_rrc, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"✅ aztyre_rrc.xml загружен в S3")
+                else:
+                    print(f"❌ Ошибка загрузки aztyre_rrc.xml: {result.stderr}")
+        else:
+            print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
+    except Exception as e:
+        print(f"❌ Ошибка при загрузке в S3: {e}")
+else:
+    print("ℹ️ S3: загрузка отключена (LOCAL_MODE=True)")
+
 # ===================== СОХРАНЕНИЕ В ПАПКУ СО СКРИПТОМ =====================
-# Файлы уже созданы в текущей рабочей директории (папка со скриптом)
 script_dir = os.path.dirname(os.path.abspath(__file__))
 print(f"\n📁 Рабочая директория (папка со скриптом): {script_dir}")
 for fname in ["aztyre_full.xml", "aztyre_rrc.xml", "brand_statistics.txt", IMAGE_CACHE_FILE]:
