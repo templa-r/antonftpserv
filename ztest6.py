@@ -48,7 +48,7 @@ SEASON_EXCLUDE_VALUE = "зима"
 EXCLUDED_BRANDS = [
     "Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
-    "Kelly", "Nitto", "Кама", "Roadcruza", "Ikon"
+    "Kelly", "Nitto", "Кама", "Roadcruza",
 ]
 
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
@@ -87,6 +87,8 @@ EXCLUDED_CAE = [
     # Новые добавленные CAE:
     "КА-00072012", "КА-00049032", "КА-00063171", "КА-00049057", "КА-00049024",
     "КА-00049017", "КА-00049167", "КА-00049020", "КА-00052632", "КА-00046419",
+    "КА-00078067", "КА-00078066", "КА-00045402", "КА-00077826", "КА-00077831",
+    "КА-00077830",
 ]
 
 # ===================== КОЭФФИЦИЕНТЫ ЦЕН =====================
@@ -106,7 +108,19 @@ GLOBAL_COEFF = {
 
 BRAND_COEFFS = {
     # Ikon: значения (value) прибавляются к опт-цене
-
+    "ikon": {
+        "default": 0.915,
+        "diameter_ranges": [
+            {"min": 13, "max": 14, "value": 600},
+            {"diameter": 15, "value": 800},
+            {"diameter": 16, "value": 1000},
+            {"diameter": 17, "value": 1500},
+            {"diameter": 18, "value": 1850},
+            {"diameter": 19, "value": 2000},
+            {"diameter": 20, "value": 2250},
+            {"diameter": 21, "value": 2500},
+        ],
+    },
     # Эти бренды работают от РРЦ (retail) через коэффициенты:
     "laufenn": 0.985,
     "bridgestone": 0.965,
@@ -126,6 +140,7 @@ BRAND_COEFFS = {
         "diameter_ranges": [
             {"min": 13, "max": 16, "value": 1000},
             {"min": 17, "max": 22, "value": 1200},
+            
         ],
     },
 
@@ -140,14 +155,14 @@ BRAND_COEFFS = {
 
 IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
-    "Kelly", "Nitto", "Кама", "Roadcruza", "Ikon"]
+    "Kelly", "Nitto", "Кама", "Roadcruza",]
 
 MODEL_RULES = {
     ("autograph", "autograph ice 9 suv"): {
         "type": "add_to_field_by_diameter",
         "field": "price",
         "ranges": [
-            {"min": 16, "max": 17, "value": 1300},
+            {"min": 16, "max": 17, "value": 1500},
             {"min": 18, "max": 19, "value": 1700},
         ],
         "default": None,
@@ -176,14 +191,31 @@ def round_price(price, step=None, method=None):
         return int(round(price / step) * step)
 
 def get_coeff_from_settings(settings, diameter):
+    """
+    Возвращает коэффициент для применения к retail.
+    Поддерживает:
+      - {"min": 15, "max": 16, "coeff": 0.94}
+      - {"diameter": 16, "coeff": 0.94}
+      - {"diameters": [15, 16], "coeff": 0.94}
+    """
     if not isinstance(settings, dict):
         return settings, None, None
 
     if diameter is not None and "diameter_ranges" in settings:
         for r in settings["diameter_ranges"]:
-            if r["min"] <= diameter <= r["max"]:
-                if "coeff" in r:
-                    return r["coeff"], settings.get("round_step"), settings.get("round_method")
+            match = False
+            # диапазон
+            if "min" in r and "max" in r:
+                match = r["min"] <= diameter <= r["max"]
+            # один размер
+            elif "diameter" in r and isinstance(r["diameter"], (int, float)):
+                match = int(diameter) == int(r["diameter"])
+            # несколько размеров
+            elif "diameters" in r and isinstance(r["diameters"], list):
+                match = int(diameter) in [int(x) for x in r["diameters"]]
+
+            if match and "coeff" in r:
+                return r["coeff"], settings.get("round_step"), settings.get("round_method")
 
     if "default" in settings and isinstance(settings["default"], (int, float)):
         return settings["default"], settings.get("round_step"), settings.get("round_method")
@@ -192,15 +224,32 @@ def get_coeff_from_settings(settings, diameter):
         return settings["coeff"], settings.get("round_step"), settings.get("round_method")
 
     return None, None, None
+    
 
 def get_value_from_settings(settings, diameter):
+    """
+    Возвращает value (прибавку к опту) для бренда по диаметру.
+    Поддерживает:
+      - {"min": 15, "max": 16, "value": 900}
+      - {"diameter": 16, "value": 900}
+      - {"diameters": [15, 16], "value": 900}
+    """
     if not isinstance(settings, dict):
         return None
+
     if diameter is not None and "diameter_ranges" in settings:
         for r in settings["diameter_ranges"]:
-            if r["min"] <= diameter <= r["max"]:
-                if "value" in r:
-                    return r["value"]
+            match = False
+            if "min" in r and "max" in r:
+                match = r["min"] <= diameter <= r["max"]
+            elif "diameter" in r and isinstance(r["diameter"], (int, float)):
+                match = int(diameter) == int(r["diameter"])
+            elif "diameters" in r and isinstance(r["diameters"], list):
+                match = int(diameter) in [int(x) for x in r["diameters"]]
+
+            if match and "value" in r:
+                return r["value"]
+
     if "value" in settings:
         return settings["value"]
     return None
@@ -690,34 +739,6 @@ except Exception as e:
     print(f"❌ Ошибка при записи статистики: {e}")
     traceback.print_exc()
 
-# ===================== ЗАПИСЬ XML ФАЙЛОВ =====================
-root_full = ET.Element("Products")
-for item, diameter, final_price in all_items:
-    add_product_to_root(root_full, item, diameter, final_price,
-                        replace_images=True,
-                        image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
-tree_full = ET.ElementTree(root_full)
-with open("aztyre_full.xml", "wb") as file:
-    tree_full.write(file, encoding="utf-8", xml_declaration=True)
-print(f"✅ Файл aztyre_full.xml создан: {total_products_full} товаров")
-
-root_rrc = ET.Element("Products")
-for item, diameter, final_price in rrc_items:
-    add_product_to_root(root_rrc, item, diameter, final_price,
-                        replace_images=True,
-                        image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
-tree_rrc = ET.ElementTree(root_rrc)
-with open("aztyre_rrc.xml", "wb") as file:
-    tree_rrc.write(file, encoding="utf-8", xml_declaration=True)
-print(f"✅ Файл aztyre_rrc.xml создан: {total_products_rrc} товаров")
-
-print(f"\n📊 ИТОГО:")
-print(f"   - Позиций без цены (пропущено): {excluded_no_price}")
-print(f"   - Позиций с ценой < {MIN_FINAL_PRICE} (пропущено): {excluded_low_price}")
-print(f"   - Убыточных (не-РРЦ) позиций (пропущено): {excluded_loss}")
-print(f"   - Ручных цен применено: {manual_price_count}")
-print(f"   - РРЦ исключено из full: {excluded_from_full_rrc if EXCLUDE_RRC_FROM_FULL else 0}")
-
 # ===================== ЗАГРУЗКА В S3 =====================
 S3_ENABLED = True
 
@@ -778,3 +799,43 @@ signature_v2 = False
         print(f"❌ Ошибка при загрузке в S3: {e}")
 else:
     print("ℹ️ S3: загрузка отключена (S3_ENABLED=false)")
+
+# ===================== ЗАПИСЬ XML ФАЙЛОВ =====================
+root_full = ET.Element("Products")
+for item, diameter, final_price in all_items:
+    add_product_to_root(root_full, item, diameter, final_price,
+                        replace_images=True,
+                        image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
+tree_full = ET.ElementTree(root_full)
+with open("aztyre_full.xml", "wb") as file:
+    tree_full.write(file, encoding="utf-8", xml_declaration=True)
+print(f"✅ Файл aztyre_full.xml создан: {total_products_full} товаров")
+
+root_rrc = ET.Element("Products")
+for item, diameter, final_price in rrc_items:
+    add_product_to_root(root_rrc, item, diameter, final_price,
+                        replace_images=True,
+                        image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
+tree_rrc = ET.ElementTree(root_rrc)
+with open("aztyre_rrc.xml", "wb") as file:
+    tree_rrc.write(file, encoding="utf-8", xml_declaration=True)
+print(f"✅ Файл aztyre_rrc.xml создан: {total_products_rrc} товаров")
+
+print(f"\n📊 ИТОГО:")
+print(f"   - Позиций без цены (пропущено): {excluded_no_price}")
+print(f"   - Позиций с ценой < {MIN_FINAL_PRICE} (пропущено): {excluded_low_price}")
+print(f"   - Убыточных (не-РРЦ) позиций (пропущено): {excluded_loss}")
+print(f"   - Ручных цен применено: {manual_price_count}")
+print(f"   - РРЦ исключено из full: {excluded_from_full_rrc if EXCLUDE_RRC_FROM_FULL else 0}")
+
+# ===================== СОХРАНЕНИЕ В ПАПКУ СО СКРИПТОМ =====================
+# Файлы уже созданы в текущей рабочей директории (папка со скриптом)
+script_dir = os.path.dirname(os.path.abspath(__file__))
+print(f"\n📁 Рабочая директория (папка со скриптом): {script_dir}")
+for fname in ["aztyre_full.xml", "aztyre_rrc.xml", "brand_statistics.txt", IMAGE_CACHE_FILE]:
+    fpath = os.path.join(script_dir, fname)
+    if os.path.exists(fpath):
+        size_kb = os.path.getsize(fpath) / 1024
+        print(f"   ✅ {fname} — {size_kb:.1f} KB")
+    else:
+        print(f"   ⚠️ {fname} — файл не найден")
