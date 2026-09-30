@@ -12,7 +12,7 @@ on:
         type: boolean
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   update:
@@ -21,6 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ---------- Кэш для image_cache.json ----------
       - name: Cache image check results
         uses: actions/cache@v4
         with:
@@ -29,6 +30,7 @@ jobs:
           restore-keys: |
             image-cache-${{ runner.os }}-
 
+      # ---------- Установка Python и зависимостей ----------
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -39,6 +41,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests s3cmd
 
+      # ---------- Запуск основного скрипта ----------
       - name: Run update tyres
         run: python ztest6.py
         env:
@@ -49,3 +52,20 @@ jobs:
           S3_BUCKET: fa5a823588a1-antontyres
           S3_ENDPOINT: https://s3.ru1.storage.beget.cloud
         continue-on-error: true
+
+      # ---------- Коммит и пуш изменений ----------
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add -A
+          if git diff-index --quiet HEAD --; then
+            echo "Нет изменений для коммита"
+          else
+            git commit -m 'Daily update of products XML'
+          fi
+          # Синхронизация с удалённым репо с сохранением локальных изменений
+          git pull --rebase --autostash origin main || true
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
