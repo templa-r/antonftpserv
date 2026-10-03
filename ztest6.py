@@ -23,8 +23,8 @@ INCLUDE_PRICE_TAG = False
 
 # ===================== СВИТЧЕРЫ =====================
 EXCLUDE_RRC_FROM_FULL = True
-MIN_FINAL_PRICE = 2500      # минимальная итоговая цена (для дешёвых позиций)
-MIN_MARGIN = 500            # минимальная маржа от закупки (защита от убытка)
+MIN_FINAL_PRICE = 2500
+MIN_MARGIN = 500
 
 # LOCAL_MODE:
 #   True  — локальный запуск: XML пишутся в папку, S3 не трогаем
@@ -39,7 +39,7 @@ IMAGE_CACHE_FILE = "image_cache.json"
 IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
 
 MAX_WORKERS = 50
-HEAD_TIMEOUT = 1
+HEAD_TIMEOUT = 3   # увеличим чуть — GET может отвечать медленнее
 
 # ===================== РУЧНЫЕ ЦЕНЫ =====================
 MANUAL_PRICES = {
@@ -289,12 +289,14 @@ def save_image_cache(cache):
         pass
 
 def check_image_exists(url, cache):
+    """Проверка через GET с stream=True (Beget S3 не отдаёт 200 на HEAD)."""
     if url in cache:
         return cache[url]
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        response = requests.head(url, timeout=HEAD_TIMEOUT, headers=headers)
+        response = requests.get(url, timeout=HEAD_TIMEOUT, headers=headers, stream=True)
         exists = response.status_code == 200
+        response.close()
     except:
         exists = False
     cache[url] = exists
@@ -644,10 +646,13 @@ if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
         check_start = time.time()
 
         def check_url(url):
+            """GET с stream=True — Beget S3 не отдаёт 200 на HEAD."""
             try:
                 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-                response = requests.head(url, timeout=HEAD_TIMEOUT, headers=headers)
-                return url, response.status_code == 200
+                response = requests.get(url, timeout=HEAD_TIMEOUT, headers=headers, stream=True)
+                exists = response.status_code == 200
+                response.close()
+                return url, exists
             except:
                 return url, False
 
