@@ -26,9 +26,6 @@ EXCLUDE_RRC_FROM_FULL = True
 MIN_FINAL_PRICE = 2500
 MIN_MARGIN = 500
 
-# LOCAL_MODE:
-#   True  — локальный запуск: XML пишутся в папку, S3 не трогаем
-#   False — GitHub Actions: XML пишутся и загружаются в S3
 LOCAL_MODE = os.getenv("LOCAL_MODE", "true").lower() == "true"
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
@@ -39,7 +36,7 @@ IMAGE_CACHE_FILE = "image_cache.json"
 IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
 
 MAX_WORKERS = 50
-HEAD_TIMEOUT = 3   # увеличим чуть — GET может отвечать медленнее
+HEAD_TIMEOUT = 5   # GET отвечает медленнее HEAD, увеличим
 
 # ===================== РУЧНЫЕ ЦЕНЫ =====================
 MANUAL_PRICES = {
@@ -289,7 +286,7 @@ def save_image_cache(cache):
         pass
 
 def check_image_exists(url, cache):
-    """Проверка через GET с stream=True (Beget S3 не отдаёт 200 на HEAD)."""
+    """Проверка через GET с stream=True — Beget S3 не отдаёт 200 на HEAD."""
     if url in cache:
         return cache[url]
     try:
@@ -297,7 +294,7 @@ def check_image_exists(url, cache):
         response = requests.get(url, timeout=HEAD_TIMEOUT, headers=headers, stream=True)
         exists = response.status_code == 200
         response.close()
-    except:
+    except Exception:
         exists = False
     cache[url] = exists
     return exists
@@ -435,24 +432,30 @@ def add_product_to_root(root, item, diameter, final_price, replace_images=True, 
         model = item.get("model", "").strip()
         fallback_url = item.get("img", "").strip()
 
+        # Приоритет URL: сначала с размерами (со суффиксами _1.._4), потом короткое имя.
         s3_urls = []
         short_url = None
         brand_clean = None
         if brand and model:
             brand_clean = clean_name(brand)
             model_clean = clean_name(model)
-            short_url = f"{IMAGE_BASE_URL}/{brand_clean}/{brand_clean}_{model_clean}.jpg"
-            s3_urls.append(short_url)
+
+            # 1. URL с размерами (со суффиксами)
             s3_urls.extend(get_additional_image_urls(item))
 
+            # 2. Короткое имя (бренд_модель.jpg)
+            short_url = f"{IMAGE_BASE_URL}/{brand_clean}/{brand_clean}_{model_clean}.jpg"
+            s3_urls.append(short_url)
+
+        # Ищем, какие из s3_urls реально существуют (по кэшу)
         existing_s3 = {}
         if IMAGE_CHECK_ENABLED and image_cache is not None:
             for url in s3_urls:
-                exists = image_cache.get(url, False)
-                if exists:
+                if image_cache.get(url, False):
                     filename = url[url.rfind('/')+1:] if '/' in url else url
                     existing_s3[url] = filename
         else:
+            # Если проверка отключена — считаем, что короткое имя существует
             if short_url:
                 filename = short_url[short_url.rfind('/')+1:] if '/' in short_url else short_url
                 existing_s3[short_url] = filename
@@ -464,11 +467,16 @@ def add_product_to_root(root, item, diameter, final_price, replace_images=True, 
                 first_url = next(iter(existing_s3))
                 photo_dir = first_url[:first_url.rfind('/')+1]
 
+            # Собираем имена в порядке приоритета s3_urls
             filenames = []
-            if short_url and short_url in existing_s3:
-                filenames.append(existing_s3[short_url])
+            for url in s3_urls:
+                if url in existing_s3:
+                    fname = existing_s3[url]
+                    if fname not in filenames:
+                        filenames.append(fname)
+            # На всякий случай — если что-то из existing_s3 не попало в s3_urls
             for url, fname in existing_s3.items():
-                if url != short_url and fname not in filenames:
+                if fname not in filenames:
                     filenames.append(fname)
 
             images_elem = ET.SubElement(product, "Images")
@@ -477,6 +485,7 @@ def add_product_to_root(root, item, diameter, final_price, replace_images=True, 
                 img_elem = ET.SubElement(images_elem, "Image")
                 img_elem.set("name", fname)
         else:
+            # Fallback — оригинальный URL из API
             if fallback_url:
                 photo_dir = fallback_url[:fallback_url.rfind('/')+1] if '/' in fallback_url else ""
                 main_filename = fallback_url[fallback_url.rfind('/')+1:] if '/' in fallback_url else fallback_url
