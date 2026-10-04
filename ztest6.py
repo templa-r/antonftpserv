@@ -712,6 +712,58 @@ except Exception as e:
     print(f"❌ Ошибка при записи статистики: {e}")
     traceback.print_exc()
 
+# ===================== ВЫГРУЗКА ОТСУТСТВУЮЩИХ ФОТО (по брендам) =====================
+# Собираем список моделей, для которых нет фото на Beget — только «Бренд_Модель.jpg».
+# Такие позиции нужны, чтобы правильно наименовать файлы на S3.
+
+missing_by_brand = defaultdict(set)
+
+for item, diameter, final_price in all_items_for_stats:
+    if not IMAGE_REPLACE_ENABLED:
+        break
+    brand = item.get("brand", "").strip()
+    model = item.get("model", "").strip()
+    if not brand or not model:
+        continue
+
+    brand_clean = clean_name(brand)
+    model_clean = clean_name(model)
+    short_url = f"{IMAGE_BASE_URL}/{brand_clean}/{brand_clean}_{model_clean}.jpg"
+
+    # Проверяем — есть ли у нас этот файл в кэше (True = есть, False/нет = отсутствует)
+    exists = False
+    if IMAGE_CHECK_ENABLED and image_cache is not None:
+        exists = image_cache.get(short_url, False)
+    else:
+        # Если проверка отключена — считаем, что файла нет
+        exists = False
+
+    if not exists:
+        # Имя файла, которое нужно создать на S3: Бренд_Модель.jpg
+        missing_by_brand[brand].add(f"{brand_clean}_{model_clean}.jpg")
+
+with open("photos_missing.txt", "w", encoding="utf-8") as f:
+    f.write("Список отсутствующих фото на S3 (Beget)\n")
+    f.write("Формат: Бренд_Модель.jpg (без размеров)\n")
+    f.write("=" * 60 + "\n\n")
+
+    total_missing = 0
+    for brand in sorted(missing_by_brand.keys()):
+        files = sorted(missing_by_brand[brand])
+        f.write(f"### {brand} ({len(files)} шт.)\n")
+        for fname in files:
+            f.write(f"  {fname}\n")
+        f.write("\n")
+        total_missing += len(files)
+
+    f.write("=" * 60 + "\n")
+    f.write(f"Всего отсутствующих моделей: {total_missing}\n")
+    f.write(f"Брендов затронуто: {len(missing_by_brand)}\n")
+
+print(f"📄 Список отсутствующих фото сохранён в photos_missing.txt")
+print(f"   - Моделей без фото: {sum(len(v) for v in missing_by_brand.values())}")
+print(f"   - Брендов затронуто: {len(missing_by_brand)}")
+
 # ===================== ЗАПИСЬ XML ФАЙЛОВ =====================
 root_full = ET.Element("Products")
 for item, diameter, final_price in all_items:
