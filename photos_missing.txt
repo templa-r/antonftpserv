@@ -52,9 +52,8 @@
   Firemax_FM601.jpg
   Firemax_FM806.jpg
 
-### Gislaved (3 шт.)
+### Gislaved (2 шт.)
   Gislaved_ArcticControl.jpg
-  Gislaved_One_W.jpg
   Gislaved_TerraControl_ATR.jpg
 
 ### Goodyear (3 шт.)
@@ -534,5 +533,5 @@
   ОШЗ_У-2.jpg
 
 ============================================================
-Всего отсутствующих моделей: 451
+Всего отсутствующих моделей: 450
 Брендов затронуто: 40
