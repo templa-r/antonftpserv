@@ -53,6 +53,14 @@ jobs:
           S3_ENDPOINT: https://s3.ru1.storage.beget.cloud
         continue-on-error: true
 
+      # ---------- Артефакт: список отсутствующих фото ----------
+      - name: Upload missing photos list
+        uses: actions/upload-artifact@v4
+        with:
+          name: photos_missing
+          path: photos_missing.txt
+        if: always()
+
       # ---------- Коммит и пуш изменений ----------
       - name: Commit and push changes
         run: |
