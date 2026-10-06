@@ -19,7 +19,7 @@
   Continental_ContiSportContact_5P.jpg
   Continental_VikingContact_7.jpg
 
-### Cordiant (24 шт.)
+### Cordiant (23 шт.)
   Cordiant_All_Terrain_OA-1.jpg
   Cordiant_Business_CA-1.jpg
   Cordiant_Business_CA-2.jpg
@@ -27,7 +27,6 @@
   Cordiant_Business_CW-2.jpg
   Cordiant_Comfort_2.jpg
   Cordiant_Comfort_2_SUV.jpg
-  Cordiant_Cordiant_Off_Road_2.jpg
   Cordiant_DL-1.jpg
   Cordiant_DM-1.jpg
   Cordiant_DR-1.jpg
@@ -52,22 +51,19 @@
   Firemax_FM601.jpg
   Firemax_FM806.jpg
 
-### GOODRIDE (1 шт.)
-  GOODRIDE_GDR_1.jpg
-
-### Gislaved (3 шт.)
+### Gislaved (4 шт.)
   Gislaved_ArcticControl.jpg
   Gislaved_One_W.jpg
   Gislaved_TerraControl_ATR.jpg
+  Gislaved_VanControl_Arctic.jpg
 
 ### Goodyear (3 шт.)
   Goodyear_Eagle_F1_Asymmetric_SUV_AT.jpg
   Goodyear_EfficientGrip_2_SUV.jpg
   Goodyear_Wrangler_All-Terrain_Adventure.jpg
 
-### Hankook (6 шт.)
+### Hankook (5 шт.)
   Hankook_Winter_i_cept_evo2_W320A.jpg
-  Hankook_Winter_i_cept_evo3_W330.jpg
   Hankook_Winter_i_cept_evo_4_SUV_W340A.jpg
   Hankook_Winter_i_cept_evo_4_W340.jpg
   Hankook_iON_GT_SUV_IK41A.jpg
@@ -253,7 +249,7 @@
   Nokian_Hakkapeliitta_10p_SUV.jpg
   Nokian_Hakkapeliitta_9.jpg
 
-### Pirelli (24 шт.)
+### Pirelli (23 шт.)
   Pirelli_Cinturato_P1.jpg
   Pirelli_Cinturato_P7.jpg
   Pirelli_Cinturato_P7__P7C2_.jpg
@@ -265,7 +261,6 @@
   Pirelli_P-Zero__PZ4__Luxury_Saloon.jpg
   Pirelli_P-Zero__PZ4__Sports_Car.jpg
   Pirelli_P_Zero.jpg
-  Pirelli_P_Zero_Winter.jpg
   Pirelli_Powergy.jpg
   Pirelli_Scorpion.jpg
   Pirelli_Scorpion_ATR.jpg
@@ -383,7 +378,8 @@
   Tourador_Ice_Star_TSW1.jpg
   Tourador_Winter_Pro_TSU1.jpg
 
-### Tunga (3 шт.)
+### Tunga (4 шт.)
+  Tunga_Nordway.jpg
   Tunga_Nordway_2_PW-5.jpg
   Tunga_Nordway_3.jpg
   Tunga_Zodiak_2_PS-7.jpg
@@ -517,19 +513,19 @@
   Кама_И-520.jpg
   Кама_ИД-304.jpg
   Кама_ИН-142Б.jpg
+  Кама_КАМА-1260-2.jpg
   Кама_КАМА-310.jpg
   Кама_КАМА-701.jpg
   Кама_НК-241.jpg
   Кама_НК-241_GRANT.jpg
   Кама_НК-242.jpg
   Кама_НК-245.jpg
-  Кама_НК-431.jpg
   Кама_НК-531.jpg
   Кама_НК-532.jpg
   Кама_НК-534.jpg
   Кама_О-40БМ.jpg
 
-### ОШЗ (9 шт.)
+### ОШЗ (8 шт.)
   ОШЗ_ВИ-244.jpg
   ОШЗ_И-281.jpg
   ОШЗ_ИК-6АМО.jpg
@@ -538,8 +534,7 @@
   ОШЗ_О-40БМ.jpg
   ОШЗ_О-75.jpg
   ОШЗ_ОИ-25.jpg
-  ОШЗ_У-2.jpg
 
 ============================================================
-Всего отсутствующих моделей: 456
-Брендов затронуто: 41
+Всего отсутствующих моделей: 453
+Брендов затронуто: 40
