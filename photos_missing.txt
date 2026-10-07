@@ -2,8 +2,7 @@
 Формат: Бренд_Модель.jpg (без размеров)
 ============================================================
 
-### AMBERSTONE (8 шт.)
-  AMBERSTONE_300.jpg
+### AMBERSTONE (7 шт.)
   AMBERSTONE_366.jpg
   AMBERSTONE_386.jpg
   AMBERSTONE_397.jpg
@@ -62,10 +61,9 @@
   Goodyear_EfficientGrip_2_SUV.jpg
   Goodyear_Wrangler_All-Terrain_Adventure.jpg
 
-### Hankook (5 шт.)
+### Hankook (4 шт.)
   Hankook_Winter_i_cept_evo2_W320A.jpg
   Hankook_Winter_i_cept_evo_4_SUV_W340A.jpg
-  Hankook_Winter_i_cept_evo_4_W340.jpg
   Hankook_iON_GT_SUV_IK41A.jpg
   Hankook_iON_evo_SUV_IK01A.jpg
 
@@ -244,9 +242,8 @@
 ### Nitto (1 шт.)
   Nitto_SN3.jpg
 
-### Nokian (3 шт.)
+### Nokian (2 шт.)
   Nokian_Hakkapeliitta_10.jpg
-  Nokian_Hakkapeliitta_10p_SUV.jpg
   Nokian_Hakkapeliitta_9.jpg
 
 ### Pirelli (23 шт.)
@@ -378,8 +375,7 @@
   Tourador_Ice_Star_TSW1.jpg
   Tourador_Winter_Pro_TSU1.jpg
 
-### Tunga (4 шт.)
-  Tunga_Nordway.jpg
+### Tunga (3 шт.)
   Tunga_Nordway_2_PW-5.jpg
   Tunga_Nordway_3.jpg
   Tunga_Zodiak_2_PS-7.jpg
@@ -536,5 +532,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 453
+Всего отсутствующих моделей: 449
 Брендов затронуто: 40
