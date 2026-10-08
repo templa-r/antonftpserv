@@ -158,7 +158,8 @@
   Massimo_Velocita_U1.jpg
   Massimo_Vitto_SUV.jpg
 
-### Mazzini (14 шт.)
+### Mazzini (15 шт.)
+  Mazzini_ECO607.jpg
   Mazzini_ECO819.jpg
   Mazzini_ECO907.jpg
   Mazzini_EcoRover.jpg
@@ -509,5 +510,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 426
+Всего отсутствующих моделей: 427
 Брендов затронуто: 40
