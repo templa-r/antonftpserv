@@ -2,7 +2,7 @@ name: Update Products and Upload to S3
 
 on:
   schedule:
-    - cron: "10 20 * * *"
+    - cron: "00 18 * * *"
   workflow_dispatch:
     inputs:
       refresh_cache:
