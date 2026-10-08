@@ -70,12 +70,12 @@
 ### Ikon (12 шт.)
   Ikon_Autograph_Ice_9.jpg
   Ikon_Autograph_Ice_9_SUV.jpg
+  Ikon_Autograph_Ice_C3.jpg
   Ikon_Autograph_Ice_C4.jpg
   Ikon_Autograph_Ice_LT3.jpg
   Ikon_Autograph_Ice_LT4.jpg
   Ikon_Autograph_Snow_C4.jpg
   Ikon_Autograph_Ultra_2_SUV.jpg
-  Ikon_Character_Eco.jpg
   Ikon_Character_Ice_C2.jpg
   Ikon_Character_Snow_2.jpg
   Ikon_Character_Snow_2_SUV.jpg
@@ -158,10 +158,16 @@
   Massimo_Velocita_U1.jpg
   Massimo_Vitto_SUV.jpg
 
-### Mazzini (20 шт.)
+### Mazzini (35 шт.)
+  Mazzini_Cross_AllSeason_AS8.jpg
+  Mazzini_Cruise_HTX.jpg
+  Mazzini_ECO307.jpg
+  Mazzini_ECO307_plus.jpg
+  Mazzini_ECO602.jpg
   Mazzini_ECO603.jpg
   Mazzini_ECO605_Plus.jpg
   Mazzini_ECO606.jpg
+  Mazzini_ECO607.jpg
   Mazzini_ECO802.jpg
   Mazzini_ECO805.jpg
   Mazzini_ECO809.jpg
@@ -169,14 +175,23 @@
   Mazzini_ECO907.jpg
   Mazzini_EcoRover.jpg
   Mazzini_EcoVan_AllSeason_AS9.jpg
+  Mazzini_Ecosaver.jpg
   Mazzini_Ecotour.jpg
   Mazzini_EffiVan.jpg
   Mazzini_Falconer_F1.jpg
   Mazzini_GiantXplorer_AT.jpg
   Mazzini_Giantsaver.jpg
+  Mazzini_ICE_LEOPARD.jpg
+  Mazzini_ICE_LEOPARD_2.jpg
+  Mazzini_ICE_LEOPARD_SUV.jpg
   Mazzini_Mud_Contender.jpg
   Mazzini_Mud_Crusher_M_T.jpg
   Mazzini_Nitrogrip_G5.jpg
+  Mazzini_SNOW_LEOPARD.jpg
+  Mazzini_SNOW_LEOPARD_2.jpg
+  Mazzini_SNOW_LEOPARD_3.jpg
+  Mazzini_SNOW_LEOPARD_LX.jpg
+  Mazzini_SNOW_LEOPARD_VAN.jpg
   Mazzini_VARENNA_SS01.jpg
   Mazzini_Varenna_S01.jpg
 
@@ -517,5 +532,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 434
+Всего отсутствующих моделей: 449
 Брендов затронуто: 40
