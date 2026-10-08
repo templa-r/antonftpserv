@@ -127,7 +127,7 @@ IMAGE_CACHE_FILE = "image_cache.json"
 IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
 
 MAX_WORKERS = 50
-HEAD_TIMEOUT = 1
+HEAD_TIMEOUT = 5  # GET отвечает медленнее HEAD, увеличим таймаут
 
 # ===================== ФИЛЬТРЫ =====================
 SEASON_EXCLUDE_ENABLED = False
@@ -326,13 +326,18 @@ def save_image_cache(cache):
         pass
 
 def check_image_exists(url, cache):
+    """
+    Проверка существования файла через GET + stream=True.
+    Beget S3 не всегда отдаёт 200 на HEAD — поэтому используем GET и сразу закрываем поток.
+    """
     if url in cache:
         return cache[url]
     try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.head(url, timeout=HEAD_TIMEOUT, headers=headers)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        response = requests.get(url, timeout=HEAD_TIMEOUT, headers=headers, stream=True)
         exists = response.status_code == 200
-    except:
+        response.close()
+    except Exception:
         exists = False
     cache[url] = exists
     return exists
@@ -764,6 +769,7 @@ def main():
     for cat, cnt in sorted(category_stats.items(), key=lambda x: -x[1]):
         print(f"   {cat}: {cnt}")
 
+    # ===================== КЭШИРОВАНИЕ ИЗОБРАЖЕНИЙ (GET + stream) =====================
     image_cache = {}
     check_time = 0
     if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
@@ -778,10 +784,13 @@ def main():
             check_start = time.time()
 
             def check_url(url):
+                """Проверка через GET + stream=True (HEAD на Beget S3 не работает)."""
                 try:
-                    headers = {"User-Agent": "Mozilla/5.0"}
-                    response = requests.head(url, timeout=HEAD_TIMEOUT, headers=headers)
-                    return url, response.status_code == 200
+                    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+                    response = requests.get(url, timeout=HEAD_TIMEOUT, headers=headers, stream=True)
+                    exists = response.status_code == 200
+                    response.close()
+                    return url, exists
                 except:
                     return url, False
 
