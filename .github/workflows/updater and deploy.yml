@@ -66,7 +66,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git add -A
+          git add aztyre_full.xml aztyre_rrc.xml brand_statistics.txt photos_missing.txt
           if git diff-index --quiet HEAD --; then
             echo "Нет изменений для коммита"
           else
