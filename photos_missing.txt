@@ -2,7 +2,8 @@
 Формат: Бренд_Модель.jpg (без размеров)
 ============================================================
 
-### AMBERSTONE (7 шт.)
+### AMBERSTONE (8 шт.)
+  AMBERSTONE_339.jpg
   AMBERSTONE_366.jpg
   AMBERSTONE_386.jpg
   AMBERSTONE_397.jpg
@@ -246,7 +247,7 @@
   Nokian_Hakkapeliitta_10.jpg
   Nokian_Hakkapeliitta_9.jpg
 
-### Pirelli (23 шт.)
+### Pirelli (22 шт.)
   Pirelli_Cinturato_P1.jpg
   Pirelli_Cinturato_P7.jpg
   Pirelli_Cinturato_P7__P7C2_.jpg
@@ -266,7 +267,6 @@
   Pirelli_Scorpion_Verde.jpg
   Pirelli_Scorpion_Verde_All_Season.jpg
   Pirelli_Scorpion_Winter.jpg
-  Pirelli_Scorpion_Winter_2.jpg
   Pirelli_Scorpion_Zero.jpg
   Pirelli_Scorpion_Zero_All_Season.jpg
   Pirelli_Scorpion_Zero_Asimmetrico.jpg
@@ -473,7 +473,7 @@
 ### ВОЛШЗ (1 шт.)
   ВОЛШЗ_Ф-2АД.jpg
 
-### Кама (46 шт.)
+### Кама (45 шт.)
   Кама_243.jpg
   Кама_312.jpg
   Кама_505.jpg
@@ -519,7 +519,6 @@
   Кама_НК-531.jpg
   Кама_НК-532.jpg
   Кама_НК-534.jpg
-  Кама_О-40БМ.jpg
 
 ### ОШЗ (8 шт.)
   ОШЗ_ВИ-244.jpg
@@ -532,5 +531,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 449
+Всего отсутствующих моделей: 448
 Брендов затронуто: 40
