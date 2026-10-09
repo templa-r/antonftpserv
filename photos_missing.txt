@@ -62,8 +62,9 @@
   Goodyear_EfficientGrip_2_SUV.jpg
   Goodyear_Wrangler_All-Terrain_Adventure.jpg
 
-### Hankook (4 шт.)
+### Hankook (5 шт.)
   Hankook_Winter_i_cept_evo2_W320A.jpg
+  Hankook_Winter_i_cept_evo3_W330.jpg
   Hankook_Winter_i_cept_evo_4_SUV_W340A.jpg
   Hankook_iON_GT_SUV_IK41A.jpg
   Hankook_iON_evo_SUV_IK01A.jpg
@@ -247,7 +248,7 @@
   Nokian_Hakkapeliitta_10.jpg
   Nokian_Hakkapeliitta_9.jpg
 
-### Pirelli (22 шт.)
+### Pirelli (23 шт.)
   Pirelli_Cinturato_P1.jpg
   Pirelli_Cinturato_P7.jpg
   Pirelli_Cinturato_P7__P7C2_.jpg
@@ -259,6 +260,7 @@
   Pirelli_P-Zero__PZ4__Luxury_Saloon.jpg
   Pirelli_P-Zero__PZ4__Sports_Car.jpg
   Pirelli_P_Zero.jpg
+  Pirelli_P_Zero_Winter.jpg
   Pirelli_Powergy.jpg
   Pirelli_Scorpion.jpg
   Pirelli_Scorpion_ATR.jpg
@@ -319,12 +321,11 @@
   Roadcruza_RA8000.jpg
   Roadcruza_Thruster.jpg
 
-### Roadmarch (7 шт.)
+### Roadmarch (6 шт.)
   Roadmarch_Snow_Rover_868.jpg
   Roadmarch_Snow_Rover_989.jpg
   Roadmarch_Winter_X_Pro_888.jpg
   Roadmarch_Winter_X_Pro_999.jpg
-  Roadmarch_Winter_X_Pro_Studs_68.jpg
   Roadmarch_Winter_X_Pro_Studs_69.jpg
   Roadmarch_Winter_X_Pro_Studs_77.jpg
 
@@ -403,13 +404,12 @@
   Viatti_Vettore_Brina_V-525.jpg
   Viatti_Vettore_Inverno_V-524.jpg
 
-### Yatai (7 шт.)
+### Yatai (6 шт.)
   Yatai_A168.jpg
   Yatai_A369.jpg
   Yatai_S801.jpg
   Yatai_T168.jpg
   Yatai_T176.jpg
-  Yatai_T286.jpg
   Yatai_T298.jpg
 
 ### Yokohama (46 шт.)
@@ -473,7 +473,7 @@
 ### ВОЛШЗ (1 шт.)
   ВОЛШЗ_Ф-2АД.jpg
 
-### Кама (45 шт.)
+### Кама (46 шт.)
   Кама_243.jpg
   Кама_312.jpg
   Кама_505.jpg
@@ -516,6 +516,7 @@
   Кама_НК-241_GRANT.jpg
   Кама_НК-242.jpg
   Кама_НК-245.jpg
+  Кама_НК-431.jpg
   Кама_НК-531.jpg
   Кама_НК-532.jpg
   Кама_НК-534.jpg
@@ -531,5 +532,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 448
+Всего отсутствующих моделей: 449
 Брендов затронуто: 40
