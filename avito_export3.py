@@ -3,12 +3,10 @@ import requests
 import base64
 import xml.etree.ElementTree as ET
 import re
-import json
 import time
 import subprocess
 import sys
 from collections import defaultdict
-from typing import Dict
 
 # ===================== НАСТРОЙКИ =====================
 API_URL = "https://ka2.sibzapaska.ru:16500/API/hs/V2/GetTires"
@@ -122,15 +120,13 @@ def load_int_set(xml_path: str, tag: str) -> set:
 IMAGE_REPLACE_ENABLED = True
 IMAGE_CHECK_ENABLED = True
 IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-antontyres/images"
-IMAGE_CACHE_FILE = "image_cache.json"
-IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
 
 # ===================== S3 =====================
 S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
 S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
 S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
 S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
-S3_PREFIX = os.getenv("S3_IMAGES_PREFIX", "images/")  # префикс, где лежат фото
+S3_PREFIX = os.getenv("S3_IMAGES_PREFIX", "images/")
 
 # ===================== ФИЛЬТРЫ =====================
 SEASON_EXCLUDE_ENABLED = False
@@ -333,15 +329,13 @@ signature_v2 = False
 def load_s3_file_list():
     """
     Загружает список файлов из S3 через `s3cmd ls -r`.
-    Возвращает set относительных ключей, начинающихся с S3_PREFIX,
-    например: 'images/Hankook/Hankook_Winter_i_cept_IZ2_W616.jpg'.
+    Возвращает set относительных ключей, начинающихся с S3_PREFIX.
     """
     s3cfg = setup_s3cfg()
     if s3cfg is None:
         print("⚠️ S3: не заданы ключи, список файлов получить нельзя")
         return set()
 
-    # Проверяем s3cmd
     try:
         subprocess.run(["s3cmd", "--version"], capture_output=True, check=True)
     except Exception:
@@ -366,24 +360,21 @@ def load_s3_file_list():
 
     files = set()
     for line in result.stdout.splitlines():
-        # Формат строки: "2024-05-12 10:22    123456   s3://bucket/path/file.ext"
         parts = line.split()
         if len(parts) < 4:
             continue
         key = parts[-1]
         prefix = f"s3://{S3_BUCKET}/"
         if key.startswith(prefix):
-            rel = key[len(prefix):]
-            files.add(rel)
+            files.add(key[len(prefix):])
 
-    elapsed = time.time() - start
-    print(f"✅ Загружено {len(files)} файлов из S3 за {elapsed:.2f} сек.")
+    print(f"✅ Загружено {len(files)} файлов из S3 за {time.time() - start:.2f} сек.")
     return files
 
 def s3_url_to_key(url: str) -> str:
     """
     Из URL https://.../images/Hankook/Hankook_Winter.jpg
-    возвращает ключ S3, начинающийся с S3_PREFIX: 'images/Hankook/Hankook_Winter.jpg'.
+    возвращает ключ S3 'images/Hankook/Hankook_Winter.jpg'.
     """
     marker = f"/{S3_PREFIX}"
     idx = url.find(marker)
@@ -394,37 +385,12 @@ def s3_url_to_key(url: str) -> str:
         return url
     return url[idx + 1:]
 
-def check_image_exists(url, cache, s3_files=None):
-    """
-    Проверка существования файла по кэшу и/или списку файлов S3.
-    Никаких HTTP-запросов.
-    """
-    if url in cache:
-        return cache[url]
-    if s3_files is not None:
-        key = s3_url_to_key(url)
-        exists = key in s3_files
-        cache[url] = exists
-        return exists
-    cache[url] = False
-    return False
-
-# ===================== КЭШ ИЗОБРАЖЕНИЙ =====================
-def load_image_cache():
-    if os.path.exists(IMAGE_CACHE_FILE):
-        try:
-            with open(IMAGE_CACHE_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            return {}
-    return {}
-
-def save_image_cache(cache):
-    try:
-        with open(IMAGE_CACHE_FILE, 'w') as f:
-            json.dump(cache, f)
-    except:
-        pass
+def check_image_exists(url, s3_files):
+    """Проверка наличия картинки в списке файлов S3. Без кэша и HTTP."""
+    if not s3_files:
+        return False
+    key = s3_url_to_key(url)
+    return key in s3_files
 
 # ===================== РАСЧЁТ ИТОГОВОЙ ЦЕНЫ (за 1 шт.) =====================
 def calculate_price_per_one(item, diameter):
@@ -509,7 +475,7 @@ def is_disk(item):
     return False
 
 # ===================== ФОРМИРОВАНИЕ XML ДЛЯ АВИТО =====================
-def add_ad_to_root(root, item, diameter, image_cache=None, s3_files=None, seen_ids=None):
+def add_ad_to_root(root, item, diameter, s3_files=None, seen_ids=None):
     if seen_ids is None:
         seen_ids = set()
 
@@ -577,9 +543,9 @@ def add_ad_to_root(root, item, diameter, image_cache=None, s3_files=None, seen_i
     if IMAGE_REPLACE_ENABLED and brand and model:
         all_urls = get_all_image_urls(item)
         existing_urls = []
-        if IMAGE_CHECK_ENABLED:
+        if IMAGE_CHECK_ENABLED and s3_files:
             for url in all_urls:
-                if check_image_exists(url, image_cache, s3_files):
+                if check_image_exists(url, s3_files):
                     existing_urls.append(url)
         else:
             existing_urls = all_urls[:1]
@@ -680,7 +646,6 @@ def main():
     excluded_whitelist = 0
 
     category_stats = defaultdict(int)
-
     whitelist_norms = {normalize_string(b) for b in WHITELIST_BRANDS}
 
     for item in data:
@@ -851,31 +816,13 @@ def main():
     for cat, cnt in sorted(category_stats.items(), key=lambda x: -x[1]):
         print(f"   {cat}: {cnt}")
 
-    # ===================== СПИСОК ФАЙЛОВ S3 (вместо HTTP-проверок) =====================
-    image_cache = {}
+    # ===================== СПИСОК ФАЙЛОВ S3 (без кэша) =====================
     s3_files = set()
-    check_time = 0
     if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
-        if IMAGE_CACHE_REFRESH and os.path.exists(IMAGE_CACHE_FILE):
-            os.remove(IMAGE_CACHE_FILE)
-            print("🔁 Кэш принудительно удалён.")
-        image_cache = load_image_cache()
-        print(f"🔍 Загружено {len(image_cache)} записей из кэша.")
-
         s3_files = load_s3_file_list()
-
         if s3_files:
-            new_urls = [url for url in unique_urls if url not in image_cache]
-            if new_urls:
-                print(f"🔍 Проверяем {len(new_urls)} URL по списку S3...")
-                check_start = time.time()
-                for url in new_urls:
-                    check_image_exists(url, image_cache, s3_files)
-                check_time = time.time() - check_start
-                print(f"✅ Проверка завершена за {check_time:.2f} сек.")
-                save_image_cache(image_cache)
-            else:
-                print("✅ Все URL уже есть в кэше, проверка не требуется.")
+            matched = sum(1 for url in unique_urls if check_image_exists(url, s3_files))
+            print(f"📊 Из {len(unique_urls)} URL найдено в S3: {matched}")
         else:
             print("⚠️ Список файлов S3 пуст — изображения будут браться из fallback (img)")
     else:
@@ -896,7 +843,6 @@ def main():
 
     for item, diameter in all_items:
         result = add_ad_to_root(root, item, diameter,
-                                image_cache=image_cache if IMAGE_CHECK_ENABLED else None,
                                 s3_files=s3_files if IMAGE_CHECK_ENABLED else None,
                                 seen_ids=seen_ids)
         add_stats[result] = add_stats.get(result, 0) + 1
@@ -945,7 +891,7 @@ def main():
             if s3cfg is None:
                 print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
             else:
-                print("🔧 Устанавливаем s3cmd (если не установлен)...")
+                print("🔧 Проверяем s3cmd...")
                 try:
                     subprocess.run(["s3cmd", "--version"], capture_output=True, check=True)
                 except Exception:
