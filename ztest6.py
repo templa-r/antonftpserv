@@ -7,6 +7,8 @@ import json
 import time
 import traceback
 import hashlib
+import subprocess
+import sys
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from requests.adapters import HTTPAdapter
@@ -30,13 +32,7 @@ LOCAL_MODE = os.getenv("LOCAL_MODE", "true").lower() == "true"
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
-IMAGE_CHECK_ENABLED = True
 IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-antontyres/images"
-IMAGE_CACHE_FILE = "image_cache.json"
-IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
-
-MAX_WORKERS = 50
-HEAD_TIMEOUT = 5   # GET отвечает медленнее HEAD, увеличим
 
 # ===================== РУЧНЫЕ ЦЕНЫ =====================
 MANUAL_PRICES = {
@@ -54,7 +50,6 @@ EXCLUDED_BRANDS = [
 ]
 
 EXCLUDED_BRANDS_FROM_EXPORT = ["Compasal", "Aoteli"]
-
 EXCLUDED_CATEGORY = ["Грузовая"]
 
 EXCLUDED_ARTICLES = [
@@ -145,8 +140,7 @@ BRAND_COEFFS = {
 
 IGNORE_COEFF_BRANDS = ["Mazzini", "Nexen", "MAXXIS", "Predator", "Compasal", "HIFLY", "Aoteli",
     "Torero", "Viatti", "Massimo", "Firemax", "Sonix", "Prinx", "Roadmarch",
-    "Kelly", "Nitto", "Кама", "Roadcruza", "Ikon"
-]
+    "Kelly", "Nitto", "Кама", "Roadcruza", "Ikon"]
 
 MODEL_RULES = {
     ("autograph", "autograph ice 9 suv"): {
@@ -269,36 +263,94 @@ def get_additional_image_urls(item):
 def get_all_image_urls(item):
     return get_base_image_urls(item) + get_additional_image_urls(item)
 
-# ===================== КЭШ =====================
-def load_image_cache():
-    if os.path.exists(IMAGE_CACHE_FILE):
-        try:
-            with open(IMAGE_CACHE_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            return {}
-    return {}
+# ===================== СПИСОК ФАЙЛОВ НА S3 (через s3cmd) =====================
+# Загружаем один раз все ключи бакета и храним в памяти.
+# Проверка файла — простой поиск по множеству, никаких HTTP-запросов.
 
-def save_image_cache(cache):
-    try:
-        with open(IMAGE_CACHE_FILE, 'w') as f:
-            json.dump(cache, f)
-    except:
-        pass
+S3_FILES = set()          # будет содержать пути без префикса бакета: "Mazzini/Mazzini_ICE_LEOPARD.jpg"
+S3_AVAILABLE = False      # True, если список успешно загружен
 
-def check_image_exists(url, cache):
-    """Проверка через GET с stream=True — Beget S3 не отдаёт 200 на HEAD."""
-    if url in cache:
-        return cache[url]
+
+def load_s3_file_list():
+    """Загружает список всех файлов на S3 через s3cmd и сохраняет в S3_FILES."""
+    global S3_FILES, S3_AVAILABLE
+
+    S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
+    S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
+    S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
+    S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
+
+    if not S3_ACCESS_KEY or not S3_SECRET_KEY:
+        print("⚠️ S3: нет ключей, список файлов не загружен. Все проверки будут возвращать False.")
+        S3_AVAILABLE = False
+        return
+
+    print("🔧 Устанавливаем s3cmd (если ещё нет)...")
+    subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"],
+                   check=True, capture_output=True)
+
+    host_base = S3_ENDPOINT.replace('https://', '').replace('http://', '')
+    config_content = f"""[default]
+access_key = {S3_ACCESS_KEY}
+secret_key = {S3_SECRET_KEY}
+host_base = {host_base}
+host_bucket = {host_base}
+use_https = True
+signature_v2 = False
+"""
+    with open("/tmp/s3cfg", "w") as f:
+        f.write(config_content)
+
+    print("📥 Загружаем список файлов с S3 (одна операция, без HTTP-запросов)...")
+    t0 = time.time()
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        response = requests.get(url, timeout=HEAD_TIMEOUT, headers=headers, stream=True)
-        exists = response.status_code == 200
-        response.close()
-    except Exception:
-        exists = False
-    cache[url] = exists
-    return exists
+        result = subprocess.run(
+            ["s3cmd", "--config=/tmp/s3cfg", "ls", "-r", f"s3://{S3_BUCKET}/images/"],
+            capture_output=True, text=True, timeout=180
+        )
+    except subprocess.TimeoutExpired:
+        print("❌ s3cmd ls timeout")
+        S3_AVAILABLE = False
+        return
+
+    if result.returncode != 0:
+        print(f"❌ s3cmd ls вернул ошибку: {result.stderr}")
+        S3_AVAILABLE = False
+        return
+
+    # Формат строк:
+    # 2024-01-01 12:00      1234   s3://bucket/images/Mazzini/Mazzini_ICE_LEOPARD.jpg
+    prefix = f"s3://{S3_BUCKET}/images/"
+    count = 0
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if "s3://" in line:
+            path = line.split("s3://", 1)[1]
+            # Убираем bucket/
+            parts = path.split("/", 1)
+            if len(parts) == 2:
+                rel = parts[1]   # "images/Mazzini/Mazzini_ICE_LEOPARD.jpg"
+                # убираем "images/"
+                if rel.startswith("images/"):
+                    rel = rel[len("images/"):]
+                S3_FILES.add(rel)
+                count += 1
+
+    S3_AVAILABLE = True
+    print(f"✅ Загружено {count} файлов с S3 за {time.time()-t0:.2f} сек.")
+
+
+def check_image_exists_by_filename(rel_path):
+    """
+    Проверяет файл в S3_FILES. rel_path например: "Mazzini/Mazzini_ICE_LEOPARD.jpg".
+    Никаких HTTP-запросов, просто поиск по множеству.
+    """
+    if not S3_AVAILABLE:
+        return False
+    return rel_path in S3_FILES
+
 
 # ===================== СЧЁТЧИКИ =====================
 low_price_count = 0
@@ -410,7 +462,7 @@ def calculate_final_price(item, diameter, is_rrc):
     return final_price, "ok"
 
 # ===================== ДОБАВЛЕНИЕ ТОВАРА В XML =====================
-def add_product_to_root(root, item, diameter, final_price, replace_images=True, image_cache=None):
+def add_product_to_root(root, item, diameter, final_price, replace_images=True):
     product = ET.SubElement(root, "Product")
 
     for key, value in item.items():
@@ -433,7 +485,6 @@ def add_product_to_root(root, item, diameter, final_price, replace_images=True, 
         model = item.get("model", "").strip()
         fallback_url = item.get("img", "").strip()
 
-        # Приоритет URL: сначала с размерами (со суффиксами _1.._4), потом короткое имя.
         s3_urls = []
         short_url = None
         brand_clean = None
@@ -448,34 +499,24 @@ def add_product_to_root(root, item, diameter, final_price, replace_images=True, 
             short_url = f"{IMAGE_BASE_URL}/{brand_clean}/{brand_clean}_{model_clean}.jpg"
             s3_urls.append(short_url)
 
-        # Ищем, какие из s3_urls реально существуют (по кэшу)
+        # Ищем, какие из s3_urls реально существуют (по списку S3_FILES)
         existing_s3 = {}
-        if IMAGE_CHECK_ENABLED and image_cache is not None:
-            for url in s3_urls:
-                if image_cache.get(url, False):
-                    filename = url[url.rfind('/')+1:] if '/' in url else url
-                    existing_s3[url] = filename
-        else:
-            # Если проверка отключена — считаем, что короткое имя существует
-            if short_url:
-                filename = short_url[short_url.rfind('/')+1:] if '/' in short_url else short_url
-                existing_s3[short_url] = filename
+        for url in s3_urls:
+            # извлекаем относительный путь после /images/
+            rel = url.split("/images/", 1)[1] if "/images/" in url else None
+            if rel and check_image_exists_by_filename(rel):
+                filename = rel.split("/", 1)[1] if "/" in rel else rel
+                existing_s3[url] = filename
 
         if existing_s3:
-            if brand_clean:
-                photo_dir = f"{IMAGE_BASE_URL}/{brand_clean}/"
-            else:
-                first_url = next(iter(existing_s3))
-                photo_dir = first_url[:first_url.rfind('/')+1]
+            photo_dir = f"{IMAGE_BASE_URL}/{brand_clean}/"
 
-            # Собираем имена в порядке приоритета s3_urls
             filenames = []
             for url in s3_urls:
                 if url in existing_s3:
                     fname = existing_s3[url]
                     if fname not in filenames:
                         filenames.append(fname)
-            # На всякий случай — если что-то из existing_s3 не попало в s3_urls
             for url, fname in existing_s3.items():
                 if fname not in filenames:
                     filenames.append(fname)
@@ -509,6 +550,9 @@ def add_product_to_root(root, item, diameter, final_price, replace_images=True, 
         product.tag = "tyres"
 
 # ===================== ОСНОВНАЯ ЛОГИКА =====================
+# Сразу подгружаем список файлов с S3 — это одна операция на весь запуск
+load_s3_file_list()
+
 session = requests.Session()
 retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
 session.mount('https://', HTTPAdapter(max_retries=retries))
@@ -524,7 +568,6 @@ print("🔄 Обработка...")
 
 all_items = []
 rrc_items = []
-unique_urls = set()
 
 total_products_full = 0
 total_products_rrc = 0
@@ -597,18 +640,12 @@ for item in data:
     final_price, status = calculate_final_price(item, diameter, is_rrc)
 
     if status == "no_price":
-        print(f"⛔ Нет цены: {name} | article={article} | brand={brand}")
         excluded_no_price += 1
         continue
     if status == "low":
-        print(f"💸 Низкая цена ({final_price} < {MIN_FINAL_PRICE}): {name} | "
-              f"brand={brand} | article={article} → исключено")
         excluded_low_price += 1
         continue
     if status == "loss":
-        price_val = safe_float(item.get("price", 0))
-        print(f"🚫 Убыток предотвращён (не-РРЦ): {name} | final={final_price} | "
-              f"price={price_val} | brand={brand} | article={article} → исключено")
         excluded_loss += 1
         continue
     if status == "manual":
@@ -626,10 +663,6 @@ for item in data:
         all_items.append((item, diameter, final_price))
         total_products_full += 1
 
-    if IMAGE_REPLACE_ENABLED:
-        for url in get_all_image_urls(item):
-            unique_urls.add(url)
-
 print(f"🔍 Свитчер EXCLUDE_RRC_FROM_FULL = {EXCLUDE_RRC_FROM_FULL}")
 print(f"🔍 Всего товаров для aztyre_full.xml: {total_products_full}")
 print(f"🔍 Всего товаров для aztyre_rrc.xml:  {total_products_rrc}")
@@ -639,46 +672,6 @@ print(f"🔍 Исключено по CAE: {excluded_cae}")
 print(f"🔍 Исключено без цены: {excluded_no_price}")
 print(f"🔍 Исключено низкой цены (<{MIN_FINAL_PRICE}): {excluded_low_price}")
 print(f"🔍 Исключено убыточных (не-РРЦ) (<price+{MIN_MARGIN}): {excluded_loss}")
-print(f"🔍 Уникальных URL для проверки: {len(unique_urls)}")
-
-# ===================== ПРОВЕРКА ИЗОБРАЖЕНИЙ =====================
-image_cache = {}
-check_time = 0
-if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
-    if IMAGE_CACHE_REFRESH and os.path.exists(IMAGE_CACHE_FILE):
-        os.remove(IMAGE_CACHE_FILE)
-        print("🔁 Кэш принудительно удалён (IMAGE_CACHE_REFRESH=True).")
-    image_cache = load_image_cache()
-    print(f"🔍 Загружено {len(image_cache)} записей из кэша.")
-    new_urls = [url for url in unique_urls if url not in image_cache]
-    if new_urls:
-        print(f"🔍 Требуется проверить {len(new_urls)} новых URL...")
-        check_start = time.time()
-
-        def check_url(url):
-            """GET с stream=True — Beget S3 не отдаёт 200 на HEAD."""
-            try:
-                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-                response = requests.get(url, timeout=HEAD_TIMEOUT, headers=headers, stream=True)
-                exists = response.status_code == 200
-                response.close()
-                return url, exists
-            except:
-                return url, False
-
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            futures = [executor.submit(check_url, url) for url in new_urls]
-            for future in as_completed(futures):
-                url, exists = future.result()
-                image_cache[url] = exists
-
-        check_time = time.time() - check_start
-        print(f"✅ Проверка завершена за {check_time:.2f} сек.")
-        save_image_cache(image_cache)
-    else:
-        print("✅ Все URL уже есть в кэше, проверка не требуется.")
-else:
-    print("🔍 Проверка существования файлов отключена (IMAGE_CHECK_ENABLED=False)")
 
 # ===================== СТАТИСТИКА =====================
 all_items_for_stats = all_items + rrc_items
@@ -713,10 +706,7 @@ except Exception as e:
     print(f"❌ Ошибка при записи статистики: {e}")
     traceback.print_exc()
 
-# ===================== ВЫГРУЗКА ОТСУТСТВУЮЩИХ ФОТО (по брендам) =====================
-# Собираем список моделей, для которых нет фото на Beget — только «Бренд_Модель.jpg».
-# Такие позиции нужны, чтобы правильно наименовать файлы на S3.
-
+# ===================== ВЫГРУЗКА ОТСУТСТВУЮЩИХ ФОТО =====================
 missing_by_brand = defaultdict(set)
 
 for item, diameter, final_price in all_items_for_stats:
@@ -729,18 +719,8 @@ for item, diameter, final_price in all_items_for_stats:
 
     brand_clean = clean_name(brand)
     model_clean = clean_name(model)
-    short_url = f"{IMAGE_BASE_URL}/{brand_clean}/{brand_clean}_{model_clean}.jpg"
-
-    # Проверяем — есть ли у нас этот файл в кэше (True = есть, False/нет = отсутствует)
-    exists = False
-    if IMAGE_CHECK_ENABLED and image_cache is not None:
-        exists = image_cache.get(short_url, False)
-    else:
-        # Если проверка отключена — считаем, что файла нет
-        exists = False
-
-    if not exists:
-        # Имя файла, которое нужно создать на S3: Бренд_Модель.jpg
+    rel = f"{brand_clean}/{brand_clean}_{model_clean}.jpg"
+    if not check_image_exists_by_filename(rel):
         missing_by_brand[brand].add(f"{brand_clean}_{model_clean}.jpg")
 
 with open("photos_missing.txt", "w", encoding="utf-8") as f:
@@ -762,15 +742,11 @@ with open("photos_missing.txt", "w", encoding="utf-8") as f:
     f.write(f"Брендов затронуто: {len(missing_by_brand)}\n")
 
 print(f"📄 Список отсутствующих фото сохранён в photos_missing.txt")
-print(f"   - Моделей без фото: {sum(len(v) for v in missing_by_brand.values())}")
-print(f"   - Брендов затронуто: {len(missing_by_brand)}")
 
 # ===================== ЗАПИСЬ XML ФАЙЛОВ =====================
 root_full = ET.Element("Products")
 for item, diameter, final_price in all_items:
-    add_product_to_root(root_full, item, diameter, final_price,
-                        replace_images=True,
-                        image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
+    add_product_to_root(root_full, item, diameter, final_price, replace_images=True)
 tree_full = ET.ElementTree(root_full)
 with open("aztyre_full.xml", "wb") as file:
     tree_full.write(file, encoding="utf-8", xml_declaration=True)
@@ -778,9 +754,7 @@ print(f"✅ Файл aztyre_full.xml создан: {total_products_full} тов�
 
 root_rrc = ET.Element("Products")
 for item, diameter, final_price in rrc_items:
-    add_product_to_root(root_rrc, item, diameter, final_price,
-                        replace_images=True,
-                        image_cache=image_cache if IMAGE_CHECK_ENABLED else None)
+    add_product_to_root(root_rrc, item, diameter, final_price, replace_images=True)
 tree_rrc = ET.ElementTree(root_rrc)
 with open("aztyre_rrc.xml", "wb") as file:
     tree_rrc.write(file, encoding="utf-8", xml_declaration=True)
@@ -798,30 +772,12 @@ S3_ENABLED = not LOCAL_MODE
 
 if S3_ENABLED:
     try:
-        import subprocess
-        import sys
-
         S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
         S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
         S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
         S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
 
         if S3_ACCESS_KEY and S3_SECRET_KEY:
-            print("🔧 Устанавливаем s3cmd...")
-            subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"], check=True, capture_output=True)
-
-            host_base = S3_ENDPOINT.replace('https://', '').replace('http://', '')
-            config_content = f"""[default]
-access_key = {S3_ACCESS_KEY}
-secret_key = {S3_SECRET_KEY}
-host_base = {host_base}
-host_bucket = {host_base}
-use_https = True
-signature_v2 = False
-"""
-            with open("/tmp/s3cfg", "w") as f:
-                f.write(config_content)
-
             if os.path.exists("aztyre_full.xml") and os.path.getsize("aztyre_full.xml") > 0:
                 cmd_full = [
                     "s3cmd", "--config=/tmp/s3cfg", "put",
@@ -853,14 +809,3 @@ signature_v2 = False
         print(f"❌ Ошибка при загрузке в S3: {e}")
 else:
     print("ℹ️ S3: загрузка отключена (LOCAL_MODE=True)")
-
-# ===================== СОХРАНЕНИЕ В ПАПКУ СО СКРИПТОМ =====================
-script_dir = os.path.dirname(os.path.abspath(__file__))
-print(f"\n📁 Рабочая директория (папка со скриптом): {script_dir}")
-for fname in ["aztyre_full.xml", "aztyre_rrc.xml", "brand_statistics.txt", IMAGE_CACHE_FILE]:
-    fpath = os.path.join(script_dir, fname)
-    if os.path.exists(fpath):
-        size_kb = os.path.getsize(fpath) / 1024
-        print(f"   ✅ {fname} — {size_kb:.1f} KB")
-    else:
-        print(f"   ⚠️ {fname} — файл не найден")
