@@ -8,7 +8,6 @@ import time
 import subprocess
 import sys
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict
 
 # ===================== НАСТРОЙКИ =====================
@@ -126,8 +125,12 @@ IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-antontyres/ima
 IMAGE_CACHE_FILE = "image_cache.json"
 IMAGE_CACHE_REFRESH = os.getenv("IMAGE_CACHE_REFRESH", "false").lower() == "true"
 
-MAX_WORKERS = 50
-HEAD_TIMEOUT = 5  # GET отвечает медленнее HEAD, увеличим таймаут
+# ===================== S3 =====================
+S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
+S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
+S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
+S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
+S3_PREFIX = os.getenv("S3_IMAGES_PREFIX", "images/")  # префикс, где лежат фото
 
 # ===================== ФИЛЬТРЫ =====================
 SEASON_EXCLUDE_ENABLED = False
@@ -308,6 +311,104 @@ def get_additional_image_urls(item):
 def get_all_image_urls(item):
     return get_base_image_urls(item) + get_additional_image_urls(item)
 
+# ===================== S3: СПИСОК ФАЙЛОВ =====================
+def setup_s3cfg():
+    """Создаёт /tmp/s3cfg, если есть ключи. Возвращает путь или None."""
+    if not (S3_ACCESS_KEY and S3_SECRET_KEY):
+        return None
+    host_base = S3_ENDPOINT.replace('https://', '').replace('http://', '')
+    config_content = f"""[default]
+access_key = {S3_ACCESS_KEY}
+secret_key = {S3_SECRET_KEY}
+host_base = {host_base}
+host_bucket = {host_base}
+use_https = True
+signature_v2 = False
+"""
+    path = "/tmp/s3cfg"
+    with open(path, "w") as f:
+        f.write(config_content)
+    return path
+
+def load_s3_file_list():
+    """
+    Загружает список файлов из S3 через `s3cmd ls -r`.
+    Возвращает set относительных ключей, начинающихся с S3_PREFIX,
+    например: 'images/Hankook/Hankook_Winter_i_cept_IZ2_W616.jpg'.
+    """
+    s3cfg = setup_s3cfg()
+    if s3cfg is None:
+        print("⚠️ S3: не заданы ключи, список файлов получить нельзя")
+        return set()
+
+    # Проверяем s3cmd
+    try:
+        subprocess.run(["s3cmd", "--version"], capture_output=True, check=True)
+    except Exception:
+        print("🔧 s3cmd не найден, устанавливаем...")
+        subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"], check=True, capture_output=True)
+
+    s3_path = f"s3://{S3_BUCKET}/{S3_PREFIX}".rstrip('/') + "/"
+    print(f"🔍 Загружаем список файлов из S3: {s3_path}")
+    start = time.time()
+    try:
+        result = subprocess.run(
+            ["s3cmd", f"--config={s3cfg}", "ls", "-r", s3_path],
+            capture_output=True, text=True, timeout=300
+        )
+    except subprocess.TimeoutExpired:
+        print("❌ Превышено время ожидания s3cmd ls")
+        return set()
+
+    if result.returncode != 0:
+        print(f"❌ Ошибка s3cmd ls: {result.stderr.strip()}")
+        return set()
+
+    files = set()
+    for line in result.stdout.splitlines():
+        # Формат строки: "2024-05-12 10:22    123456   s3://bucket/path/file.ext"
+        parts = line.split()
+        if len(parts) < 4:
+            continue
+        key = parts[-1]
+        prefix = f"s3://{S3_BUCKET}/"
+        if key.startswith(prefix):
+            rel = key[len(prefix):]
+            files.add(rel)
+
+    elapsed = time.time() - start
+    print(f"✅ Загружено {len(files)} файлов из S3 за {elapsed:.2f} сек.")
+    return files
+
+def s3_url_to_key(url: str) -> str:
+    """
+    Из URL https://.../images/Hankook/Hankook_Winter.jpg
+    возвращает ключ S3, начинающийся с S3_PREFIX: 'images/Hankook/Hankook_Winter.jpg'.
+    """
+    marker = f"/{S3_PREFIX}"
+    idx = url.find(marker)
+    if idx == -1:
+        parts = url.split("/", 3)
+        if len(parts) >= 4:
+            return parts[3]
+        return url
+    return url[idx + 1:]
+
+def check_image_exists(url, cache, s3_files=None):
+    """
+    Проверка существования файла по кэшу и/или списку файлов S3.
+    Никаких HTTP-запросов.
+    """
+    if url in cache:
+        return cache[url]
+    if s3_files is not None:
+        key = s3_url_to_key(url)
+        exists = key in s3_files
+        cache[url] = exists
+        return exists
+    cache[url] = False
+    return False
+
 # ===================== КЭШ ИЗОБРАЖЕНИЙ =====================
 def load_image_cache():
     if os.path.exists(IMAGE_CACHE_FILE):
@@ -324,23 +425,6 @@ def save_image_cache(cache):
             json.dump(cache, f)
     except:
         pass
-
-def check_image_exists(url, cache):
-    """
-    Проверка существования файла через GET + stream=True.
-    Beget S3 не всегда отдаёт 200 на HEAD — поэтому используем GET и сразу закрываем поток.
-    """
-    if url in cache:
-        return cache[url]
-    try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        response = requests.get(url, timeout=HEAD_TIMEOUT, headers=headers, stream=True)
-        exists = response.status_code == 200
-        response.close()
-    except Exception:
-        exists = False
-    cache[url] = exists
-    return exists
 
 # ===================== РАСЧЁТ ИТОГОВОЙ ЦЕНЫ (за 1 шт.) =====================
 def calculate_price_per_one(item, diameter):
@@ -425,7 +509,7 @@ def is_disk(item):
     return False
 
 # ===================== ФОРМИРОВАНИЕ XML ДЛЯ АВИТО =====================
-def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
+def add_ad_to_root(root, item, diameter, image_cache=None, s3_files=None, seen_ids=None):
     if seen_ids is None:
         seen_ids = set()
 
@@ -493,9 +577,9 @@ def add_ad_to_root(root, item, diameter, image_cache=None, seen_ids=None):
     if IMAGE_REPLACE_ENABLED and brand and model:
         all_urls = get_all_image_urls(item)
         existing_urls = []
-        if IMAGE_CHECK_ENABLED and image_cache is not None:
+        if IMAGE_CHECK_ENABLED:
             for url in all_urls:
-                if image_cache.get(url, False):
+                if check_image_exists(url, image_cache, s3_files):
                     existing_urls.append(url)
         else:
             existing_urls = all_urls[:1]
@@ -627,11 +711,9 @@ def main():
 
         brand_norm = normalize_string(brand)
 
-        # ---------- БЕЛЫЙ СПИСОК БРЕНДОВ ----------
         if ONLY_WHITELIST_BRANDS and brand_norm not in whitelist_norms:
             excluded_whitelist += 1
             continue
-        # ------------------------------------------
 
         if brand_norm not in valid_brands_norms:
             log_invalid(item, "Brand", brand, f"не найден в справочнике (норм: {brand_norm})")
@@ -769,8 +851,9 @@ def main():
     for cat, cnt in sorted(category_stats.items(), key=lambda x: -x[1]):
         print(f"   {cat}: {cnt}")
 
-    # ===================== КЭШИРОВАНИЕ ИЗОБРАЖЕНИЙ (GET + stream) =====================
+    # ===================== СПИСОК ФАЙЛОВ S3 (вместо HTTP-проверок) =====================
     image_cache = {}
+    s3_files = set()
     check_time = 0
     if IMAGE_REPLACE_ENABLED and IMAGE_CHECK_ENABLED:
         if IMAGE_CACHE_REFRESH and os.path.exists(IMAGE_CACHE_FILE):
@@ -778,33 +861,23 @@ def main():
             print("🔁 Кэш принудительно удалён.")
         image_cache = load_image_cache()
         print(f"🔍 Загружено {len(image_cache)} записей из кэша.")
-        new_urls = [url for url in unique_urls if url not in image_cache]
-        if new_urls:
-            print(f"🔍 Требуется проверить {len(new_urls)} новых URL...")
-            check_start = time.time()
 
-            def check_url(url):
-                """Проверка через GET + stream=True (HEAD на Beget S3 не работает)."""
-                try:
-                    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-                    response = requests.get(url, timeout=HEAD_TIMEOUT, headers=headers, stream=True)
-                    exists = response.status_code == 200
-                    response.close()
-                    return url, exists
-                except:
-                    return url, False
+        s3_files = load_s3_file_list()
 
-            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-                futures = [executor.submit(check_url, url) for url in new_urls]
-                for future in as_completed(futures):
-                    url, exists = future.result()
-                    image_cache[url] = exists
-
-            check_time = time.time() - check_start
-            print(f"✅ Проверка завершена за {check_time:.2f} сек.")
-            save_image_cache(image_cache)
+        if s3_files:
+            new_urls = [url for url in unique_urls if url not in image_cache]
+            if new_urls:
+                print(f"🔍 Проверяем {len(new_urls)} URL по списку S3...")
+                check_start = time.time()
+                for url in new_urls:
+                    check_image_exists(url, image_cache, s3_files)
+                check_time = time.time() - check_start
+                print(f"✅ Проверка завершена за {check_time:.2f} сек.")
+                save_image_cache(image_cache)
+            else:
+                print("✅ Все URL уже есть в кэше, проверка не требуется.")
         else:
-            print("✅ Все URL уже есть в кэше, проверка не требуется.")
+            print("⚠️ Список файлов S3 пуст — изображения будут браться из fallback (img)")
     else:
         print("🔍 Проверка существования файлов отключена.")
 
@@ -824,6 +897,7 @@ def main():
     for item, diameter in all_items:
         result = add_ad_to_root(root, item, diameter,
                                 image_cache=image_cache if IMAGE_CHECK_ENABLED else None,
+                                s3_files=s3_files if IMAGE_CHECK_ENABLED else None,
                                 seen_ids=seen_ids)
         add_stats[result] = add_stats.get(result, 0) + 1
 
@@ -856,40 +930,29 @@ def main():
 
     if S3_ENABLED:
         try:
-            S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
-            S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
-            S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
+            if not os.path.exists(output_file):
+                print(f"❌ Файл {output_file} не найден!")
+                raise FileNotFoundError(f"{output_file} not found")
+
+            file_size = os.path.getsize(output_file)
+            print(f"\n📄 Размер файла: {file_size} байт")
+            if file_size == 0:
+                print("❌ Файл пуст, загрузка отменена")
+                raise ValueError("File is empty")
+
             S3_KEY = os.getenv("S3_KEY", "exports/avito_export3.xml")
-            S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
-
-            if S3_ACCESS_KEY and S3_SECRET_KEY:
-                if not os.path.exists(output_file):
-                    print(f"❌ Файл {output_file} не найден!")
-                    raise FileNotFoundError(f"{output_file} not found")
-
-                file_size = os.path.getsize(output_file)
-                print(f"\n📄 Размер файла: {file_size} байт")
-                if file_size == 0:
-                    print("❌ Файл пуст, загрузка отменена")
-                    raise ValueError("File is empty")
-
-                print("🔧 Устанавливаем s3cmd...")
-                subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"], check=True, capture_output=True)
-
-                host_base = S3_ENDPOINT.replace('https://', '').replace('http://', '')
-                config_content = f"""[default]
-access_key = {S3_ACCESS_KEY}
-secret_key = {S3_SECRET_KEY}
-host_base = {host_base}
-host_bucket = {host_base}
-use_https = True
-signature_v2 = False
-"""
-                with open("/tmp/s3cfg", "w") as f:
-                    f.write(config_content)
+            s3cfg = setup_s3cfg()
+            if s3cfg is None:
+                print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
+            else:
+                print("🔧 Устанавливаем s3cmd (если не установлен)...")
+                try:
+                    subprocess.run(["s3cmd", "--version"], capture_output=True, check=True)
+                except Exception:
+                    subprocess.run([sys.executable, "-m", "pip", "install", "s3cmd"], check=True, capture_output=True)
 
                 cmd = [
-                    "s3cmd", "--config=/tmp/s3cfg", "put",
+                    "s3cmd", f"--config={s3cfg}", "put",
                     output_file,
                     f"s3://{S3_BUCKET}/{S3_KEY}"
                 ]
@@ -903,8 +966,6 @@ signature_v2 = False
                         print(result.stderr)
                     if result.stdout:
                         print(result.stdout)
-            else:
-                print("⚠️ S3: не заданы ключи доступа, загрузка пропущена")
         except Exception as e:
             print(f"❌ Ошибка при загрузке в S3: {e}")
     else:
