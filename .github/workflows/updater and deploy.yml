@@ -4,12 +4,6 @@ on:
   schedule:
     - cron: "00 18 * * *"
   workflow_dispatch:
-    inputs:
-      refresh_cache:
-        description: 'Принудительно обновить кэш изображений'
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: write
@@ -20,15 +14,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # ---------- Кэш для image_cache.json ----------
-      - name: Cache image check results
-        uses: actions/cache@v4
-        with:
-          path: image_cache.json
-          key: image-cache-${{ runner.os }}-${{ hashFiles('ztest6.py') }}
-          restore-keys: |
-            image-cache-${{ runner.os }}-
 
       # ---------- Установка Python и зависимостей ----------
       - name: Set up Python
@@ -46,7 +31,6 @@ jobs:
         run: python ztest6.py
         env:
           LOCAL_MODE: "false"
-          IMAGE_CACHE_REFRESH: ${{ inputs.refresh_cache == true && 'true' || 'false' }}
           S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
           S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
           S3_BUCKET: fa5a823588a1-antontyres
@@ -72,7 +56,6 @@ jobs:
           else
             git commit -m 'Daily update of products XML'
           fi
-          # Синхронизация с удалённым репо с сохранением локальных изменений
           git pull --rebase --autostash origin main || true
           git push
         env:
