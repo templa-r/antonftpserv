@@ -159,9 +159,6 @@
   Massimo_Velocita_U1.jpg
   Massimo_Vitto_SUV.jpg
 
-### Mazzini (1 шт.)
-  Mazzini_EcoRover.jpg
-
 ### Michelin (4 шт.)
   Michelin_E-Primacy_S1.jpg
   Michelin_Latitude_Cross.jpg
@@ -497,5 +494,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 414
-Брендов затронуто: 40
+Всего отсутствующих моделей: 413
+Брендов затронуто: 39
