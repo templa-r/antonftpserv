@@ -249,9 +249,8 @@
   Roadcruza_RA8000.jpg
   Roadcruza_Thruster.jpg
 
-### Roadmarch (6 шт.)
+### Roadmarch (5 шт.)
   Roadmarch_Snow_Rover_868.jpg
-  Roadmarch_Snow_Rover_989.jpg
   Roadmarch_Winter_X_Pro_888.jpg
   Roadmarch_Winter_X_Pro_999.jpg
   Roadmarch_Winter_X_Pro_Studs_69.jpg
@@ -447,5 +446,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 372
+Всего отсутствующих моделей: 371
 Брендов затронуто: 36
