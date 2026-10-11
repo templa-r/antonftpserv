@@ -12,9 +12,6 @@
   AMBERSTONE_785.jpg
   AMBERSTONE_886.jpg
 
-### Bridgestone (1 шт.)
-  Bridgestone_Blizzak_DM-V3.jpg
-
 ### Continental (2 шт.)
   Continental_ContiSportContact_5P.jpg
   Continental_VikingContact_7.jpg
@@ -308,18 +305,8 @@
   Sava_CITY_U4.jpg
   Sava_ORJAK_5.jpg
 
-### Sonix (11 шт.)
-  Sonix_Glorytour_52.jpg
-  Sonix_Loading_PRO.jpg
-  Sonix_Prime_UHP_07.jpg
+### Sonix (1 шт.)
   Sonix_Primemaster_M_T_I.jpg
-  Sonix_Primevan_28.jpg
-  Sonix_Snow_Rover_966.jpg
-  Sonix_SuperVan_S1.jpg
-  Sonix_SuperVan_S2.jpg
-  Sonix_Winter_X_Pro_999.jpg
-  Sonix_Winter_X_Pro_Studs_69.jpg
-  Sonix_Xcomfort_S7.jpg
 
 ### Three-A (2 шт.)
   Three-A_T176.jpg
@@ -494,5 +481,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 413
-Брендов затронуто: 39
+Всего отсутствующих моделей: 402
+Брендов затронуто: 38
