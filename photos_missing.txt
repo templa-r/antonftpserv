@@ -16,37 +16,8 @@
   Continental_ContiSportContact_5P.jpg
   Continental_VikingContact_7.jpg
 
-### Cordiant (23 шт.)
-  Cordiant_All_Terrain_OA-1.jpg
-  Cordiant_Business_CA-1.jpg
-  Cordiant_Business_CA-2.jpg
-  Cordiant_Business_CS-2.jpg
-  Cordiant_Business_CW-2.jpg
-  Cordiant_Comfort_2.jpg
-  Cordiant_Comfort_2_SUV.jpg
-  Cordiant_DL-1.jpg
-  Cordiant_DM-1.jpg
-  Cordiant_DR-1.jpg
+### Cordiant (1 шт.)
   Cordiant_FR-2.jpg
-  Cordiant_Gravity.jpg
-  Cordiant_Road_Runner_PS-1.jpg
-  Cordiant_Sno-Max_7000.jpg
-  Cordiant_Snow_Cross_2.jpg
-  Cordiant_Snow_Cross_2_SUV.jpg
-  Cordiant_Snow_Cross_PW-2.jpg
-  Cordiant_Sport_3_PS-2.jpg
-  Cordiant_TR-1.jpg
-  Cordiant_TR-2.jpg
-  Cordiant_VM-1.jpg
-  Cordiant_Winter_Drive_2.jpg
-  Cordiant_Winter_Drive_PW-1.jpg
-
-### Firemax (5 шт.)
-  Firemax_FM316.jpg
-  Firemax_FM501.jpg
-  Firemax_FM518.jpg
-  Firemax_FM601.jpg
-  Firemax_FM806.jpg
 
 ### Gislaved (4 шт.)
   Gislaved_ArcticControl.jpg
@@ -79,13 +50,11 @@
   Ikon_Character_Snow_2_SUV.jpg
   Ikon_Ikon_Nordman_C.jpg
 
-### Laufenn (9 шт.)
+### Laufenn (7 шт.)
   Laufenn_G_FIT_4S_LH71.jpg
-  Laufenn_G_FIT_AS_LH41.jpg
   Laufenn_I-Fit_iZ_LW51.jpg
   Laufenn_S_FIT_AS_LH01.jpg
   Laufenn_X_FIT_AT_LC01.jpg
-  Laufenn_X_FIT_HT_LD01.jpg
   Laufenn_X_FIT_VAN_LV01.jpg
   Laufenn_Z_FIT_EQ_LK03.jpg
   Laufenn_i-Fit_Ice_LW71.jpg
@@ -305,9 +274,6 @@
   Sava_CITY_U4.jpg
   Sava_ORJAK_5.jpg
 
-### Sonix (1 шт.)
-  Sonix_Primemaster_M_T_I.jpg
-
 ### Three-A (2 шт.)
   Three-A_T176.jpg
   Three-A_T276_.jpg
@@ -481,5 +447,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 402
-Брендов затронуто: 38
+Всего отсутствующих моделей: 372
+Брендов затронуто: 36
