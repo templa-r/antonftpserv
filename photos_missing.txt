@@ -173,9 +173,8 @@
 ### Nitto (1 шт.)
   Nitto_SN3.jpg
 
-### Nokian (3 шт.)
+### Nokian (2 шт.)
   Nokian_Hakkapeliitta_10.jpg
-  Nokian_Hakkapeliitta_10p_SUV.jpg
   Nokian_Hakkapeliitta_9.jpg
 
 ### Pirelli (24 шт.)
@@ -293,8 +292,7 @@
   Tourador_Ice_Star_TSW1.jpg
   Tourador_Winter_Pro_TSU1.jpg
 
-### Tunga (4 шт.)
-  Tunga_Nordway.jpg
+### Tunga (3 шт.)
   Tunga_Nordway_2_PW-5.jpg
   Tunga_Nordway_3.jpg
   Tunga_Zodiak_2_PS-7.jpg
@@ -390,7 +388,8 @@
 ### ВОЛШЗ (1 шт.)
   ВОЛШЗ_Ф-2АД.jpg
 
-### Кама (46 шт.)
+### Кама (48 шт.)
+  Кама_218.jpg
   Кама_243.jpg
   Кама_312.jpg
   Кама_505.jpg
@@ -422,6 +421,7 @@
   Кама_NU903.jpg
   Кама_REG_D.jpg
   Кама_TRACE_HK-135.jpg
+  Кама_Евро-518.jpg
   Кама_И-281.jpg
   Кама_И-520.jpg
   Кама_ИД-304.jpg
