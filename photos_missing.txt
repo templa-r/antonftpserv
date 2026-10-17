@@ -130,9 +130,6 @@
   Michelin_Pilot_Sport_EV_NE0.jpg
   Michelin_X-Ice_North_4_SUV.jpg
 
-### NORTEC (1 шт.)
-  NORTEC_ET-500.jpg
-
 ### Nexen (33 шт.)
   Nexen_N_Blue_4Season.jpg
   Nexen_N_Blue_HD_Plus.jpg
@@ -171,8 +168,9 @@
 ### Nitto (1 шт.)
   Nitto_SN3.jpg
 
-### Nokian (2 шт.)
+### Nokian (3 шт.)
   Nokian_Hakkapeliitta_10.jpg
+  Nokian_Hakkapeliitta_10p_SUV.jpg
   Nokian_Hakkapeliitta_9.jpg
 
 ### Pirelli (23 шт.)
@@ -295,11 +293,12 @@
   Tunga_Nordway_3.jpg
   Tunga_Zodiak_2_PS-7.jpg
 
-### Tyrex (6 шт.)
+### Tyrex (7 шт.)
   Tyrex_DR-1.jpg
   Tyrex_FR-401.jpg
   Tyrex_VM-201.jpg
   Tyrex_VM-310.jpg
+  Tyrex_VO-1260.jpg
   Tyrex_О-168.jpg
   Tyrex_О-79.jpg
 
@@ -317,10 +316,9 @@
   Viatti_Vettore_Brina_V-525.jpg
   Viatti_Vettore_Inverno_V-524.jpg
 
-### Yatai (5 шт.)
+### Yatai (4 шт.)
   Yatai_A168.jpg
   Yatai_S801.jpg
-  Yatai_T168.jpg
   Yatai_T176.jpg
   Yatai_T298.jpg
 
@@ -372,9 +370,7 @@
   Yokohama_Parada_Spec-X_PA02.jpg
   Yokohama_V105.jpg
 
-### АШК (4 шт.)
-  АШК_F-35.jpg
-  АШК_В-105А.jpg
+### АШК (2 шт.)
   АШК_Ф-2АД.jpg
   АШК_Я-166.jpg
 
@@ -446,5 +442,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 371
-Брендов затронуто: 36
+Всего отсутствующих моделей: 369
+Брендов затронуто: 35
