@@ -223,7 +223,7 @@
   Prinx_XLAB_COMFORT_EV.jpg
   Prinx_XNEX_SPORT_EV.jpg
 
-### Rapid (13 шт.)
+### Rapid (12 шт.)
   Rapid_ECO809.jpg
   Rapid_ECO819.jpg
   Rapid_ECOSAVER_Ⅱ.jpg
@@ -236,7 +236,6 @@
   Rapid_P309.jpg
   Rapid_P609.jpg
   Rapid_Tuftrail_AT.jpg
-  Rapid_Winter_Defender.jpg
 
 ### Roadcruza (6 шт.)
   Roadcruza_RA1100.jpg
@@ -442,5 +441,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 369
+Всего отсутствующих моделей: 368
 Брендов затронуто: 35
