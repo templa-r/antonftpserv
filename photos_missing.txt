@@ -173,7 +173,7 @@
   Nokian_Hakkapeliitta_10p_SUV.jpg
   Nokian_Hakkapeliitta_9.jpg
 
-### Pirelli (23 шт.)
+### Pirelli (24 шт.)
   Pirelli_Cinturato_P1.jpg
   Pirelli_Cinturato_P7.jpg
   Pirelli_Cinturato_P7__P7C2_.jpg
@@ -185,6 +185,7 @@
   Pirelli_P-Zero__PZ4__Luxury_Saloon.jpg
   Pirelli_P-Zero__PZ4__Sports_Car.jpg
   Pirelli_P_Zero.jpg
+  Pirelli_P_Zero_Winter.jpg
   Pirelli_Powergy.jpg
   Pirelli_Scorpion.jpg
   Pirelli_Scorpion_ATR.jpg
@@ -245,11 +246,10 @@
   Roadcruza_RA8000.jpg
   Roadcruza_Thruster.jpg
 
-### Roadmarch (6 шт.)
+### Roadmarch (5 шт.)
   Roadmarch_Snow_Rover_868.jpg
   Roadmarch_Winter_X_Pro_888.jpg
   Roadmarch_Winter_X_Pro_999.jpg
-  Roadmarch_Winter_X_Pro_Studs_68.jpg
   Roadmarch_Winter_X_Pro_Studs_69.jpg
   Roadmarch_Winter_X_Pro_Studs_77.jpg
 
@@ -315,8 +315,9 @@
   Viatti_Vettore_Brina_V-525.jpg
   Viatti_Vettore_Inverno_V-524.jpg
 
-### Yatai (4 шт.)
+### Yatai (5 шт.)
   Yatai_A168.jpg
+  Yatai_A369.jpg
   Yatai_S801.jpg
   Yatai_T176.jpg
   Yatai_T298.jpg
@@ -380,10 +381,11 @@
 ### ВОЛШЗ (1 шт.)
   ВОЛШЗ_Ф-2АД.jpg
 
-### Кама (48 шт.)
+### Кама (51 шт.)
   Кама_218.jpg
   Кама_243.jpg
   Кама_312.jpg
+  Кама_503.jpg
   Кама_505.jpg
   Кама_BREEZE_НК-132.jpg
   Кама_EURO_НК-131.jpg
@@ -415,6 +417,7 @@
   Кама_TRACE_HK-135.jpg
   Кама_Евро-518.jpg
   Кама_И-281.jpg
+  Кама_И-511.jpg
   Кама_И-520.jpg
   Кама_ИД-304.jpg
   Кама_ИН-142Б.jpg
@@ -429,6 +432,7 @@
   Кама_НК-531.jpg
   Кама_НК-532.jpg
   Кама_НК-534.jpg
+  Кама_О-40БМ.jpg
 
 ### ОШЗ (8 шт.)
   ОШЗ_ВИ-244.jpg
@@ -441,5 +445,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 368
+Всего отсутствующих моделей: 372
 Брендов затронуто: 35
