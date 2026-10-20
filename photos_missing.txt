@@ -168,9 +168,8 @@
 ### Nitto (1 шт.)
   Nitto_SN3.jpg
 
-### Nokian (3 шт.)
+### Nokian (2 шт.)
   Nokian_Hakkapeliitta_10.jpg
-  Nokian_Hakkapeliitta_10p_SUV.jpg
   Nokian_Hakkapeliitta_9.jpg
 
 ### Pirelli (24 шт.)
@@ -292,12 +291,11 @@
   Tunga_Nordway_3.jpg
   Tunga_Zodiak_2_PS-7.jpg
 
-### Tyrex (7 шт.)
+### Tyrex (6 шт.)
   Tyrex_DR-1.jpg
   Tyrex_FR-401.jpg
   Tyrex_VM-201.jpg
   Tyrex_VM-310.jpg
-  Tyrex_VO-1260.jpg
   Tyrex_О-168.jpg
   Tyrex_О-79.jpg
 
@@ -445,5 +443,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 372
+Всего отсутствующих моделей: 370
 Брендов затронуто: 35
