@@ -2,11 +2,12 @@
 Формат: Бренд_Модель.jpg (без размеров)
 ============================================================
 
-### AMBERSTONE (8 шт.)
+### AMBERSTONE (9 шт.)
   AMBERSTONE_339.jpg
   AMBERSTONE_366.jpg
   AMBERSTONE_386.jpg
   AMBERSTONE_397.jpg
+  AMBERSTONE_617.jpg
   AMBERSTONE_660.jpg
   AMBERSTONE_706.jpg
   AMBERSTONE_785.jpg
@@ -379,7 +380,7 @@
 ### ВОЛШЗ (1 шт.)
   ВОЛШЗ_Ф-2АД.jpg
 
-### Кама (51 шт.)
+### Кама (50 шт.)
   Кама_218.jpg
   Кама_243.jpg
   Кама_312.jpg
@@ -413,7 +414,6 @@
   Кама_NU903.jpg
   Кама_REG_D.jpg
   Кама_TRACE_HK-135.jpg
-  Кама_Евро-518.jpg
   Кама_И-281.jpg
   Кама_И-511.jpg
   Кама_И-520.jpg
