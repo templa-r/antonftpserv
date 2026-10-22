@@ -59,7 +59,7 @@
   Laufenn_Z_FIT_EQ_LK03.jpg
   Laufenn_i-Fit_Ice_LW71.jpg
 
-### MAXXIS (49 шт.)
+### MAXXIS (48 шт.)
   MAXXIS_AT-781.jpg
   MAXXIS_Arctic_Trekker_SP-02.jpg
   MAXXIS_Bighorn_MT-762.jpg
@@ -70,7 +70,6 @@
   MAXXIS_Bravo_UE-168.jpg
   MAXXIS_Bravo_UE-168N.jpg
   MAXXIS_Crawler_M8090.jpg
-  MAXXIS_HP-M3A.jpg
   MAXXIS_HT780.jpg
   MAXXIS_MA-W2.jpg
   MAXXIS_MA219.jpg
@@ -246,10 +245,11 @@
   Roadcruza_RA8000.jpg
   Roadcruza_Thruster.jpg
 
-### Roadmarch (5 шт.)
+### Roadmarch (6 шт.)
   Roadmarch_Snow_Rover_868.jpg
   Roadmarch_Winter_X_Pro_888.jpg
   Roadmarch_Winter_X_Pro_999.jpg
+  Roadmarch_Winter_X_Pro_Studs_68.jpg
   Roadmarch_Winter_X_Pro_Studs_69.jpg
   Roadmarch_Winter_X_Pro_Studs_77.jpg
 
