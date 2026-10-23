@@ -2,7 +2,8 @@
 Формат: Бренд_Модель.jpg (без размеров)
 ============================================================
 
-### AMBERSTONE (9 шт.)
+### AMBERSTONE (10 шт.)
+  AMBERSTONE_300.jpg
   AMBERSTONE_339.jpg
   AMBERSTONE_366.jpg
   AMBERSTONE_386.jpg
@@ -165,14 +166,12 @@
   Nexen_Winguard_ice.jpg
   Nexen_Winguard_ice_Plus.jpg
 
-### Nitto (1 шт.)
-  Nitto_SN3.jpg
-
-### Nokian (2 шт.)
+### Nokian (3 шт.)
   Nokian_Hakkapeliitta_10.jpg
+  Nokian_Hakkapeliitta_10p_SUV.jpg
   Nokian_Hakkapeliitta_9.jpg
 
-### Pirelli (24 шт.)
+### Pirelli (23 шт.)
   Pirelli_Cinturato_P1.jpg
   Pirelli_Cinturato_P7.jpg
   Pirelli_Cinturato_P7__P7C2_.jpg
@@ -184,7 +183,6 @@
   Pirelli_P-Zero__PZ4__Luxury_Saloon.jpg
   Pirelli_P-Zero__PZ4__Sports_Car.jpg
   Pirelli_P_Zero.jpg
-  Pirelli_P_Zero_Winter.jpg
   Pirelli_Powergy.jpg
   Pirelli_Scorpion.jpg
   Pirelli_Scorpion_ATR.jpg
@@ -288,15 +286,16 @@
   Tourador_Winter_Pro_TSU1.jpg
 
 ### Tunga (3 шт.)
-  Tunga_Nordway_2_PW-5.jpg
+  Tunga_Nordway.jpg
   Tunga_Nordway_3.jpg
   Tunga_Zodiak_2_PS-7.jpg
 
-### Tyrex (6 шт.)
+### Tyrex (7 шт.)
   Tyrex_DR-1.jpg
   Tyrex_FR-401.jpg
   Tyrex_VM-201.jpg
   Tyrex_VM-310.jpg
+  Tyrex_VO-1260.jpg
   Tyrex_О-168.jpg
   Tyrex_О-79.jpg
 
@@ -443,5 +442,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 370
-Брендов затронуто: 35
+Всего отсутствующих моделей: 371
+Брендов затронуто: 34
