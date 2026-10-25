@@ -131,7 +131,7 @@
   Michelin_Pilot_Sport_EV_NE0.jpg
   Michelin_X-Ice_North_4_SUV.jpg
 
-### Nexen (33 шт.)
+### Nexen (35 шт.)
   Nexen_N_Blue_4Season.jpg
   Nexen_N_Blue_HD_Plus.jpg
   Nexen_N_Blue_S.jpg
@@ -143,7 +143,9 @@
   Nexen_N_Fera_RU5.jpg
   Nexen_N_Fera_SU1.jpg
   Nexen_N_Fera_Sport.jpg
+  Nexen_N_Fera_Sport_SUV.jpg
   Nexen_N_Priz_RH1.jpg
+  Nexen_N_blue_4Season_2.jpg
   Nexen_Roadian_ATX.jpg
   Nexen_Roadian_AT_4X4.jpg
   Nexen_Roadian_CT8.jpg
@@ -165,6 +167,9 @@
   Nexen_Winguard_Winspike_SUV_WS62.jpg
   Nexen_Winguard_ice.jpg
   Nexen_Winguard_ice_Plus.jpg
+
+### Nitto (1 шт.)
+  Nitto_SN3.jpg
 
 ### Nokian (3 шт.)
   Nokian_Hakkapeliitta_10.jpg
@@ -449,5 +454,5 @@
   ОШЗ_ОИ-25.jpg
 
 ============================================================
-Всего отсутствующих моделей: 378
-Брендов затронуто: 34
+Всего отсутствующих моделей: 381
+Брендов затронуто: 35
