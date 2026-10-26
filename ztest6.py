@@ -104,14 +104,14 @@ BRAND_COEFFS = {
     "ikon": {
         "default": 0.915,
         "diameter_ranges": [
-            {"min": 13, "max": 14, "value": 705},
-            {"diameter": 15, "value": 905},
-            {"diameter": 16, "value": 1155},
-            {"diameter": 17, "value": 1655},
-            {"diameter": 18, "value": 2005},
-            {"diameter": 19, "value": 2155},
-            {"diameter": 20, "value": 2405},
-            {"diameter": 21, "value": 2605},
+            {"min": 13, "max": 14, "value": 700},
+            {"diameter": 15, "value": 800},
+            {"diameter": 16, "value": 1000},
+            {"diameter": 17, "value": 1100},
+            {"diameter": 18, "value": 1300},
+            {"diameter": 19, "value": 1400},
+            {"diameter": 20, "value": 1500},
+            {"diameter": 21, "value": 1600},
         ],
     },
     "laufenn": 0.985,
@@ -119,10 +119,10 @@ BRAND_COEFFS = {
 
     "hankook": {
         "diameter_ranges": [
-            {"min": 13, "max": 14, "value": 700},
-            {"min": 15, "max": 16, "value": 800},
-            {"min": 17, "max": 18, "value": 900},
-            {"min": 19, "max": 22, "value": 1000},
+            {"min": 13, "max": 14, "value": 600},
+            {"min": 15, "max": 16, "value": 700},
+            {"min": 17, "max": 18, "value": 800},
+            {"min": 19, "max": 22, "value": 900},
         ],
     },
 
@@ -135,15 +135,15 @@ BRAND_COEFFS = {
 
     "yokohama": {
         "diameter_ranges": [
-            {"min": 13, "max": 16, "value": 1200},
-            {"min": 17, "max": 22, "value": 1600},
+            {"min": 13, "max": 16, "value": 1000},
+            {"min": 17, "max": 22, "value": 1400},
         ],
     },
 
     "formula": {
         "diameter_ranges": [
             {"min": 13, "max": 16, "value": 700},
-            {"min": 17, "max": 22, "value": 900},
+            {"min": 17, "max": 22, "value": 800},
         ],
     },
 }
