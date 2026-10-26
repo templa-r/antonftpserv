@@ -176,7 +176,7 @@
   Nokian_Hakkapeliitta_10p_SUV.jpg
   Nokian_Hakkapeliitta_9.jpg
 
-### Pirelli (23 шт.)
+### Pirelli (24 шт.)
   Pirelli_Cinturato_P1.jpg
   Pirelli_Cinturato_P7.jpg
   Pirelli_Cinturato_P7__P7C2_.jpg
@@ -188,6 +188,7 @@
   Pirelli_P-Zero__PZ4__Luxury_Saloon.jpg
   Pirelli_P-Zero__PZ4__Sports_Car.jpg
   Pirelli_P_Zero.jpg
+  Pirelli_P_Zero_Winter.jpg
   Pirelli_Powergy.jpg
   Pirelli_Scorpion.jpg
   Pirelli_Scorpion_ATR.jpg
@@ -248,11 +249,10 @@
   Roadcruza_RA8000.jpg
   Roadcruza_Thruster.jpg
 
-### Roadmarch (6 шт.)
+### Roadmarch (5 шт.)
   Roadmarch_Snow_Rover_868.jpg
   Roadmarch_Winter_X_Pro_888.jpg
   Roadmarch_Winter_X_Pro_999.jpg
-  Roadmarch_Winter_X_Pro_Studs_68.jpg
   Roadmarch_Winter_X_Pro_Studs_69.jpg
   Roadmarch_Winter_X_Pro_Studs_77.jpg
 
@@ -302,13 +302,14 @@
   Tunga_Nordway_3.jpg
   Tunga_Zodiak_2_PS-7.jpg
 
-### Tyrex (7 шт.)
+### Tyrex (8 шт.)
   Tyrex_DR-1.jpg
   Tyrex_FR-401.jpg
   Tyrex_VM-201.jpg
   Tyrex_VM-310.jpg
   Tyrex_VO-1260.jpg
   Tyrex_О-168.jpg
+  Tyrex_О-184.jpg
   Tyrex_О-79.jpg
 
 ### Viatti (12 шт.)
@@ -443,7 +444,7 @@
   Кама_НК-534.jpg
   Кама_О-40БМ.jpg
 
-### ОШЗ (8 шт.)
+### ОШЗ (9 шт.)
   ОШЗ_ВИ-244.jpg
   ОШЗ_И-281.jpg
   ОШЗ_ИК-6АМО.jpg
@@ -452,7 +453,8 @@
   ОШЗ_О-40БМ.jpg
   ОШЗ_О-75.jpg
   ОШЗ_ОИ-25.jpg
+  ОШЗ_У-2.jpg
 
 ============================================================
-Всего отсутствующих моделей: 381
+Всего отсутствующих моделей: 383
 Брендов затронуто: 35
