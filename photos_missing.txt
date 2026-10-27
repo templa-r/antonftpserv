@@ -131,7 +131,7 @@
   Michelin_Pilot_Sport_EV_NE0.jpg
   Michelin_X-Ice_North_4_SUV.jpg
 
-### Nexen (35 шт.)
+### Nexen (34 шт.)
   Nexen_N_Blue_4Season.jpg
   Nexen_N_Blue_HD_Plus.jpg
   Nexen_N_Blue_S.jpg
@@ -159,7 +159,6 @@
   Nexen_Roadian_MTX.jpg
   Nexen_Winguard_Ice_3.jpg
   Nexen_Winguard_Ice_SUV.jpg
-  Nexen_Winguard_SUV.jpg
   Nexen_Winguard_Sport_2.jpg
   Nexen_Winguard_WT1.jpg
   Nexen_Winguard_Winspike_3.jpg
@@ -326,9 +325,8 @@
   Viatti_Vettore_Brina_V-525.jpg
   Viatti_Vettore_Inverno_V-524.jpg
 
-### Yatai (5 шт.)
+### Yatai (4 шт.)
   Yatai_A168.jpg
-  Yatai_A369.jpg
   Yatai_S801.jpg
   Yatai_T176.jpg
   Yatai_T298.jpg
@@ -392,7 +390,7 @@
 ### ВОЛШЗ (1 шт.)
   ВОЛШЗ_Ф-2АД.jpg
 
-### Кама (50 шт.)
+### Кама (49 шт.)
   Кама_218.jpg
   Кама_243.jpg
   Кама_312.jpg
@@ -410,7 +408,6 @@
   Кама_Ice_Trace_НК-530.jpg
   Кама_NF201.jpg
   Кама_NF202.jpg
-  Кама_NF701.jpg
   Кама_NF702.jpg
   Кама_NR201.jpg
   Кама_NR202.jpg
@@ -444,17 +441,16 @@
   Кама_НК-534.jpg
   Кама_О-40БМ.jpg
 
-### ОШЗ (9 шт.)
+### ОШЗ (8 шт.)
   ОШЗ_ВИ-244.jpg
   ОШЗ_И-281.jpg
   ОШЗ_ИК-6АМО.jpg
   ОШЗ_ИН-142Б-1.jpg
   ОШЗ_О-164.jpg
-  ОШЗ_О-40БМ.jpg
   ОШЗ_О-75.jpg
   ОШЗ_ОИ-25.jpg
   ОШЗ_У-2.jpg
 
 ============================================================
-Всего отсутствующих моделей: 383
+Всего отсутствующих моделей: 379
 Брендов затронуто: 35
