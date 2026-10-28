@@ -2,13 +2,11 @@
 Формат: Бренд_Модель.jpg (без размеров)
 ============================================================
 
-### AMBERSTONE (10 шт.)
+### AMBERSTONE (8 шт.)
   AMBERSTONE_300.jpg
-  AMBERSTONE_339.jpg
   AMBERSTONE_366.jpg
   AMBERSTONE_386.jpg
   AMBERSTONE_397.jpg
-  AMBERSTONE_617.jpg
   AMBERSTONE_660.jpg
   AMBERSTONE_706.jpg
   AMBERSTONE_785.jpg
@@ -175,7 +173,7 @@
   Nokian_Hakkapeliitta_10p_SUV.jpg
   Nokian_Hakkapeliitta_9.jpg
 
-### Pirelli (24 шт.)
+### Pirelli (23 шт.)
   Pirelli_Cinturato_P1.jpg
   Pirelli_Cinturato_P7.jpg
   Pirelli_Cinturato_P7__P7C2_.jpg
@@ -187,7 +185,6 @@
   Pirelli_P-Zero__PZ4__Luxury_Saloon.jpg
   Pirelli_P-Zero__PZ4__Sports_Car.jpg
   Pirelli_P_Zero.jpg
-  Pirelli_P_Zero_Winter.jpg
   Pirelli_Powergy.jpg
   Pirelli_Scorpion.jpg
   Pirelli_Scorpion_ATR.jpg
@@ -248,11 +245,10 @@
   Roadcruza_RA8000.jpg
   Roadcruza_Thruster.jpg
 
-### Roadmarch (5 шт.)
+### Roadmarch (4 шт.)
   Roadmarch_Snow_Rover_868.jpg
   Roadmarch_Winter_X_Pro_888.jpg
   Roadmarch_Winter_X_Pro_999.jpg
-  Roadmarch_Winter_X_Pro_Studs_69.jpg
   Roadmarch_Winter_X_Pro_Studs_77.jpg
 
 ### Sailun (16 шт.)
@@ -325,8 +321,9 @@
   Viatti_Vettore_Brina_V-525.jpg
   Viatti_Vettore_Inverno_V-524.jpg
 
-### Yatai (4 шт.)
+### Yatai (5 шт.)
   Yatai_A168.jpg
+  Yatai_A369.jpg
   Yatai_S801.jpg
   Yatai_T176.jpg
   Yatai_T298.jpg
@@ -390,7 +387,7 @@
 ### ВОЛШЗ (1 шт.)
   ВОЛШЗ_Ф-2АД.jpg
 
-### Кама (49 шт.)
+### Кама (50 шт.)
   Кама_218.jpg
   Кама_243.jpg
   Кама_312.jpg
@@ -408,6 +405,7 @@
   Кама_Ice_Trace_НК-530.jpg
   Кама_NF201.jpg
   Кама_NF202.jpg
+  Кама_NF701.jpg
   Кама_NF702.jpg
   Кама_NR201.jpg
   Кама_NR202.jpg
@@ -441,16 +439,17 @@
   Кама_НК-534.jpg
   Кама_О-40БМ.jpg
 
-### ОШЗ (8 шт.)
+### ОШЗ (9 шт.)
   ОШЗ_ВИ-244.jpg
   ОШЗ_И-281.jpg
   ОШЗ_ИК-6АМО.jpg
   ОШЗ_ИН-142Б-1.jpg
   ОШЗ_О-164.jpg
+  ОШЗ_О-40БМ.jpg
   ОШЗ_О-75.jpg
   ОШЗ_ОИ-25.jpg
   ОШЗ_У-2.jpg
 
 ============================================================
-Всего отсутствующих моделей: 379
+Всего отсутствующих моделей: 378
 Брендов затронуто: 35
