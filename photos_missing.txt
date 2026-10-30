@@ -58,7 +58,7 @@
   Laufenn_Z_FIT_EQ_LK03.jpg
   Laufenn_i-Fit_Ice_LW71.jpg
 
-### MAXXIS (48 шт.)
+### MAXXIS (49 шт.)
   MAXXIS_AT-781.jpg
   MAXXIS_Arctic_Trekker_SP-02.jpg
   MAXXIS_Bighorn_MT-762.jpg
@@ -69,6 +69,7 @@
   MAXXIS_Bravo_UE-168.jpg
   MAXXIS_Bravo_UE-168N.jpg
   MAXXIS_Crawler_M8090.jpg
+  MAXXIS_HP-M3A.jpg
   MAXXIS_HT780.jpg
   MAXXIS_MA-W2.jpg
   MAXXIS_MA219.jpg
@@ -129,7 +130,7 @@
   Michelin_Pilot_Sport_EV_NE0.jpg
   Michelin_X-Ice_North_4_SUV.jpg
 
-### Nexen (34 шт.)
+### Nexen (35 шт.)
   Nexen_N_Blue_4Season.jpg
   Nexen_N_Blue_HD_Plus.jpg
   Nexen_N_Blue_S.jpg
@@ -157,6 +158,7 @@
   Nexen_Roadian_MTX.jpg
   Nexen_Winguard_Ice_3.jpg
   Nexen_Winguard_Ice_SUV.jpg
+  Nexen_Winguard_SUV.jpg
   Nexen_Winguard_Sport_2.jpg
   Nexen_Winguard_WT1.jpg
   Nexen_Winguard_Winspike_3.jpg
@@ -164,6 +166,9 @@
   Nexen_Winguard_Winspike_SUV_WS62.jpg
   Nexen_Winguard_ice.jpg
   Nexen_Winguard_ice_Plus.jpg
+
+### Nitto (1 шт.)
+  Nitto_SN3.jpg
 
 ### Nokian (3 шт.)
   Nokian_Hakkapeliitta_10.jpg
@@ -452,5 +457,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 379
-Брендов затронуто: 35
+Всего отсутствующих моделей: 382
+Брендов затронуто: 36
