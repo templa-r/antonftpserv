@@ -170,9 +170,8 @@
 ### Nitto (1 шт.)
   Nitto_SN3.jpg
 
-### Nokian (3 шт.)
+### Nokian (2 шт.)
   Nokian_Hakkapeliitta_10.jpg
-  Nokian_Hakkapeliitta_10p_SUV.jpg
   Nokian_Hakkapeliitta_9.jpg
 
 ### Pirelli (23 шт.)
@@ -457,5 +456,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 382
+Всего отсутствующих моделей: 381
 Брендов затронуто: 36
