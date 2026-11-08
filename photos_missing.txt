@@ -1,4 +1,4 @@
-Список отсутствующих фото на S3 (Beget)
+Список отсутствующих фото на S3 (Yandex)
 Формат: Бренд_Модель.jpg (без размеров)
 ============================================================
 
@@ -11,237 +11,48 @@
   AMBERSTONE_785.jpg
   AMBERSTONE_886.jpg
 
-### BFGoodrich (2 шт.)
-  BFGoodrich_ROUTE_CONTROL_D.jpg
-  BFGoodrich_ROUTE_CONTROL_S.jpg
-
-### Bars (9 шт.)
-  Bars_BR230.jpg
-  Bars_SOLARFLEXX.jpg
-  Bars_UZ200.jpg
-  Bars_UZ220.jpg
-  Bars_UZ300.jpg
-  Bars_UZ310.jpg
-  Bars_XL607.jpg
-  Bars_XL630.jpg
-  Bars_XL640.jpg
-
-### Bridgestone (8 шт.)
-  Bridgestone_Alenza_001.jpg
-  Bridgestone_Alenza_Sport_A_S.jpg
-  Bridgestone_Blizzak_DM-V3.jpg
-  Bridgestone_Dueler_A_T_001.jpg
-  Bridgestone_Dueler_H_L_D400.jpg
-  Bridgestone_Ecopia_EP850.jpg
-  Bridgestone_Potenza_Sport.jpg
-  Bridgestone_Turanza_6.jpg
-
-### Comforser (1 шт.)
-  Comforser_Thruster.jpg
-
-### Continental (9 шт.)
-  Continental_Conti4x4SportContact.jpg
-  Continental_ContiCrossContact_LX_Sport.jpg
-  Continental_ContiCrossContact_UHP.jpg
+### Continental (2 шт.)
   Continental_ContiSportContact_5P.jpg
-  Continental_ContiSportContact_5_P.jpg
-  Continental_IceContact_2.jpg
-  Continental_PremiumContact_6.jpg
-  Continental_SportContact_6.jpg
   Continental_VikingContact_7.jpg
 
-### Cordiant (23 шт.)
-  Cordiant_All_Terrain_OA-1.jpg
-  Cordiant_Business_CA-1.jpg
-  Cordiant_Business_CA-2.jpg
-  Cordiant_Business_CS-2.jpg
-  Cordiant_Business_CW-2.jpg
-  Cordiant_Comfort_2.jpg
-  Cordiant_Comfort_2_SUV.jpg
-  Cordiant_DL-1.jpg
-  Cordiant_DM-1.jpg
-  Cordiant_DR-1.jpg
+### Cordiant (1 шт.)
   Cordiant_FR-1.jpg
-  Cordiant_Gravity.jpg
-  Cordiant_Road_Runner_PS-1.jpg
-  Cordiant_Run_Tour.jpg
-  Cordiant_Sno-Max_7000.jpg
-  Cordiant_Snow_Cross_2.jpg
-  Cordiant_Snow_Cross_2_SUV.jpg
-  Cordiant_Snow_Cross_PW-2.jpg
-  Cordiant_Sport_3_PS-2.jpg
-  Cordiant_TR-2.jpg
-  Cordiant_VM-1.jpg
-  Cordiant_Winter_Drive_2.jpg
-  Cordiant_Winter_Drive_PW-1.jpg
 
-### FORMULA (4 шт.)
-  FORMULA_FORMULA_ENERGY.jpg
-  FORMULA_FORMULA_ICE.jpg
-  FORMULA_FORMULA_ICE_FRICTION.jpg
-  FORMULA_FORMULA_ROSSO.jpg
-
-### Firemax (5 шт.)
-  Firemax_FM316.jpg
-  Firemax_FM501.jpg
-  Firemax_FM518.jpg
-  Firemax_FM601.jpg
-  Firemax_FM806.jpg
-
-### Fulda (1 шт.)
-  Fulda_REGIOCONTROL_3.jpg
-
-### Ginell (1 шт.)
-  Ginell_GN3000.jpg
-
-### Gislaved (15 шт.)
-  Gislaved_ActiveControl.jpg
+### Gislaved (4 шт.)
   Gislaved_ArcticControl.jpg
-  Gislaved_EcoControl.jpg
-  Gislaved_IceControl.jpg
-  Gislaved_Nord_Frost_200.jpg
-  Gislaved_Nord_Frost_VAN_2.jpg
   Gislaved_One_W.jpg
-  Gislaved_PremiumControl.jpg
-  Gislaved_Soft_Frost_200.jpg
-  Gislaved_SpikeControl.jpg
-  Gislaved_TerraControl.jpg
   Gislaved_TerraControl_ATR.jpg
-  Gislaved_UltraControl.jpg
-  Gislaved_VanContol_Ice.jpg
   Gislaved_VanControl_Arctic.jpg
 
-### Goodyear (17 шт.)
-  Goodyear_Eagle_F1_Asymmetric_3.jpg
-  Goodyear_Eagle_F1_Asymmetric_3_SUV.jpg
-  Goodyear_Eagle_F1_Asymmetric_5.jpg
-  Goodyear_Eagle_F1_Asymmetric_6.jpg
-  Goodyear_Eagle_F1_Asymmetric_SUV.jpg
+### Goodyear (3 шт.)
   Goodyear_Eagle_F1_Asymmetric_SUV_AT.jpg
-  Goodyear_Eagle_F1_SuperSport.jpg
-  Goodyear_Eagle_Touring.jpg
   Goodyear_EfficientGrip_2_SUV.jpg
-  Goodyear_EfficientGrip_Performance.jpg
-  Goodyear_KMAX_D_CARGO.jpg
-  Goodyear_OMNITRAC_D_HD.jpg
-  Goodyear_OMNITRAC_MST_II_HCT.jpg
-  Goodyear_OMNITRAC_S_HD.jpg
-  Goodyear_OMNİTRAC_D.jpg
-  Goodyear_REGIONAL_RHS_II.jpg
   Goodyear_Wrangler_All-Terrain_Adventure.jpg
 
-### Gripmax (1 шт.)
-  Gripmax_SureGrip_Pro_Ice.jpg
-
-### Hankook (35 шт.)
-  Hankook_Dynapro_AT2_RF11.jpg
-  Hankook_Dynapro_HP2_RA33.jpg
-  Hankook_Dynapro_HPX_RA43.jpg
-  Hankook_Kinergy_4S2_H750.jpg
-  Hankook_Kinergy_4S2_X_H750A.jpg
-  Hankook_Kinergy_eco2_K435.jpg
-  Hankook_Vantra_ST_AS2_RA30.jpg
-  Hankook_Vantra_Transit_RA58.jpg
-  Hankook_Ventus_Prime3_K125.jpg
-  Hankook_Ventus_Prime4_K135.jpg
-  Hankook_Ventus_Prime4_K135A.jpg
-  Hankook_Ventus_Prime_2_K115.jpg
-  Hankook_Ventus_Prime_3_SUV_K125A.jpg
-  Hankook_Ventus_S1_evo3_K127B.jpg
-  Hankook_Ventus_S1_evo3_SUV_K127A.jpg
-  Hankook_Ventus_S1_evo_2_K117.jpg
-  Hankook_Ventus_S1_evo_3_K127.jpg
-  Hankook_Ventus_S2_AS_X_RH17.jpg
-  Hankook_Ventus_evo_K137.jpg
-  Hankook_Ventus_evo_SUV_K137A.jpg
-  Hankook_Winter_i_cept_IZ2_W616.jpg
-  Hankook_Winter_i_cept_IZ3_W636.jpg
-  Hankook_Winter_i_cept_IZ3_X_W636A.jpg
-  Hankook_Winter_i_cept_X_RW10.jpg
+### Hankook (4 шт.)
   Hankook_Winter_i_cept_evo2_W320A.jpg
   Hankook_Winter_i_cept_evo3_W330.jpg
-  Hankook_Winter_i_cept_evo3_W330A.jpg
-  Hankook_Winter_i_pike_LV_RW15.jpg
-  Hankook_Winter_i_pike_RS2_W429.jpg
-  Hankook_Winter_i_pike_RW11.jpg
-  Hankook_Winter_i_pike_X_W429A.jpg
   Hankook_iON_GT_SUV_IK41A.jpg
-  Hankook_iON_Nordic_i_ce_SUV_IW04A.jpg
   Hankook_iON_evo_SUV_IK01A.jpg
-  Hankook_iON_i_cept_IW01A.jpg
 
-### Ikon (41 шт.)
-  Ikon_Autograph_Aqua_3.jpg
-  Ikon_Autograph_Aqua_3_SUV.jpg
-  Ikon_Autograph_Eco_3.jpg
-  Ikon_Autograph_Eco_C3.jpg
-  Ikon_Autograph_Ice_10.jpg
-  Ikon_Autograph_Ice_10_SUV.jpg
+### Ikon (11 шт.)
   Ikon_Autograph_Ice_9.jpg
   Ikon_Autograph_Ice_9_SUV.jpg
-  Ikon_Autograph_Ice_C3.jpg
   Ikon_Autograph_Ice_C4.jpg
   Ikon_Autograph_Ice_LT3.jpg
   Ikon_Autograph_Ice_LT4.jpg
-  Ikon_Autograph_Snow_3.jpg
-  Ikon_Autograph_Snow_3_SUV.jpg
-  Ikon_Autograph_Snow_5.jpg
-  Ikon_Autograph_Snow_5_SUV.jpg
-  Ikon_Autograph_Snow_C3.jpg
   Ikon_Autograph_Snow_C4.jpg
-  Ikon_Autograph_Ultra_2.jpg
   Ikon_Autograph_Ultra_2_SUV.jpg
-  Ikon_Character_Aqua_SUV.jpg
-  Ikon_Character_Eco.jpg
-  Ikon_Character_Eco_C2.jpg
-  Ikon_Character_Ice_5.jpg
-  Ikon_Character_Ice_7.jpg
-  Ikon_Character_Ice_7_SUV.jpg
-  Ikon_Character_Ice_8.jpg
-  Ikon_Character_Ice_8_SUV.jpg
   Ikon_Character_Ice_C2.jpg
   Ikon_Character_Snow_2.jpg
   Ikon_Character_Snow_2_SUV.jpg
-  Ikon_Character_Ultra.jpg
-  Ikon_Ikon_Nordman_5.jpg
   Ikon_Ikon_Nordman_C.jpg
-  Ikon_Ikon_Nordman_RS2.jpg
-  Ikon_Ikon_Nordman_RS2_SUV.jpg
-  Ikon_Nordman_5.jpg
-  Ikon_Nordman_S2_SUV.jpg
-  Ikon_Nordman_SC.jpg
-  Ikon_Nordman_SX3.jpg
-  Ikon_Nordman_SZ2.jpg
 
-### Kumho (18 шт.)
-  Kumho_Crugen_HP71.jpg
-  Kumho_Crugen_HP91.jpg
-  Kumho_Ecowing_ES31.jpg
-  Kumho_Ecsta_HS52.jpg
-  Kumho_Ecsta_PS71.jpg
-  Kumho_PorTran_KC53.jpg
-  Kumho_Power_Grip_KC11.jpg
-  Kumho_Road_Venture_AT52.jpg
-  Kumho_Road_Venture_MT51.jpg
-  Kumho_Road_Venture_M_T_KL71.jpg
-  Kumho_Road_Venture_M_T_MT71.jpg
-  Kumho_Solus_HS51.jpg
-  Kumho_WinterCraft_Ice_WI32.jpg
-  Kumho_WinterCraft_Ice_WI51.jpg
-  Kumho_WinterCraft_SUV_WS31.jpg
-  Kumho_WinterCraft_SUV_WS51.jpg
-  Kumho_Winter_Portran_CW11.jpg
-  Kumho_Winter_Portran_CW51.jpg
-
-### Laufenn (11 шт.)
+### Laufenn (7 шт.)
   Laufenn_G_FIT_4S_LH71.jpg
-  Laufenn_G_FIT_AS_LH41.jpg
-  Laufenn_G_FIT_EQ__LK41.jpg
   Laufenn_I-Fit_iZ_LW51.jpg
   Laufenn_S_FIT_AS_LH01.jpg
-  Laufenn_S_FIT_EQ__LK01.jpg
   Laufenn_X_FIT_AT_LC01.jpg
-  Laufenn_X_FIT_HT_LD01.jpg
   Laufenn_X_FIT_VAN_LV01.jpg
   Laufenn_Z_FIT_EQ_LK03.jpg
   Laufenn_i-Fit_Ice_LW71.jpg
@@ -310,42 +121,6 @@
   Massimo_Super_T9000.jpg
   Massimo_Velocita_U1.jpg
   Massimo_Vitto_SUV.jpg
-
-### Mazzini (34 шт.)
-  Mazzini_Cross_AllSeason_AS8.jpg
-  Mazzini_Cruise_HTX.jpg
-  Mazzini_ECO307.jpg
-  Mazzini_ECO307_plus.jpg
-  Mazzini_ECO602.jpg
-  Mazzini_ECO603.jpg
-  Mazzini_ECO605_Plus.jpg
-  Mazzini_ECO606.jpg
-  Mazzini_ECO607.jpg
-  Mazzini_ECO802.jpg
-  Mazzini_ECO805.jpg
-  Mazzini_ECO809.jpg
-  Mazzini_ECO819.jpg
-  Mazzini_ECO907.jpg
-  Mazzini_EcoRover.jpg
-  Mazzini_EcoVan_AllSeason_AS9.jpg
-  Mazzini_Ecosaver.jpg
-  Mazzini_Ecotour.jpg
-  Mazzini_EffiVan.jpg
-  Mazzini_Falconer_F1.jpg
-  Mazzini_Giantsaver.jpg
-  Mazzini_ICE_LEOPARD.jpg
-  Mazzini_ICE_LEOPARD_2.jpg
-  Mazzini_ICE_LEOPARD_SUV.jpg
-  Mazzini_Mud_Contender.jpg
-  Mazzini_Mud_Crusher_M_T.jpg
-  Mazzini_Nitrogrip_G5.jpg
-  Mazzini_SNOW_LEOPARD.jpg
-  Mazzini_SNOW_LEOPARD_2.jpg
-  Mazzini_SNOW_LEOPARD_3.jpg
-  Mazzini_SNOW_LEOPARD_LX.jpg
-  Mazzini_SNOW_LEOPARD_VAN.jpg
-  Mazzini_VARENNA_SS01.jpg
-  Mazzini_Varenna_S01.jpg
 
 ### Michelin (15 шт.)
   Michelin_E-Primacy.jpg
@@ -439,7 +214,7 @@
   Predator_New_Mutant_X-MT.jpg
   Predator_New_Mutant_X-RT.jpg
 
-### Prinx (18 шт.)
+### Prinx (17 шт.)
   Prinx_AQUILA_PRO.jpg
   Prinx_AQUILA_REV.jpg
   Prinx_HA1.jpg
@@ -447,7 +222,6 @@
   Prinx_HH1.jpg
   Prinx_HH3.jpg
   Prinx_HP1.jpg
-  Prinx_HT1.jpg
   Prinx_HT2.jpg
   Prinx_HT2_plus.jpg
   Prinx_HU1.jpg
@@ -510,35 +284,9 @@
   Sava_CITY_U4.jpg
   Sava_ORJAK_5.jpg
 
-### Sonix (28 шт.)
-  Sonix_Ecopro_99.jpg
-  Sonix_Glorytour_52.jpg
+### Sonix (2 шт.)
   Sonix_L-Zeal_56.jpg
-  Sonix_Loading_PRO.jpg
   Sonix_PRIMEMASTER_A_T.jpg
-  Sonix_Prime_UHP_07.jpg
-  Sonix_Prime_UHP_08.jpg
-  Sonix_Primemarch_H_T_79.jpg
-  Sonix_Primemaster_M_T_I.jpg
-  Sonix_Primemaster_M_T_II.jpg
-  Sonix_Primemaster_R_T.jpg
-  Sonix_Primemax_A_T_I.jpg
-  Sonix_Primemax_A_T_II.jpg
-  Sonix_Primestar_66.jpg
-  Sonix_Primevan_28.jpg
-  Sonix_Primevan_9.jpg
-  Sonix_Snow_Rover_868.jpg
-  Sonix_Snow_Rover_966.jpg
-  Sonix_Snow_Rover_989.jpg
-  Sonix_SuperVan_S1.jpg
-  Sonix_SuperVan_S2.jpg
-  Sonix_Winter_X_Pro_888.jpg
-  Sonix_Winter_X_Pro_999.jpg
-  Sonix_Winter_X_Pro_Studs_68.jpg
-  Sonix_Winter_X_Pro_Studs_69.jpg
-  Sonix_Winter_X_Pro_Studs_77.jpg
-  Sonix_XSPORT_S8.jpg
-  Sonix_Xcomfort_S7.jpg
 
 ### Three-A (2 шт.)
   Three-A_T176.jpg
@@ -718,5 +466,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 619
-Брендов затронуто: 48
+Всего отсутствующих моделей: 389
+Брендов затронуто: 37
