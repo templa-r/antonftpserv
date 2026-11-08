@@ -33,6 +33,7 @@ LOCAL_MODE = os.getenv("LOCAL_MODE", "true").lower() == "true"
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
 IMAGE_BASE_URL = "https://storage.yandexcloud.net/templar/Images"
+IMAGE_S3_PREFIX = "Images/"  # Регистр должен совпадать с папкой в бакете.
 
 # ===================== РУЧНЫЕ ЦЕНЫ =====================
 MANUAL_PRICES = {
@@ -316,7 +317,7 @@ signature_v2 = False
     t0 = time.time()
     try:
         result = subprocess.run(
-            ["s3cmd", "--config=/tmp/s3cfg", "ls", "-r", f"s3://{S3_BUCKET}/images/"],
+            ["s3cmd", "--config=/tmp/s3cfg", "ls", "-r", f"s3://{S3_BUCKET}/{IMAGE_S3_PREFIX}"],
             capture_output=True, text=True, timeout=180
         )
     except subprocess.TimeoutExpired:
@@ -331,7 +332,7 @@ signature_v2 = False
 
     # Формат строк:
     # 2024-01-01 12:00      1234   s3://bucket/images/Mazzini/Mazzini_ICE_LEOPARD.jpg
-    prefix = f"s3://{S3_BUCKET}/images/"
+    prefix = f"s3://{S3_BUCKET}/{IMAGE_S3_PREFIX}"
     count = 0
     for line in result.stdout.splitlines():
         line = line.strip()
@@ -344,8 +345,9 @@ signature_v2 = False
             if len(parts) == 2:
                 rel = parts[1]   # "images/Mazzini/Mazzini_ICE_LEOPARD.jpg"
                 # убираем "images/"
-                if rel.startswith("images/"):
-                    rel = rel[len("images/"):]
+                if not rel.startswith(IMAGE_S3_PREFIX):
+                    continue
+                rel = rel[len(IMAGE_S3_PREFIX):]
                 S3_FILES.add(rel)
                 count += 1
 
@@ -514,7 +516,8 @@ def add_product_to_root(root, item, diameter, final_price, replace_images=True):
         existing_s3 = {}
         for url in s3_urls:
             # извлекаем относительный путь после /images/
-            rel = url.split("/images/", 1)[1] if "/images/" in url else None
+            base_prefix = IMAGE_BASE_URL.rstrip("/") + "/"
+            rel = url[len(base_prefix):] if url.startswith(base_prefix) else None
             if rel and check_image_exists_by_filename(rel):
                 filename = rel.split("/", 1)[1] if "/" in rel else rel
                 existing_s3[url] = filename
@@ -735,7 +738,7 @@ for item, diameter, final_price in all_items_for_stats:
         missing_by_brand[brand].add(f"{brand_clean}_{model_clean}.jpg")
 
 with open("photos_missing.txt", "w", encoding="utf-8") as f:
-    f.write("Список отсутствующих фото на S3 (Beget)\n")
+    f.write("Список отсутствующих фото на S3 (Yandex)\n")
     f.write("Формат: Бренд_Модель.jpg (без размеров)\n")
     f.write("=" * 60 + "\n\n")
 
@@ -785,8 +788,8 @@ if S3_ENABLED:
     try:
         S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
         S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
-        S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
-        S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
+        S3_BUCKET = os.getenv("S3_BUCKET", "templar")
+        S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://storage.yandexcloud.net")
 
         if S3_ACCESS_KEY and S3_SECRET_KEY:
             if os.path.exists("aztyre_full.xml") and os.path.getsize("aztyre_full.xml") > 0:
