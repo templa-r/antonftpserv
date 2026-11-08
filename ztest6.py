@@ -32,7 +32,7 @@ LOCAL_MODE = os.getenv("LOCAL_MODE", "true").lower() == "true"
 
 # ===================== ЗАМЕНА ИЗОБРАЖЕНИЙ =====================
 IMAGE_REPLACE_ENABLED = True
-IMAGE_BASE_URL = "https://s3.ru1.storage.beget.cloud/fa5a823588a1-antontyres/images"
+IMAGE_BASE_URL = "https://storage.yandexcloud.net/templar/images"
 
 # ===================== РУЧНЫЕ ЦЕНЫ =====================
 MANUAL_PRICES = {
