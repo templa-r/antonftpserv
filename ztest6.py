@@ -303,8 +303,9 @@ def load_s3_file_list():
     config_content = f"""[default]
 access_key = {S3_ACCESS_KEY}
 secret_key = {S3_SECRET_KEY}
-host_base = {host_base}
-host_bucket = {host_base}
+bucket_location = ru-central1
+host_base = storage.yandexcloud.net
+host_bucket = %(bucket)s.storage.yandexcloud.net
 use_https = True
 signature_v2 = False
 """
