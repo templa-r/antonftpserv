@@ -1,4 +1,4 @@
-name: Update Products and Upload to S3
+name: Update Products and Upload to Yandex S3
 
 on:
   schedule:
@@ -8,55 +8,60 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: drom-update
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ---------- Установка Python и зависимостей ----------
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.12'
 
       - name: Install dependencies
+        timeout-minutes: 2
         run: |
           python -m pip install --upgrade pip
-          pip install requests s3cmd
+          python -m pip install requests s3cmd
 
-      # ---------- Запуск основного скрипта ----------
       - name: Run update tyres
-        run: python ztest6.py
+        timeout-minutes: 8
+        run: python -u ztest6.py
         env:
           LOCAL_MODE: "false"
           S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
           S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
-          S3_BUCKET: fa5a823588a1-antontyres
-          S3_ENDPOINT: https://s3.ru1.storage.beget.cloud
-        continue-on-error: true
+          S3_BUCKET: templar
+          S3_ENDPOINT: https://storage.yandexcloud.net
 
-      # ---------- Артефакт: список отсутствующих фото ----------
       - name: Upload missing photos list
+        if: always()
+        timeout-minutes: 1
         uses: actions/upload-artifact@v4
         with:
           name: photos_missing
           path: photos_missing.txt
-        if: always()
+          if-no-files-found: warn
 
-      # ---------- Коммит и пуш изменений ----------
       - name: Commit and push changes
+        timeout-minutes: 1
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add aztyre_full.xml aztyre_rrc.xml brand_statistics.txt photos_missing.txt
-          if git diff-index --quiet HEAD --; then
+          if git diff --cached --quiet; then
             echo "Нет изменений для коммита"
           else
             git commit -m 'Daily update of products XML'
+            git pull --rebase --autostash origin main
+            git push
           fi
-          git pull --rebase --autostash origin main || true
-          git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
