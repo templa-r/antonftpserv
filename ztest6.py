@@ -287,8 +287,8 @@ def load_s3_file_list():
 
     S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
     S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
-    S3_BUCKET = os.getenv("S3_BUCKET", "fa5a823588a1-antontyres")
-    S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
+    S3_BUCKET = os.getenv("S3_BUCKET", "templar")
+    S3_ENDPOINT = os.getenv("S3_ENDPOINT", "https://storage.yandexcloud.net")
 
     if not S3_ACCESS_KEY or not S3_SECRET_KEY:
         print("⚠️ S3: нет ключей, список файлов не загружен. Все проверки будут возвращать False.")
