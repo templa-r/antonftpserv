@@ -2,11 +2,10 @@
 Формат: Бренд_Модель.jpg (без размеров)
 ============================================================
 
-### AMBERSTONE (7 шт.)
+### AMBERSTONE (6 шт.)
   AMBERSTONE_300.jpg
   AMBERSTONE_366.jpg
   AMBERSTONE_397.jpg
-  AMBERSTONE_660.jpg
   AMBERSTONE_706.jpg
   AMBERSTONE_785.jpg
   AMBERSTONE_886.jpg
@@ -57,7 +56,7 @@
   Laufenn_Z_FIT_EQ_LK03.jpg
   Laufenn_i-Fit_Ice_LW71.jpg
 
-### MAXXIS (48 шт.)
+### MAXXIS (49 шт.)
   MAXXIS_AT-781.jpg
   MAXXIS_Arctic_Trekker_SP-02.jpg
   MAXXIS_Bighorn_MT-762.jpg
@@ -93,6 +92,7 @@
   MAXXIS_Trepador_M8060.jpg
   MAXXIS_UM968.jpg
   MAXXIS_UR279.jpg
+  MAXXIS_UR288.jpg
   MAXXIS_VS-01.jpg
   MAXXIS_Vansmart_MCV3_.jpg
   MAXXIS_Vansmart_Snow_WL2.jpg
@@ -278,9 +278,8 @@
   Sailun_Ice_Blazer_WST3.jpg
   Sailun_Terramax_CVR.jpg
 
-### Sava (4 шт.)
+### Sava (3 шт.)
   Sava_AVANT_5.jpg
-  Sava_AVANT_MS2.jpg
   Sava_CITY_U4.jpg
   Sava_ORJAK_5.jpg
 
@@ -389,8 +388,7 @@
   Yokohama_Parada_Spec-X_PA02.jpg
   Yokohama_V105.jpg
 
-### АШК (2 шт.)
-  АШК_Ф-2АД.jpg
+### АШК (1 шт.)
   АШК_Я-166.jpg
 
 ### Белшина (2 шт.)
@@ -466,5 +464,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 389
+Всего отсутствующих моделей: 387
 Брендов затронуто: 37
