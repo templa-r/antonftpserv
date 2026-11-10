@@ -2,11 +2,12 @@
 Формат: Бренд_Модель.jpg (без размеров)
 ============================================================
 
-### AMBERSTONE (6 шт.)
+### AMBERSTONE (7 шт.)
   AMBERSTONE_300.jpg
   AMBERSTONE_366.jpg
   AMBERSTONE_397.jpg
   AMBERSTONE_706.jpg
+  AMBERSTONE_766.jpg
   AMBERSTONE_785.jpg
   AMBERSTONE_886.jpg
 
@@ -255,10 +256,11 @@
   Roadcruza_RA8000.jpg
   Roadcruza_Thruster.jpg
 
-### Roadmarch (4 шт.)
+### Roadmarch (5 шт.)
   Roadmarch_Snow_Rover_868.jpg
   Roadmarch_Winter_X_Pro_888.jpg
   Roadmarch_Winter_X_Pro_999.jpg
+  Roadmarch_Winter_X_Pro_Studs_69.jpg
   Roadmarch_Winter_X_Pro_Studs_77.jpg
 
 ### Sailun (15 шт.)
@@ -340,7 +342,7 @@
   Yatai_T176.jpg
   Yatai_T298.jpg
 
-### Yokohama (46 шт.)
+### Yokohama (45 шт.)
   Yokohama_ADVAN_Fleva_V701.jpg
   Yokohama_ADVAN_S_T__V802.jpg
   Yokohama_ADVAN_Sport_V105.jpg
@@ -371,7 +373,6 @@
   Yokohama_Geolandar_G91A.jpg
   Yokohama_Geolandar_G91F.jpg
   Yokohama_Geolandar_G94BV.jpg
-  Yokohama_Geolandar_G94CV.jpg
   Yokohama_Geolandar_G95A.jpg
   Yokohama_Geolandar_H_T_G056.jpg
   Yokohama_Geolandar_I_T-S_G073.jpg
@@ -464,5 +465,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 387
+Всего отсутствующих моделей: 388
 Брендов затронуто: 37
