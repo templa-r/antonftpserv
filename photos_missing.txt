@@ -2,10 +2,11 @@
 Формат: Бренд_Модель.jpg (без размеров)
 ============================================================
 
-### AMBERSTONE (7 шт.)
+### AMBERSTONE (8 шт.)
   AMBERSTONE_300.jpg
   AMBERSTONE_366.jpg
   AMBERSTONE_397.jpg
+  AMBERSTONE_660.jpg
   AMBERSTONE_706.jpg
   AMBERSTONE_766.jpg
   AMBERSTONE_785.jpg
@@ -176,9 +177,8 @@
   Nexen_Winguard_ice.jpg
   Nexen_Winguard_ice_Plus.jpg
 
-### Nokian (2 шт.)
+### Nokian (1 шт.)
   Nokian_Hakkapeliitta_10.jpg
-  Nokian_Hakkapeliitta_9.jpg
 
 ### Pirelli (23 шт.)
   Pirelli_Cinturato_P1.jpg
@@ -337,7 +337,7 @@
   Yatai_T176.jpg
   Yatai_T298.jpg
 
-### Yokohama (45 шт.)
+### Yokohama (46 шт.)
   Yokohama_ADVAN_Fleva_V701.jpg
   Yokohama_ADVAN_S_T__V802.jpg
   Yokohama_ADVAN_Sport_V105.jpg
@@ -368,6 +368,7 @@
   Yokohama_Geolandar_G91A.jpg
   Yokohama_Geolandar_G91F.jpg
   Yokohama_Geolandar_G94BV.jpg
+  Yokohama_Geolandar_G94CV.jpg
   Yokohama_Geolandar_G95A.jpg
   Yokohama_Geolandar_H_T_G056.jpg
   Yokohama_Geolandar_I_T-S_G073.jpg
@@ -398,7 +399,6 @@
   Кама_218.jpg
   Кама_243.jpg
   Кама_312.jpg
-  Кама_503.jpg
   Кама_505.jpg
   Кама_BREEZE_НК-132.jpg
   Кама_EURO_НК-131.jpg
@@ -428,6 +428,7 @@
   Кама_NU903.jpg
   Кама_REG_D.jpg
   Кама_TRACE_HK-135.jpg
+  Кама_Евро-518.jpg
   Кама_И-281.jpg
   Кама_И-511.jpg
   Кама_И-520.jpg
@@ -461,5 +462,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 386
+Всего отсутствующих моделей: 387
 Брендов затронуто: 36
