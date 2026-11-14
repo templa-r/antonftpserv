@@ -316,7 +316,7 @@
   Tyrex_О-184.jpg
   Tyrex_О-79.jpg
 
-### Viatti (12 шт.)
+### Viatti (11 шт.)
   Viatti_Bosco_A_T_V-237.jpg
   Viatti_Bosco_H_T_V-238.jpg
   Viatti_Bosco_Nordico_V-523.jpg
@@ -326,7 +326,6 @@
   Viatti_Nordico_2_V-528.jpg
   Viatti_Strada_2_V-134.jpg
   Viatti_Strada_Asimmetriсo_V-130.jpg
-  Viatti_V-522.jpg
   Viatti_Vettore_Brina_V-525.jpg
   Viatti_Vettore_Inverno_V-524.jpg
 
@@ -462,5 +461,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 387
+Всего отсутствующих моделей: 386
 Брендов затронуто: 36
