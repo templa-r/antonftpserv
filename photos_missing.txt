@@ -259,8 +259,7 @@
   Roadmarch_Winter_X_Pro_Studs_69.jpg
   Roadmarch_Winter_X_Pro_Studs_77.jpg
 
-### Sailun (15 шт.)
-  Sailun_Atrezzo_4_Seasons.jpg
+### Sailun (14 шт.)
   Sailun_Atrezzo_Elite.jpg
   Sailun_Atrezzo_SVR_LX.jpg
   Sailun_Atrezzo_ZSR.jpg
@@ -394,7 +393,7 @@
 ### ВОЛШЗ (1 шт.)
   ВОЛШЗ_Ф-2АД.jpg
 
-### Кама (50 шт.)
+### Кама (49 шт.)
   Кама_218.jpg
   Кама_243.jpg
   Кама_312.jpg
@@ -427,7 +426,6 @@
   Кама_NU903.jpg
   Кама_REG_D.jpg
   Кама_TRACE_HK-135.jpg
-  Кама_Евро-518.jpg
   Кама_И-281.jpg
   Кама_И-511.jpg
   Кама_И-520.jpg
@@ -461,5 +459,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 386
+Всего отсутствующих моделей: 384
 Брендов затронуто: 36
