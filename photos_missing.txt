@@ -2,15 +2,16 @@
 Формат: Бренд_Модель.jpg (без размеров)
 ============================================================
 
-### AMBERSTONE (10 шт.)
+### AMBERSTONE (11 шт.)
   AMBERSTONE_300.jpg
+  AMBERSTONE_308.jpg
   AMBERSTONE_339.jpg
   AMBERSTONE_366.jpg
-  AMBERSTONE_386.jpg
   AMBERSTONE_396.jpg
   AMBERSTONE_397.jpg
+  AMBERSTONE_600.jpg
+  AMBERSTONE_607.jpg
   AMBERSTONE_706.jpg
-  AMBERSTONE_766.jpg
   AMBERSTONE_785.jpg
   AMBERSTONE_886.jpg
 
@@ -51,15 +52,6 @@
 
 ### Kumho (1 шт.)
   Kumho_eco_Solus_KL21.jpg
-
-### Laufenn (7 шт.)
-  Laufenn_G_FIT_4S_LH71.jpg
-  Laufenn_I-Fit_iZ_LW51.jpg
-  Laufenn_S_FIT_AS_LH01.jpg
-  Laufenn_X_FIT_AT_LC01.jpg
-  Laufenn_X_FIT_VAN_LV01.jpg
-  Laufenn_Z_FIT_EQ_LK03.jpg
-  Laufenn_i-Fit_Ice_LW71.jpg
 
 ### MAXXIS (49 шт.)
   MAXXIS_AT-781.jpg
@@ -259,8 +251,9 @@
   Roadcruza_RA8000.jpg
   Roadcruza_Thruster.jpg
 
-### Roadmarch (3 шт.)
+### Roadmarch (4 шт.)
   Roadmarch_Snow_Rover_868.jpg
+  Roadmarch_Winter_X_Pro_888.jpg
   Roadmarch_Winter_X_Pro_999.jpg
   Roadmarch_Winter_X_Pro_Studs_77.jpg
 
@@ -321,7 +314,7 @@
   Tyrex_О-184.jpg
   Tyrex_О-79.jpg
 
-### Viatti (11 шт.)
+### Viatti (12 шт.)
   Viatti_Bosco_A_T_V-237.jpg
   Viatti_Bosco_H_T_V-238.jpg
   Viatti_Bosco_Nordico_V-523.jpg
@@ -331,6 +324,7 @@
   Viatti_Nordico_2_V-528.jpg
   Viatti_Strada_2_V-134.jpg
   Viatti_Strada_Asimmetriсo_V-130.jpg
+  Viatti_V-522.jpg
   Viatti_Vettore_Brina_V-525.jpg
   Viatti_Vettore_Inverno_V-524.jpg
 
@@ -462,5 +456,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 383
-Брендов затронуто: 38
+Всего отсутствующих моделей: 379
+Брендов затронуто: 37
