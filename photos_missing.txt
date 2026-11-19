@@ -37,7 +37,7 @@
   Hankook_iON_GT_SUV_IK41A.jpg
   Hankook_iON_evo_SUV_IK01A.jpg
 
-### Ikon (11 шт.)
+### Ikon (10 шт.)
   Ikon_Autograph_Ice_9.jpg
   Ikon_Autograph_Ice_9_SUV.jpg
   Ikon_Autograph_Ice_C4.jpg
@@ -48,7 +48,6 @@
   Ikon_Character_Ice_C2.jpg
   Ikon_Character_Snow_2.jpg
   Ikon_Character_Snow_2_SUV.jpg
-  Ikon_Ikon_Nordman_C.jpg
 
 ### Kumho (1 шт.)
   Kumho_eco_Solus_KL21.jpg
@@ -260,9 +259,8 @@
   Roadcruza_RA8000.jpg
   Roadcruza_Thruster.jpg
 
-### Roadmarch (4 шт.)
+### Roadmarch (3 шт.)
   Roadmarch_Snow_Rover_868.jpg
-  Roadmarch_Winter_X_Pro_888.jpg
   Roadmarch_Winter_X_Pro_999.jpg
   Roadmarch_Winter_X_Pro_Studs_77.jpg
 
@@ -336,11 +334,10 @@
   Viatti_Vettore_Brina_V-525.jpg
   Viatti_Vettore_Inverno_V-524.jpg
 
-### Yatai (5 шт.)
+### Yatai (4 шт.)
   Yatai_A168.jpg
   Yatai_A369.jpg
   Yatai_S801.jpg
-  Yatai_T176.jpg
   Yatai_T298.jpg
 
 ### Yokohama (46 шт.)
@@ -401,7 +398,7 @@
 ### ВОЛШЗ (1 шт.)
   ВОЛШЗ_Ф-2АД.jpg
 
-### Кама (48 шт.)
+### Кама (47 шт.)
   Кама_218.jpg
   Кама_243.jpg
   Кама_312.jpg
@@ -424,7 +421,6 @@
   Кама_NR202.jpg
   Кама_NR501.jpg
   Кама_NR702.jpg
-  Кама_NT201.jpg
   Кама_NT202.jpg
   Кама_NU301.jpg
   Кама_NU701.jpg
@@ -466,5 +462,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 387
+Всего отсутствующих моделей: 383
 Брендов затронуто: 38
