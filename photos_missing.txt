@@ -38,7 +38,8 @@
   Hankook_iON_GT_SUV_IK41A.jpg
   Hankook_iON_evo_SUV_IK01A.jpg
 
-### Ikon (10 шт.)
+### Ikon (15 шт.)
+  Ikon_Autograph_Eco_C4.jpg
   Ikon_Autograph_Ice_9.jpg
   Ikon_Autograph_Ice_9_SUV.jpg
   Ikon_Autograph_Ice_C4.jpg
@@ -46,9 +47,13 @@
   Ikon_Autograph_Ice_LT4.jpg
   Ikon_Autograph_Snow_C4.jpg
   Ikon_Autograph_Ultra_2_SUV.jpg
+  Ikon_Autograph_Ultra_5.jpg
   Ikon_Character_Ice_C2.jpg
   Ikon_Character_Snow_2.jpg
   Ikon_Character_Snow_2_SUV.jpg
+  Ikon_Character_Ultra_2.jpg
+  Ikon_Ikon_Nordman_C.jpg
+  Ikon_Magnetar_A_T.jpg
 
 ### Kumho (1 шт.)
   Kumho_eco_Solus_KL21.jpg
@@ -392,7 +397,7 @@
 ### ВОЛШЗ (1 шт.)
   ВОЛШЗ_Ф-2АД.jpg
 
-### Кама (47 шт.)
+### Кама (46 шт.)
   Кама_218.jpg
   Кама_243.jpg
   Кама_312.jpg
@@ -425,7 +430,6 @@
   Кама_REG_D.jpg
   Кама_TRACE_HK-135.jpg
   Кама_И-281.jpg
-  Кама_И-511.jpg
   Кама_И-520.jpg
   Кама_ИД-304.jpg
   Кама_ИН-142Б.jpg
@@ -455,5 +459,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 378
+Всего отсутствующих моделей: 382
 Брендов затронуто: 37
