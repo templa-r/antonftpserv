@@ -38,7 +38,7 @@
   Hankook_iON_GT_SUV_IK41A.jpg
   Hankook_iON_evo_SUV_IK01A.jpg
 
-### Ikon (15 шт.)
+### Ikon (14 шт.)
   Ikon_Autograph_Eco_C4.jpg
   Ikon_Autograph_Ice_9.jpg
   Ikon_Autograph_Ice_9_SUV.jpg
@@ -52,7 +52,6 @@
   Ikon_Character_Snow_2.jpg
   Ikon_Character_Snow_2_SUV.jpg
   Ikon_Character_Ultra_2.jpg
-  Ikon_Ikon_Nordman_C.jpg
   Ikon_Magnetar_A_T.jpg
 
 ### Kumho (1 шт.)
@@ -141,7 +140,7 @@
   Michelin_Primacy_4_.jpg
   Michelin_X-Ice_North_4_SUV.jpg
 
-### Nexen (35 шт.)
+### Nexen (36 шт.)
   Nexen_N_Blue_4Season.jpg
   Nexen_N_Blue_HD_Plus.jpg
   Nexen_N_Blue_S.jpg
@@ -152,6 +151,7 @@
   Nexen_N_Fera_RU1.jpg
   Nexen_N_Fera_RU5.jpg
   Nexen_N_Fera_SU1.jpg
+  Nexen_N_Fera_SU4.jpg
   Nexen_N_Fera_Sport.jpg
   Nexen_N_Fera_Sport_SUV.jpg
   Nexen_N_Priz_RH1.jpg
@@ -304,8 +304,7 @@
   Tourador_Ice_Star_TSW1.jpg
   Tourador_Winter_Pro_TSU1.jpg
 
-### Tunga (3 шт.)
-  Tunga_Nordway_2_PW-5.jpg
+### Tunga (2 шт.)
   Tunga_Nordway_3.jpg
   Tunga_Zodiak_2_PS-7.jpg
 
@@ -333,10 +332,11 @@
   Viatti_Vettore_Brina_V-525.jpg
   Viatti_Vettore_Inverno_V-524.jpg
 
-### Yatai (4 шт.)
+### Yatai (5 шт.)
   Yatai_A168.jpg
   Yatai_A369.jpg
   Yatai_S801.jpg
+  Yatai_T176.jpg
   Yatai_T298.jpg
 
 ### Yokohama (46 шт.)
@@ -397,10 +397,11 @@
 ### ВОЛШЗ (1 шт.)
   ВОЛШЗ_Ф-2АД.jpg
 
-### Кама (46 шт.)
+### Кама (47 шт.)
   Кама_218.jpg
   Кама_243.jpg
   Кама_312.jpg
+  Кама_503.jpg
   Кама_505.jpg
   Кама_BREEZE_НК-132.jpg
   Кама_EURO_НК-131.jpg
@@ -459,5 +460,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 382
+Всего отсутствующих моделей: 383
 Брендов затронуто: 37
