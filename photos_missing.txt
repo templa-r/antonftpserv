@@ -10,7 +10,7 @@
   AMBERSTONE_396.jpg
   AMBERSTONE_397.jpg
   AMBERSTONE_600.jpg
-  AMBERSTONE_607.jpg
+  AMBERSTONE_660.jpg
   AMBERSTONE_706.jpg
   AMBERSTONE_785.jpg
   AMBERSTONE_886.jpg
@@ -20,6 +20,9 @@
 
 ### Cordiant (1 шт.)
   Cordiant_FR-1.jpg
+
+### Credo (1 шт.)
+  Credo_SUNMODE_SUV.jpg
 
 ### Gislaved (4 шт.)
   Gislaved_ArcticControl.jpg
@@ -278,10 +281,9 @@
   Sailun_Ice_Blazer_WST3.jpg
   Sailun_Terramax_CVR.jpg
 
-### Sava (3 шт.)
+### Sava (2 шт.)
   Sava_AVANT_5.jpg
   Sava_CITY_U4.jpg
-  Sava_ORJAK_5.jpg
 
 ### Sonix (2 шт.)
   Sonix_L-Zeal_56.jpg
@@ -446,7 +448,7 @@
   Кама_НК-534.jpg
   Кама_О-40БМ.jpg
 
-### ОШЗ (8 шт.)
+### ОШЗ (9 шт.)
   ОШЗ_ВИ-244.jpg
   ОШЗ_И-281.jpg
   ОШЗ_ИК-6АМО.jpg
@@ -454,11 +456,12 @@
   ОШЗ_О-164.jpg
   ОШЗ_О-40БМ.jpg
   ОШЗ_ОИ-25.jpg
+  ОШЗ_ОИ-73Б.jpg
   ОШЗ_У-2.jpg
 
 ### ЯШЗ (1 шт.)
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 383
-Брендов затронуто: 37
+Всего отсутствующих моделей: 384
+Брендов затронуто: 38
