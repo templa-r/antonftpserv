@@ -41,7 +41,7 @@
   Hankook_iON_GT_SUV_IK41A.jpg
   Hankook_iON_evo_SUV_IK01A.jpg
 
-### Ikon (14 шт.)
+### Ikon (15 шт.)
   Ikon_Autograph_Eco_C4.jpg
   Ikon_Autograph_Ice_9.jpg
   Ikon_Autograph_Ice_9_SUV.jpg
@@ -55,6 +55,7 @@
   Ikon_Character_Snow_2.jpg
   Ikon_Character_Snow_2_SUV.jpg
   Ikon_Character_Ultra_2.jpg
+  Ikon_Ikon_Nordman_C.jpg
   Ikon_Magnetar_A_T.jpg
 
 ### Kumho (1 шт.)
@@ -341,7 +342,7 @@
   Yatai_T176.jpg
   Yatai_T298.jpg
 
-### Yokohama (46 шт.)
+### Yokohama (45 шт.)
   Yokohama_ADVAN_Fleva_V701.jpg
   Yokohama_ADVAN_S_T__V802.jpg
   Yokohama_ADVAN_Sport_V105.jpg
@@ -367,7 +368,6 @@
   Yokohama_Geolandar_CV_4S_G061.jpg
   Yokohama_Geolandar_CV_G058.jpg
   Yokohama_Geolandar_G033.jpg
-  Yokohama_Geolandar_G31A.jpg
   Yokohama_Geolandar_G902.jpg
   Yokohama_Geolandar_G91A.jpg
   Yokohama_Geolandar_G91F.jpg
@@ -448,13 +448,14 @@
   Кама_НК-534.jpg
   Кама_О-40БМ.jpg
 
-### ОШЗ (9 шт.)
+### ОШЗ (10 шт.)
   ОШЗ_ВИ-244.jpg
   ОШЗ_И-281.jpg
   ОШЗ_ИК-6АМО.jpg
   ОШЗ_ИН-142Б-1.jpg
   ОШЗ_О-164.jpg
   ОШЗ_О-40БМ.jpg
+  ОШЗ_О-75.jpg
   ОШЗ_ОИ-25.jpg
   ОШЗ_ОИ-73Б.jpg
   ОШЗ_У-2.jpg
@@ -463,5 +464,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 384
+Всего отсутствующих моделей: 385
 Брендов затронуто: 38
