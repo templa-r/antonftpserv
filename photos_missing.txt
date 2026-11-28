@@ -344,7 +344,7 @@
   Yatai_T176.jpg
   Yatai_T298.jpg
 
-### Yokohama (45 шт.)
+### Yokohama (46 шт.)
   Yokohama_ADVAN_Fleva_V701.jpg
   Yokohama_ADVAN_S_T__V802.jpg
   Yokohama_ADVAN_Sport_V105.jpg
@@ -370,6 +370,7 @@
   Yokohama_Geolandar_CV_4S_G061.jpg
   Yokohama_Geolandar_CV_G058.jpg
   Yokohama_Geolandar_G033.jpg
+  Yokohama_Geolandar_G31A.jpg
   Yokohama_Geolandar_G902.jpg
   Yokohama_Geolandar_G91A.jpg
   Yokohama_Geolandar_G91F.jpg
@@ -466,5 +467,5 @@
   ЯШЗ_Я-467.jpg
 
 ============================================================
-Всего отсутствующих моделей: 387
+Всего отсутствующих моделей: 388
 Брендов затронуто: 38
